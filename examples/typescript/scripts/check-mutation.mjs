@@ -25,9 +25,20 @@ function git(args) {
   return result.status === 0 ? result.stdout.trim() : null;
 }
 
+function mergeBaseWith(base) {
+  // CI checks out a commit without a local branch, so the base usually exists
+  // only as a remote-tracking ref. Prefer the local branch, then origin/<base>.
+  const candidates = base.includes("/") ? [base] : [base, `origin/${base}`];
+  for (const ref of candidates) {
+    const mergeBase = git(["merge-base", ref, "HEAD"]);
+    if (mergeBase !== null && mergeBase !== "") return mergeBase;
+  }
+  return null;
+}
+
 function changedMutableFiles() {
   const base = process.env.MUTATION_BASE ?? "main";
-  const mergeBase = git(["merge-base", base, "HEAD"]);
+  const mergeBase = mergeBaseWith(base);
   if (mergeBase === null) {
     // No base branch to compare against (for example a shallow clone):
     // mutating everything is the safe reading of "changed".
