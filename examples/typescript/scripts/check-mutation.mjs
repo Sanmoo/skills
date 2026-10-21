@@ -20,6 +20,8 @@ const REPORT = "reports/mutation/mutation.json";
 const full = process.argv.includes("--full");
 const failures = [];
 
+// Returns the command's trimmed stdout, or null when the command failed. A
+// successful command that printed nothing yields the empty string.
 function git(args) {
   const result = run("git", args);
   return result.status === 0 ? result.stdout.trim() : null;
@@ -53,9 +55,14 @@ function changedMutableFiles() {
     return null;
   }
   if (mergeBase === git(["rev-parse", "HEAD"])) {
-    // HEAD is the tip of the base branch, so the change to measure is the
-    // commit that just landed on it. Without this the Gate mutates nothing.
-    mergeBase = git(["rev-parse", "HEAD^"]) ?? mergeBase;
+    // HEAD is the tip of the base branch, so the change to measure is the tip
+    // commit that landed. Without this the Gate mutates nothing.
+    const parent = git(["rev-parse", "HEAD^"]);
+    if (parent === null) {
+      console.log(`  ${base} has no earlier commit here; mutating the whole codebase`);
+      return null;
+    }
+    mergeBase = parent;
   }
   const changed = git(["diff", "--name-only", mergeBase, "--", "src"]) ?? "";
   const untracked = git(["ls-files", "--others", "--exclude-standard", "--", "src"]) ?? "";

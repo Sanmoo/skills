@@ -57,7 +57,7 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 ## Mutation
 
 - **Intent**: prove the tests would notice a wrong change, which coverage alone cannot.
-- **Passes when**: the mutation score is at least **80%** overall and at least **90%** in core contexts. The full Entry Point mutates only code changed relative to the base branch, which on day zero is all of it; the changed set includes the working tree and untracked files, not only commits. A scheduled CI job mutates the whole codebase periodically. When the mutation tool has no per-context threshold, a wrapper reads its machine-readable report and applies the overall and core limits itself. When the base branch cannot be resolved, the Gate reports it and mutates the whole codebase rather than quietly measuring less; when HEAD is the base branch's own tip, the change to measure is the commit that landed.
+- **Passes when**: the mutation score is at least **80%** overall and at least **90%** in core contexts. The full Entry Point mutates only code changed relative to the base branch, which on day zero is all of it; the changed set includes the working tree and untracked files, not only commits. A scheduled CI job mutates the whole codebase periodically. When the mutation tool has no per-context threshold, a wrapper reads its machine-readable report and applies the overall and core limits itself. When the base branch cannot be resolved, the Gate reports it and mutates the whole codebase rather than quietly measuring less; when HEAD is the base branch's own tip, the change to measure is the tip commit.
 - **Tier**: full.
 - **Gate Proof**: delete the assertions of a core unit test.
 
