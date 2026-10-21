@@ -25,24 +25,37 @@ function git(args) {
   return result.status === 0 ? result.stdout.trim() : null;
 }
 
-function mergeBaseWith(base) {
+function baseRefs(base) {
   // CI checks out a commit without a local branch, so the base usually exists
-  // only as a remote-tracking ref. Prefer the local branch, then origin/<base>.
-  const candidates = base.includes("/") ? [base] : [base, `origin/${base}`];
-  for (const ref of candidates) {
+  // only as a remote-tracking ref. Try the name as given, then every remote.
+  const refs = [base];
+  for (const remote of (git(["remote"]) ?? "").split("\n").map((line) => line.trim())) {
+    if (remote !== "") refs.push(`${remote}/${base}`);
+  }
+  return [...new Set(refs)];
+}
+
+function mergeBaseWith(base) {
+  for (const ref of baseRefs(base)) {
     const mergeBase = git(["merge-base", ref, "HEAD"]);
-    if (mergeBase !== null && mergeBase !== "") return mergeBase;
+    if (mergeBase) return mergeBase;
   }
   return null;
 }
 
 function changedMutableFiles() {
   const base = process.env.MUTATION_BASE ?? "main";
-  const mergeBase = mergeBaseWith(base);
+  let mergeBase = mergeBaseWith(base);
   if (mergeBase === null) {
     // No base branch to compare against (for example a shallow clone):
-    // mutating everything is the safe reading of "changed".
+    // mutating everything is the safe reading of "changed", but say so.
+    console.log(`  base "${base}" is not resolvable here; mutating the whole codebase`);
     return null;
+  }
+  if (mergeBase === git(["rev-parse", "HEAD"])) {
+    // HEAD is the tip of the base branch, so the change to measure is the
+    // commit that just landed on it. Without this the Gate mutates nothing.
+    mergeBase = git(["rev-parse", "HEAD^"]) ?? mergeBase;
   }
   const changed = git(["diff", "--name-only", mergeBase, "--", "src"]) ?? "";
   const untracked = git(["ls-files", "--others", "--exclude-standard", "--", "src"]) ?? "";
