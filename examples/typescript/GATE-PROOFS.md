@@ -8,7 +8,7 @@ Every Gate was proven on 2026-10-21 by introducing the violation named in its Ga
 | Lint                       | fast | ESLint 10.13.0 + typescript-eslint 8.72.0            | added an unused variable                          | red    |
 | Types                      | fast | TypeScript 5.9.3                                     | assigned a string to a number                     | red    |
 | Unit tests                 | fast | Vitest 4.1.12                                        | inverted the already-returned condition           | red    |
-| Integration tests          | fast | Vitest + Testcontainers 12.2.1 (Postgres 17.2)       | mapped `borrowed_at` from the wrong column        | red    |
+| Integration tests          | full | Vitest + Testcontainers 12.2.1 (Postgres 17.2)       | mapped `borrowed_at` from the wrong column        | red    |
 | E2E tests                  | full | Vitest driving the built service over HTTP           | renamed the route that creates a book             | red    |
 | Mutation                   | full | Stryker 10.0.0 with its Vitest runner                | deleted the assertions of the core loan unit test | red    |
 | Context boundaries         | fast | dependency-cruiser 18.7.0                            | imported a Catalog domain module from Lending     | red    |
