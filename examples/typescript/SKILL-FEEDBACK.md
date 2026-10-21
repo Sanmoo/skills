@@ -21,3 +21,7 @@ Generating this example from `bootstrap-harness` exposed the gaps below. Each on
 
 - The container had no `ps`; a minimal shim was used only to run Stryker locally. CI installs `procps` by default.
 - Docker is available through the host socket; Testcontainers started pinned `postgres:17.2-alpine` containers without configuration.
+
+## The acceptance run
+
+This tree is the skill's acceptance test. It was generated on 2026-10-21 in a fresh session on the empty directory `examples/typescript/`, on branch `agent-issue-1` (born from `48efaa93e0c3936f369f36e33a202267a34aca8e`), with the interview answers fixed by the issue and recorded in [INTERVIEW-ANSWERS.md](INTERVIEW-ANSWERS.md). The session ran every Gate Proof in [GATE-PROOFS.md](GATE-PROOFS.md), then both Entry Points: `make check-fast` offline and `make check` with containers, mutation, and the advisory database. Both were green on the final tree.

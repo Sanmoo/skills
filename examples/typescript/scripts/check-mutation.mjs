@@ -35,9 +35,17 @@ function changedMutableFiles() {
   }
   const changed = git(["diff", "--name-only", mergeBase, "--", "src"]) ?? "";
   const untracked = git(["ls-files", "--others", "--exclude-standard", "--", "src"]) ?? "";
+  // git diff reports paths from the repository root while git ls-files reports
+  // them from the current directory; normalise both to the current directory.
+  const root = git(["rev-parse", "--show-toplevel"]);
+  const prefix = root === null ? "" : relative(root, process.cwd()).split("\\").join("/");
+  const normalise = (path) => {
+    if (prefix === "" || prefix === ".") return path;
+    return path.startsWith(`${prefix}/`) ? path.slice(prefix.length + 1) : path;
+  };
   return `${changed}\n${untracked}`
     .split("\n")
-    .map((line) => line.trim())
+    .map((line) => normalise(line.trim()))
     .filter((path) => path !== "" && MUTABLE.test(path) && !path.endsWith(".test.ts"));
 }
 

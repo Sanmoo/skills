@@ -132,10 +132,11 @@ function readBody(request: IncomingMessage): Promise<unknown> {
 }
 
 function toReply(error: unknown): Reply {
-  if (error instanceof InvalidRequestError || error instanceof InvalidBookError) {
-    return { status: 400, payload: { error: error.message } };
-  }
-  if (error instanceof InvalidLoanError) {
+  if (
+    error instanceof InvalidRequestError ||
+    error instanceof InvalidBookError ||
+    error instanceof InvalidLoanError
+  ) {
     return { status: 400, payload: { error: error.message } };
   }
   if (error instanceof BookNotFoundError || error instanceof LoanNotFoundError) {

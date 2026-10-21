@@ -33,13 +33,13 @@ export class LendingService {
   ) {}
 
   async borrow(input: BorrowInput): Promise<Loan> {
-    const book = await this.catalog.findBook(input.bookId);
-    if (book === null) {
+    const heldBook = await this.catalog.findBook(input.bookId);
+    if (heldBook === null) {
       throw new BookNotFoundError(input.bookId);
     }
     const loan = borrowBook({
       id: randomUUID(),
-      bookId: book.id,
+      bookId: input.bookId,
       borrower: input.borrower,
       now: new Date(),
     });
