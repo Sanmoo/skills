@@ -22,15 +22,15 @@ If application code exists, tell the user this skill establishes a Harness from 
 
 ## 2. Interview the domain
 
-Run the domain interview in [INTERVIEW.md](INTERVIEW.md), section _Domain_, and write `GLOSSARY.md` as terms resolve.
+Run the domain interview in [INTERVIEW.md](INTERVIEW.md), section _Domain_, and write `GLOSSARY.md` as terms resolve. Record every confirmed answer, numbered as in the interview, in `INTERVIEW-ANSWERS.md` beside it, so the same project can be regenerated and reviewed.
 
-**Done when** the user has confirmed every subdomain with its kind (core, supporting, generic), every bounded context with its subdomain, the allowed dependencies between contexts, and the glossary terms of each context.
+**Done when** the user has confirmed every subdomain with its kind (core, supporting, generic), every bounded context with its subdomain, the allowed dependencies between contexts, and the glossary terms of each context, and the answers are recorded.
 
 ## 3. Interview the stack
 
-Read [GATE-CONTRACTS.md](GATE-CONTRACTS.md), then run the stack interview in [INTERVIEW.md](INTERVIEW.md), section _Stack_.
+Read [GATE-CONTRACTS.md](GATE-CONTRACTS.md), then run the stack interview in [INTERVIEW.md](INTERVIEW.md), section _Stack_. Add the confirmed answers to `INTERVIEW-ANSWERS.md`, including the tool and version chosen for every Gate.
 
-**Done when** the user has confirmed the language and runtime, the deliverable type and its outermost edge, the infrastructure of each context, one pinned tool for every Gate Contract, the Entry Point mechanism, the CI provider, and any threshold that departs from the defaults.
+**Done when** the user has confirmed the language and runtime, the deliverable type and its outermost edge, the infrastructure of each context, one pinned tool for every Gate Contract, the Entry Point mechanism, the CI provider, and any threshold that departs from the defaults, and the stack answers are recorded.
 
 ## 4. Build the Walking Skeleton
 
@@ -56,13 +56,13 @@ Write the Guides as described in [GUIDES.md](GUIDES.md).
 
 ## 7. Prove every Gate
 
-Run a **Gate Proof** for each Gate, one at a time: introduce the smallest violation that Gate exists to catch, run the Entry Point of its tier, confirm it goes red _because of that Gate_, then revert the violation. GATE-CONTRACTS.md suggests a violation for each Gate.
+Run a **Gate Proof** for each Gate, one at a time: introduce the smallest violation that Gate exists to catch, run the Entry Point of its tier, confirm it goes red _because of that Gate_, then revert the violation. GATE-CONTRACTS.md suggests a violation for each Gate. Keep the violations in an executable proof file so the proofs can be repeated, and keep that file out of both Entry Points. Record the result in `GATE-PROOFS.md`: one row per Gate with its tier, tool and version, the violation, and the outcome.
 
-**Done when** every Gate has been seen red for its own reason and the full Entry Point is green on the final tree.
+**Done when** every Gate has been seen red for its own reason, `GATE-PROOFS.md` records it, and the full Entry Point is green on the final tree.
 
 ## Blocked Gates
 
-Every Gate in the Gate Floor runs before the Harness counts as established. When the environment cannot run one (no container runtime, no network for the vulnerability database), stop at that phase and report the blocker and what the user must provide. The run resumes from that phase once the blocker is cleared.
+Every Gate in the Gate Floor runs before the Harness counts as established. When the environment cannot run one, stop at that phase and report the blocker and what the user must provide. Blockers include a missing container runtime, no network for the vulnerability database, and a host binary a Gate shells out to; check what each tool needs before starting phase 7. The run resumes from that phase once the blocker is cleared.
 
 ## Final report
 
@@ -75,4 +75,4 @@ Report to the user:
 
 ## Stack Examples
 
-Non-normative realizations of the Gate Contracts for specific stacks live in <https://github.com/Sanmoo/skills/tree/main/examples>. When one matches the chosen stack, consult it for how a Gate looks when done well. The Gate Contracts remain the authority.
+Non-normative realizations of the Gate Contracts for specific stacks live in <https://github.com/Sanmoo/skills/tree/main/examples>. When one matches the chosen stack, consult it for how a Gate looks when done well; the TypeScript example also records its [interview answers](../../examples/typescript/INTERVIEW-ANSWERS.md), [Gate Proofs](../../examples/typescript/GATE-PROOFS.md), and [what generating it exposed in this skill](../../examples/typescript/SKILL-FEEDBACK.md). The Gate Contracts remain the authority.

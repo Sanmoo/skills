@@ -1,0 +1,16 @@
+# Secret scanning: gitleaks' default ruleset, with generated and vendored
+# trees excluded. Every exclusion needs a reason; keep this list short.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Generated lockfiles and build output contain no secrets of ours"
+paths = [
+  '''package-lock\.json''',
+  '''node_modules/''',
+  '''dist/''',
+  '''reports/''',
+  '''coverage/''',
+  '''\.stryker-tmp/''',
+  '''\.git/''',
+]

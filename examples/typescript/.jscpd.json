@@ -1,0 +1,15 @@
+{
+  "minTokens": 50,
+  "threshold": 3,
+  "reporters": ["console"],
+  "format": ["typescript"],
+  "absolute": true,
+  "ignore": [
+    "**/*.test.ts",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/reports/**",
+    "**/.stryker-tmp/**"
+  ],
+  "output": "reports/jscpd"
+}
