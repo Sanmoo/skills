@@ -10,6 +10,7 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 - **Warnings are errors.** A finding either fails the Gate or is excluded in config with a comment stating why.
 - **Tiered.** Fast Gates run in both Entry Points. Full Gates run only in the full Entry Point, which CI calls.
 - **Core thresholds.** Where a contract sets a stricter threshold for core, the Gate config applies it to the modules of core contexts.
+- **Third-party code.** Exclude it from traversal, never from rule targets: an exclusion that hides a target also hides the violation. A rule that depends on matching the target path must still see the dependency it forbids.
 
 ## Format
 
@@ -49,14 +50,14 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 ## E2E tests
 
 - **Intent**: prove the deliverable works as shipped.
-- **Passes when**: every e2e test passes. Each one drives the deliverable, built as it ships, through its outermost edge. Together they reach every bounded context.
+- **Passes when**: every e2e test passes. Each one drives the deliverable, built as it ships, through its outermost edge. Together they reach every bounded context. The Entry Point builds the deliverable before this level runs, and each test waits for a readiness signal from the running artifact instead of sleeping for a fixed time.
 - **Tier**: full.
 - **Gate Proof**: break the route or command that reaches one context.
 
 ## Mutation
 
 - **Intent**: prove the tests would notice a wrong change, which coverage alone cannot.
-- **Passes when**: the mutation score is at least **80%** overall and at least **90%** in core contexts. The full Entry Point mutates only code changed relative to the base branch, which on day zero is all of it. A scheduled CI job mutates the whole codebase periodically.
+- **Passes when**: the mutation score is at least **80%** overall and at least **90%** in core contexts. The full Entry Point mutates only code changed relative to the base branch, which on day zero is all of it; the changed set includes the working tree and untracked files, not only commits. A scheduled CI job mutates the whole codebase periodically. When the mutation tool has no per-context threshold, a wrapper reads its machine-readable report and applies the overall and core limits itself.
 - **Tier**: full.
 - **Gate Proof**: delete the assertions of a core unit test.
 
@@ -101,13 +102,13 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 ## Avoided terms
 
 - **Intent**: keep the code speaking the glossary's language.
-- **Passes when**: no identifier in source code contains a term listed under `_Avoid_` in `GLOSSARY.md`. Matching is case-insensitive on whole words, after splitting identifiers on camelCase, snake_case, and kebab-case boundaries. The Gate reads `GLOSSARY.md` directly, so the list exists in one place.
+- **Passes when**: no identifier in source code contains a term listed under `_Avoid_` in `GLOSSARY.md`. Matching is case-insensitive on whole words, after splitting identifiers on camelCase, snake_case, and kebab-case boundaries. The Gate reads `GLOSSARY.md` directly, so the list exists in one place. A term that the ecosystem also uses as an identifier, such as `Instance` in `toBeInstanceOf`, cannot be enforced this way; prefer terms the stack does not already speak.
 - **Tier**: fast.
 - **Gate Proof**: rename a domain identifier to an avoided synonym.
 
 ## Guide pointers
 
 - **Intent**: keep every Guide pointing at code that exists.
-- **Passes when**: every relative link and file path in `AGENTS.md`, `GLOSSARY.md`, `docs/guides/`, and `docs/adr/` resolves, and every command a Guide names is one of the two Entry Points.
+- **Passes when**: every relative link and file path in `AGENTS.md`, `GLOSSARY.md`, `docs/guides/`, and `docs/adr/` resolves, and every command a Guide names is one of the two Entry Points. A command is a tool name followed by an argument; a bare file path that starts with a tool name is not a command.
 - **Tier**: fast.
 - **Gate Proof**: point a Guide link at a file that does not exist.

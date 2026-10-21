@@ -1,0 +1,23 @@
+# What the run exposed in the skill
+
+Generating this example from `bootstrap-harness` exposed the gaps below. Each one was fed back into the skill files in the same change.
+
+## Gaps and fixes
+
+1. **Gate Proofs had no durable home.** The skill says to run them, but the inventory has no file that records the result, so the evidence disappears with the conversation. Fixed: [SKILL.md](../../skills/bootstrap-harness/SKILL.md) phase 7 now writes `GATE-PROOFS.md` next to the project, and this example does.
+2. **The interview had no durable home either.** Phase 2 writes `GLOSSARY.md`, but the answers that shaped everything else (stack, edge, tools, defaults) only lived in the session. Fixed: [INTERVIEW.md](../../skills/bootstrap-harness/INTERVIEW.md) now asks for a recorded `INTERVIEW-ANSWERS.md` next to the project; this example links it from `README.md`.
+3. **Per-context mutation thresholds need a wrapper.** GATE-CONTRACTS.md says 80% overall and 90% in core, but Stryker's `thresholds.break` is global. The example reads Stryker's JSON report in `scripts/check-mutation.mjs` and applies both limits. Fixed: [GATE-CONTRACTS.md](../../skills/bootstrap-harness/GATE-CONTRACTS.md) states that a tool without per-context thresholds needs a wrapper over its machine-readable report.
+4. **"Changed relative to the base branch" hid uncommitted work.** A plain `git diff base...HEAD` excludes untracked files, so on day zero the Mutation Gate mutates nothing and passes. Fixed: the same contract now says the changed set includes the working tree and untracked files; the example's wrapper unions `git diff` and `git ls-files --others`.
+5. **E2E needs a build and a readiness signal.** The contract says "built as it ships" but says nothing about the Entry Point building first or how a test knows the service is up. Fixed: the E2E contract now requires the Entry Point to build before the test level runs and the deliverable to expose a readiness signal; the example's `make e2e` builds and `src/main.ts` prints its port.
+6. **Gate Proofs must be runnable again.** Repeating every proof by hand invites drift. This example keeps them in `scripts/gate-proofs.mjs`, each violation applied and reverted in one command. Fixed: phase 7 recommends an executable proof per Gate, while keeping the proof itself out of both Entry Points.
+7. **A bare filename looked like a command.** "Every command a Guide names is one of the two Entry Points" is ambiguous: a backticked `eslint.config.mjs` starts with a tool name. Fixed: the Guide pointers contract defines a command as a tool name followed by an argument, and the example's Gate implements that.
+8. **Avoided terms collided with API vocabulary.** `Instance` failed on `toBeInstanceOf`, forcing the glossary to drop a reasonable domain synonym. Fixed: the Avoided terms contract now warns that a term must be distinguishable from common API vocabulary, and the domain interview recommends choosing terms the ecosystem does not already use as identifiers.
+9. **`exclude` silently disabled `pathNot` rules.** dependency-cruiser's `exclude` dropped `node_modules` targets, so the Dependency rule Gate passed while a domain imported `pg`. Fixed: the Context boundaries and Dependency rule contracts now say to use `doNotFollow` for third-party code, not `exclude`, when a rule relies on `pathNot`.
+10. **Host binaries were missing from the blocker list.** Stryker's process cleanup shells out to `ps`; this container had no `procps`, so the Gate failed until a minimal `ps` shim was placed on `PATH` for the local run (CI's ubuntu runner has it). Fixed: the Blocked Gates section now asks for the host binaries a Gate needs, not only a container runtime and network.
+11. **Test runner and mutation runner can drift.** The Dependency vulnerabilities Gate forced Vitest from 3.2.7 to 4.1.12 (a critical `tinypool` advisory), and the mutation runner had to keep working with it. Fixed: the stack interview now asks to verify the mutation tool supports the pinned test runner before locking versions.
+12. **The lockfile must match the CI npm.** npm 10.9.8 crashed resolving Vitest's optional peers; the lock was generated with npm 11 and `npm ci` with npm 10 consumed it. Fixed: the version-pinning interview step notes that the lockfile should be produced by the npm version CI will use, or verified with it.
+
+## Environment notes (not skill defects)
+
+- The container had no `ps`; a minimal shim was used only to run Stryker locally. CI installs `procps` by default.
+- Docker is available through the host socket; Testcontainers started pinned `postgres:17.2-alpine` containers without configuration.

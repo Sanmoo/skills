@@ -12,6 +12,8 @@ Recommended: <answer and the reason for it>
 
 Decisions belong to the user. Facts belong to you: look up anything the environment or current documentation can answer instead of asking. When the user supplies a briefing or product document, use it to sharpen your recommendations; the user still confirms every decision.
 
+Record every confirmed answer in `INTERVIEW-ANSWERS.md` beside `GLOSSARY.md`, numbered as the questions below are. The answer file is what makes the run repeatable, and it is where the reason for a surprising choice stays readable after the conversation is gone.
+
 An interview ends when its frontier is empty and the user confirms the summary you present.
 
 ## Domain
@@ -70,8 +72,8 @@ Settle these decisions:
    | Worker | messages on the real broker, outcomes observed on its outputs |
 
 3. **Infrastructure per context** (database, broker, cache). Integration tests run each one for real, typically in an ephemeral container.
-4. **One tool per Gate Contract.** Research the currently maintained tools for the stack and recommend one per Gate, with its exact version. Verify that each tool can enforce the contract's criteria as stated, including the per-context thresholds for core contexts.
-5. **Version pinning.** Language dependencies pinned by the ecosystem's lockfile. Standalone binaries (secret scanners, vulnerability scanners) pinned by a declarative version manager such as mise or asdf.
+4. **One tool per Gate Contract.** Research the currently maintained tools for the stack and recommend one per Gate, with its exact version. Verify that each tool can enforce the contract's criteria as stated, including the per-context thresholds for core contexts. Check that the version you pick for the mutation tool supports the pinned test runner; a vulnerability fix to the test runner can otherwise strand the Gate.
+5. **Version pinning.** Language dependencies pinned by the ecosystem's lockfile. Standalone binaries (secret scanners, vulnerability scanners) pinned by a declarative version manager such as mise or asdf. Generate or verify the lockfile with the package manager version CI will use; a lockfile resolver can fail on peer dependencies that the installed package manager handles.
 6. **Entry Point mechanism.** The task runner native to the ecosystem, or `make` when there is none. The full and fast Entry Points are two named commands of that mechanism.
 7. **CI provider.** Any provider works, since its only job is to call the full Entry Point (plus the periodic full mutation run).
 8. **Threshold departures.** Present the defaults from GATE-CONTRACTS.md. When the user changes one, record why in an ADR only if the change is surprising and hard to reverse; otherwise the config value alone suffices.

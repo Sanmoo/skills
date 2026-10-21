@@ -1,0 +1,48 @@
+{
+  "name": "skills-example-typescript",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Library lending HTTP service on Postgres: the Stack Example for bootstrap-harness.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.23.2"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "format": "node scripts/run-gate.mjs Format -- prettier --check .",
+    "lint": "node scripts/run-gate.mjs Lint -- eslint .",
+    "types": "node scripts/run-gate.mjs Types -- tsc --noEmit",
+    "unit": "node scripts/run-gate.mjs \"Unit tests\" -- vitest run --project unit",
+    "integration": "node scripts/run-gate.mjs \"Integration tests\" -- vitest run --project integration",
+    "e2e": "node scripts/run-gate.mjs \"E2E tests\" -- vitest run --project e2e",
+    "mutation": "node scripts/check-mutation.mjs",
+    "mutation-full": "node scripts/check-mutation.mjs --full",
+    "boundaries": "node scripts/check-boundaries.mjs",
+    "dependency-rule": "node scripts/check-dependency-rule.mjs",
+    "metrics": "node scripts/check-metrics.mjs",
+    "secrets": "node scripts/check-secrets.mjs",
+    "avoided-terms": "node scripts/check-avoided-terms.mjs",
+    "guide-pointers": "node scripts/check-guide-pointers.mjs",
+    "vulnerabilities": "node scripts/run-gate.mjs \"Dependency vulnerabilities\" -- npm audit --audit-level=high",
+    "gate-proofs": "node scripts/gate-proofs.mjs"
+  },
+  "dependencies": {
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@stryker-mutator/core": "10.0.0",
+    "@stryker-mutator/vitest-runner": "10.0.0",
+    "@testcontainers/postgresql": "12.2.1",
+    "@types/node": "22.20.5",
+    "@types/pg": "8.23.1",
+    "dependency-cruiser": "18.7.0",
+    "eslint": "10.13.0",
+    "jscpd": "5.4.2",
+    "prettier": "3.9.10",
+    "testcontainers": "12.2.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.0",
+    "vitest": "4.1.12"
+  }
+}
