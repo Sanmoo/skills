@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Nothing here pushes; do not leave the token in .git/config.
+          persist-credentials: false
       - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2
       - run: make check
 
@@ -23,6 +26,11 @@ jobs:
         working-directory: examples/typescript
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # The Secrets Gate scans history and the Mutation Gate diffs against
+          # the base branch; a shallow checkout makes both silently smaller.
+          fetch-depth: 0
+          persist-credentials: false
       - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2
         with:
           working_directory: examples/typescript
