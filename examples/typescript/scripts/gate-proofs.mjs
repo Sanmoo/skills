@@ -34,14 +34,6 @@ function patch(path, transform) {
   return () => writeFileSync(path, original);
 }
 
-function patchPair(entries) {
-  const originals = entries.map(([path]) => [path, readFileSync(path, "utf8")]);
-  for (const [path, content] of entries) writeFileSync(path, content);
-  return () => {
-    for (const [path, content] of originals) writeFileSync(path, content);
-  };
-}
-
 const proofs = [
   {
     gate: "Format",
@@ -158,16 +150,19 @@ const proofs = [
         throw new Error("package.json is not valid JSON");
       }
       packageJson.dependencies.lodash = "4.17.20";
+      const originalPackage = readFileSync("package.json", "utf8");
       const originalLock = readFileSync("package-lock.json", "utf8");
-      const cleanupPackage = patchPair([
-        ["package.json", `${JSON.stringify(packageJson, null, 2)}\n`],
-        ["package-lock.json", originalLock],
-      ]);
+      // The vulnerable version must be on disk while the Entry Point runs; the
+      // cleanup at the end of the proof restores both files.
+      writeFileSync("package.json", `${JSON.stringify(packageJson, null, 2)}\n`);
       const install = run(NPM, ["install", "--package-lock-only", "--no-audit", "--no-fund"]);
       if (install.status !== 0) {
         console.error(outputOf(install));
       }
-      return cleanupPackage;
+      return () => {
+        writeFileSync("package.json", originalPackage);
+        writeFileSync("package-lock.json", originalLock);
+      };
     },
   },
   {
@@ -214,12 +209,14 @@ for (const proof of selected) {
     cleanup();
   }
   const output = outputOf(result);
-  const wentRed = result.status !== 0 && output.includes(`✘ ${proof.gate}`);
+  const redGates = [...output.matchAll(/^✘ (.+)$/gm)].map((match) => match[1].trim());
+  const wentRed = result.status !== 0 && redGates.length === 1 && redGates[0] === proof.gate;
   results.push({
     gate: proof.gate,
     description: proof.description,
     command: [proof.command[0], ...proof.command[1]].join(" "),
     wentRed,
+    redGates,
     exitCode: result.status,
     output,
   });
