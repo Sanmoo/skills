@@ -14,7 +14,7 @@ Every Gate was proven on 2026-10-21 by introducing the violation named in its Ga
 | Context boundaries         | fast | dependency-cruiser 18.7.0                            | imported a Catalog domain module from Lending     | red    |
 | Dependency rule            | fast | dependency-cruiser 18.7.0                            | imported `pg` in the Catalog domain               | red    |
 | Static metrics             | fast | ESLint `complexity`, dependency-cruiser, jscpd 5.4.2 | wrote a function with eleven branches             | red    |
-| Dependency vulnerabilities | full | npm audit 10.9.8                                     | locked `lodash@4.17.20` (high advisory)           | red    |
+| Dependency vulnerabilities | full | npm audit 10.9.8                                     | locked `tinypool@2.1.1` (critical advisory)       | red    |
 | Secrets                    | fast | gitleaks 8.30.1                                      | added a well-formed fake cloud access key         | red    |
 | Avoided terms              | fast | the repository's script                              | named an identifier `inventory`                   | red    |
 | Guide pointers             | fast | the repository's script                              | linked a Guide to a missing file                  | red    |

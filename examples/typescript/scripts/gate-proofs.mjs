@@ -140,7 +140,7 @@ const proofs = [
   },
   {
     gate: "Dependency vulnerabilities",
-    description: "locked lodash@4.17.20 (high advisory)",
+    description: "locked tinypool@2.1.1 (critical advisory)",
     command: [MAKE, ["check"]],
     violation: () => {
       let packageJson;
@@ -149,7 +149,7 @@ const proofs = [
       } catch {
         throw new Error("package.json is not valid JSON");
       }
-      packageJson.dependencies.lodash = "4.17.20";
+      packageJson.dependencies.tinypool = "2.1.1";
       const originalPackage = readFileSync("package.json", "utf8");
       const originalLock = readFileSync("package-lock.json", "utf8");
       // The vulnerable version must be on disk while the Entry Point runs; the
@@ -202,11 +202,32 @@ const results = [];
 for (const proof of selected) {
   let cleanup = () => {};
   let result;
+  let setupError;
   try {
     cleanup = proof.violation() ?? (() => {});
     result = run(...proof.command);
+  } catch (error) {
+    setupError = error;
   } finally {
-    cleanup();
+    try {
+      cleanup();
+    } catch (error) {
+      setupError ??= error;
+    }
+  }
+  if (setupError !== undefined || result === undefined) {
+    const message = setupError instanceof Error ? setupError.message : String(setupError);
+    results.push({
+      gate: proof.gate,
+      description: proof.description,
+      command: [proof.command[0], ...proof.command[1]].join(" "),
+      wentRed: false,
+      redGates: [],
+      exitCode: null,
+      output: message,
+    });
+    console.log(`✘ Gate Proof: ${proof.gate}\n${message}`);
+    continue;
   }
   const output = outputOf(result);
   const redGates = [...output.matchAll(/^✘ (.+)$/gm)].map((match) => match[1].trim());
