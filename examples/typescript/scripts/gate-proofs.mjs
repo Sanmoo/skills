@@ -46,25 +46,25 @@ const proofs = [
   {
     gate: "Format",
     description: "misindented a source file",
-    command: [NPM, ["run", "format"]],
+    command: [MAKE, ["check-fast"]],
     violation: () => tempFile("src/format-proof.ts", "export const formatProof = { a:1 };\n"),
   },
   {
     gate: "Lint",
     description: "added an unused variable",
-    command: [NPM, ["run", "lint"]],
+    command: [MAKE, ["check-fast"]],
     violation: () => tempFile("src/lint-proof.ts", "const unusedProof = 1;\n"),
   },
   {
     gate: "Types",
     description: "assigned a string to a number",
-    command: [NPM, ["run", "types"]],
+    command: [MAKE, ["check-fast"]],
     violation: () => tempFile("src/types-proof.ts", 'export const wrongType: number = "text";\n'),
   },
   {
     gate: "Unit tests",
     description: "inverted the already-returned condition",
-    command: [NPM, ["run", "unit"]],
+    command: [MAKE, ["check-fast"]],
     violation: () =>
       patch("src/lending/domain/loan.ts", (source) =>
         source.replace("if (loan.returnedAt !== null) {", "if (loan.returnedAt === null) {"),
@@ -73,7 +73,7 @@ const proofs = [
   {
     gate: "Integration tests",
     description: "mapped borrowed_at from the wrong column",
-    command: [NPM, ["run", "integration"]],
+    command: [MAKE, ["check"]],
     violation: () =>
       patch("src/lending/adapters/postgres-loan-repository.ts", (source) =>
         source.replace("borrowedAt: row.borrowed_at,", "borrowedAt: row.due_at,"),
@@ -82,7 +82,7 @@ const proofs = [
   {
     gate: "E2E tests",
     description: "renamed the route that creates a book",
-    command: [MAKE, ["e2e"]],
+    command: [MAKE, ["check"]],
     violation: () => {
       const restore = patch("src/http/server.ts", (source) =>
         source.replace("pattern: /^\\/books$/,", "pattern: /^\\/catalogue$/,"),
@@ -99,7 +99,7 @@ const proofs = [
   {
     gate: "Mutation",
     description: "deleted the assertions of the core loan unit test",
-    command: [NPM, ["run", "mutation"]],
+    command: [MAKE, ["check"]],
     violation: () =>
       patch(
         "src/lending/domain/loan.test.ts",
@@ -115,7 +115,7 @@ const proofs = [
   {
     gate: "Context boundaries",
     description: "imported a Catalog domain module from Lending",
-    command: [NPM, ["run", "boundaries"]],
+    command: [MAKE, ["check-fast"]],
     violation: () =>
       tempFile(
         "src/lending/domain/boundary-proof.ts",
@@ -126,7 +126,7 @@ const proofs = [
   {
     gate: "Dependency rule",
     description: "imported pg in the Catalog domain",
-    command: [NPM, ["run", "dependency-rule"]],
+    command: [MAKE, ["check-fast"]],
     violation: () =>
       tempFile(
         "src/catalog/domain/dependency-proof.ts",
@@ -136,7 +136,7 @@ const proofs = [
   {
     gate: "Static metrics",
     description: "wrote a function with eleven branches",
-    command: [NPM, ["run", "metrics"]],
+    command: [MAKE, ["check-fast"]],
     violation: () =>
       tempFile(
         "src/metrics-proof.ts",
@@ -149,7 +149,7 @@ const proofs = [
   {
     gate: "Dependency vulnerabilities",
     description: "locked lodash@4.17.20 (high advisory)",
-    command: [NPM, ["run", "vulnerabilities"]],
+    command: [MAKE, ["check"]],
     violation: () => {
       let packageJson;
       try {
@@ -173,7 +173,7 @@ const proofs = [
   {
     gate: "Secrets",
     description: "added a well-formed fake cloud access key",
-    command: [NPM, ["run", "secrets"]],
+    command: [MAKE, ["check-fast"]],
     violation: () => {
       // Assembled at runtime so this proof file contains no key-shaped text.
       const fakeCloudKey = ["AKIA", "3Q7Z2XK9WQ4MLP7V"].join("");
@@ -183,13 +183,13 @@ const proofs = [
   {
     gate: "Avoided terms",
     description: "named an identifier inventory",
-    command: [NPM, ["run", "avoided-terms"]],
+    command: [MAKE, ["check-fast"]],
     violation: () => tempFile("src/avoided-proof.ts", "export const inventory = 1;\n"),
   },
   {
     gate: "Guide pointers",
     description: "linked a Guide to a missing file",
-    command: [NPM, ["run", "guide-pointers"]],
+    command: [MAKE, ["check-fast"]],
     violation: () =>
       patch("docs/guides/architecture.md", (source) => `${source}\n[broken](missing-file.md)\n`),
   },
