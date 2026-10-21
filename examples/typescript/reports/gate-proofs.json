@@ -1,0 +1,156 @@
+[
+  {
+    "gate": "Format",
+    "description": "misindented a source file",
+    "command": "make check-fast",
+    "wentRed": true,
+    "redGates": [
+      "Format"
+    ],
+    "exitCode": 2,
+    "output": "npm run format\n\n> skills-example-typescript@0.0.0 format\n> node scripts/run-gate.mjs Format -- prettier --check .\n\nChecking formatting...\n[warn] src/format-proof.ts\n[warn] Code style issues found in the above file. Run Prettier with --write to fix.\n✘ Format\nmake: *** [Makefile:25: format] Error 1"
+  },
+  {
+    "gate": "Lint",
+    "description": "added an unused variable",
+    "command": "make check-fast",
+    "wentRed": true,
+    "redGates": [
+      "Lint"
+    ],
+    "exitCode": 2,
+    "output": "\n> skills-example-typescript@0.0.0 format\n> node scripts/run-gate.mjs Format -- prettier --check .\n\nChecking formatting...\nAll matched files use Prettier code style!\n✔ Format\nnpm run lint\n\n> skills-example-typescript@0.0.0 lint\n> node scripts/run-gate.mjs Lint -- eslint .\n\n\n/home/agent/workspace/examples/typescript/src/lint-proof.ts\n  1:7  error  'unusedProof' is assigned a value but never used  @typescript-eslint/no-unused-vars\n\n✖ 1 problem (1 error, 0 warnings)\n\n✘ Lint\nmake: *** [Makefile:28: lint] Error 1"
+  },
+  {
+    "gate": "Types",
+    "description": "assigned a string to a number",
+    "command": "make check-fast",
+    "wentRed": true,
+    "redGates": [
+      "Types"
+    ],
+    "exitCode": 2,
+    "output": "> skills-example-typescript@0.0.0 format\n> node scripts/run-gate.mjs Format -- prettier --check .\n\nChecking formatting...\nAll matched files use Prettier code style!\n✔ Format\nnpm run lint\n\n> skills-example-typescript@0.0.0 lint\n> node scripts/run-gate.mjs Lint -- eslint .\n\n✔ Lint\nnpm run types\n\n> skills-example-typescript@0.0.0 types\n> node scripts/run-gate.mjs Types -- tsc --noEmit\n\nsrc/types-proof.ts(1,14): error TS2322: Type 'string' is not assignable to type 'number'.\n✘ Types\nmake: *** [Makefile:31: types] Error 2"
+  },
+  {
+    "gate": "Unit tests",
+    "description": "inverted the already-returned condition",
+    "command": "make check-fast",
+    "wentRed": true,
+    "redGates": [
+      "Unit tests"
+    ],
+    "exitCode": 2,
+    "output": "    124|       new InvalidLoanError(\"return moment must not precede the loan\"),\n    125|     );\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯\n\n FAIL  |unit| src/lending/domain/loan.test.ts > isOverdue > is false once the loan is returned, even after the due date\nLoanAlreadyReturnedError: loan loan-1 has already been returned\n ❯ returnLoan src/lending/domain/loan.ts:63:11\n     61| export function returnLoan(loan: Loan, now: Date): Loan {\n     62|   if (loan.returnedAt === null) {\n     63|     throw new LoanAlreadyReturnedError(loan.id);\n       |           ^\n     64|   }\n     65|   if (Number.isNaN(now.getTime())) {\n ❯ src/lending/domain/loan.test.ts:145:22\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯\n\n✘ Unit tests\nmake: *** [Makefile:34: unit] Error 1"
+  },
+  {
+    "gate": "Integration tests",
+    "description": "mapped borrowed_at from the wrong column",
+    "command": "make check",
+    "wentRed": true,
+    "redGates": [
+      "Integration tests"
+    ],
+    "exitCode": 2,
+    "output": "     45|\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯\n\n FAIL  |integration| src/lending/application/lending-service.integration.test.ts > Lending > records a return and refuses to return the same loan twice\nInvalidLoanError: return moment must not precede the loan\n ❯ returnLoan src/lending/domain/loan.ts:69:11\n     67|   }\n     68|   if (now.getTime() < loan.borrowedAt.getTime()) {\n     69|     throw new InvalidLoanError(\"return moment must not precede the loa…\n       |           ^\n     70|   }\n     71|   return Object.freeze({ ...loan, returnedAt: new Date(now.getTime()) …\n ❯ LendingService.returnLoan src/lending/application/lending-service.ts:55:22\n ❯ src/lending/application/lending-service.integration.test.ts:56:22\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯\n\n✘ Integration tests\nmake: *** [Makefile:37: integration] Error 1"
+  },
+  {
+    "gate": "E2E tests",
+    "description": "renamed the route that creates a book",
+    "command": "make check",
+    "wentRed": true,
+    "redGates": [
+      "E2E tests"
+    ],
+    "exitCode": 2,
+    "output": "AssertionError: expected 404 to be 405 // Object.is equality\n\n- Expected\n+ Received\n\n- 405\n+ 404\n\n ❯ src/http/server.e2e.test.ts:137:32\n    135|\n    136|     const wrongMethod = await fetch(`${baseUrl}/books`, { method: \"DEL…\n    137|     expect(wrongMethod.status).toBe(405);\n       |                                ^\n    138|   });\n    139| });\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯\n\n✘ E2E tests\nmake: *** [Makefile:40: e2e] Error 1"
+  },
+  {
+    "gate": "Mutation",
+    "description": "deleted the assertions of the core loan unit test",
+    "command": "make check",
+    "wentRed": true,
+    "redGates": [
+      "Mutation"
+    ],
+    "exitCode": 2,
+    "output": " Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  08:29:32\n   Duration  5.27s (transform 38ms, setup 0ms, import 399ms, tests 4.72s, environment 0ms)\n\n✔ E2E tests\nnpm run mutation\n\n> skills-example-typescript@0.0.0 mutation\n> node scripts/check-mutation.mjs\n\nMutation scope: 2 changed file(s)\n  src/lending/domain/loan.ts (core): 0/79 = 0.0%\n  src/catalog/domain/book.ts (supporting): 48/51 = 94.1%\n  overall: 48/130 = 36.9% (minimum 80%)\n  core (src/lending/): 0/79 = 0.0% (minimum 90%)\n✘ Mutation\n  overall mutation score 36.9% is below 80%\n  core mutation score 0.0% is below 90%\nmake: *** [Makefile:43: mutation] Error 1"
+  },
+  {
+    "gate": "Context boundaries",
+    "description": "imported a Catalog domain module from Lending",
+    "command": "make check-fast",
+    "wentRed": true,
+    "redGates": [
+      "Context boundaries"
+    ],
+    "exitCode": 2,
+    "output": "\n RUN  v4.1.12 /home/agent/workspace/examples/typescript\n\n\n Test Files  2 passed (2)\n      Tests  33 passed (33)\n   Start at  08:29:55\n   Duration  220ms (transform 76ms, setup 0ms, import 117ms, tests 19ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✘ Context boundaries\n  error lending-uses-catalog-public-interface: src/lending/domain/boundary-proof.ts → src/catalog/domain/book.ts\n\nx 1 dependency violations (1 errors, 0 warnings). 26 modules, 62 dependencies cruised.\nmake: *** [Makefile:49: boundaries] Error 1"
+  },
+  {
+    "gate": "Dependency rule",
+    "description": "imported pg in the Catalog domain",
+    "command": "make check-fast",
+    "wentRed": true,
+    "redGates": [
+      "Dependency rule"
+    ],
+    "exitCode": 2,
+    "output": "   Start at  08:30:05\n   Duration  272ms (transform 96ms, setup 0ms, import 146ms, tests 33ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✔ Context boundaries\nnpm run dependency-rule\n\n> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✘ Dependency rule\n  error catalog-domain-is-independent: src/catalog/domain/dependency-proof.ts → node_modules/pg/lib/index.js\n\nx 1 dependency violations (1 errors, 0 warnings). 26 modules, 62 dependencies cruised.\nmake: *** [Makefile:52: dependency-rule] Error 1"
+  },
+  {
+    "gate": "Static metrics",
+    "description": "wrote a function with eleven branches",
+    "command": "make check-fast",
+    "wentRed": true,
+    "redGates": [
+      "Static metrics"
+    ],
+    "exitCode": 2,
+    "output": "\n✔ Context boundaries\nnpm run dependency-rule\n\n> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✔ Dependency rule\nnpm run metrics\n\n> skills-example-typescript@0.0.0 metrics\n> node scripts/check-metrics.mjs\n\n✘ Static metrics\n  complexity above 10:\n/home/agent/workspace/examples/typescript/src/metrics-proof.ts\n  1:8  error  Function 'metricsProof' has a complexity of 12. Maximum allowed is 10  complexity\n\n✖ 1 problem (1 error, 0 warnings)\nmake: *** [Makefile:55: metrics] Error 1"
+  },
+  {
+    "gate": "Dependency vulnerabilities",
+    "description": "locked tinypool@2.1.1 (critical advisory)",
+    "command": "make check",
+    "wentRed": true,
+    "redGates": [
+      "Dependency vulnerabilities"
+    ],
+    "exitCode": 2,
+    "output": "  typed-rest-client  2.3.1 - 3.1.0\n  Depends on vulnerable versions of qs\n  node_modules/typed-rest-client\n\ntinypool  <2.1.2\nSeverity: critical\nTinypool: Prototype Pollution Gadget to RCE in run() options - https://github.com/advisories/GHSA-85c8-ppgw-ccpr\nfix available via `npm audit fix --force`\nWill install tinypool@2.2.0, which is outside the stated dependency range\nnode_modules/tinypool\n\n3 vulnerabilities (2 moderate, 1 critical)\n\nTo address issues that do not require attention, run:\n  npm audit fix\n\nTo address all issues, run:\n  npm audit fix --force\n✘ Dependency vulnerabilities\nmake: *** [Makefile:67: vulnerabilities] Error 1"
+  },
+  {
+    "gate": "Secrets",
+    "description": "added a well-formed fake cloud access key",
+    "command": "make check-fast",
+    "wentRed": true,
+    "redGates": [
+      "Secrets"
+    ],
+    "exitCode": 2,
+    "output": "> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✔ Dependency rule\nnpm run metrics\n\n> skills-example-typescript@0.0.0 metrics\n> node scripts/check-metrics.mjs\n\n✔ Static metrics\nnpm run secrets\n\n> skills-example-typescript@0.0.0 secrets\n> node scripts/check-secrets.mjs\n\n✘ Secrets\n  secret found in the working tree:\n8:31AM INF scanned ~95838 bytes (95.84 KB) in 50.3ms\n8:31AM WRN leaks found: 1\nmake: *** [Makefile:58: secrets] Error 1"
+  },
+  {
+    "gate": "Avoided terms",
+    "description": "named an identifier inventory",
+    "command": "make check-fast",
+    "wentRed": true,
+    "redGates": [
+      "Avoided terms"
+    ],
+    "exitCode": 2,
+    "output": "npm run metrics\n\n> skills-example-typescript@0.0.0 metrics\n> node scripts/check-metrics.mjs\n\n✔ Static metrics\nnpm run secrets\n\n> skills-example-typescript@0.0.0 secrets\n> node scripts/check-secrets.mjs\n\n✔ Secrets\nnpm run avoided-terms\n\n> skills-example-typescript@0.0.0 avoided-terms\n> node scripts/check-avoided-terms.mjs\n\n✘ Avoided terms\n  src/avoided-proof.ts:1 uses avoided term \"inventory\"\nmake: *** [Makefile:61: avoided-terms] Error 1"
+  },
+  {
+    "gate": "Guide pointers",
+    "description": "linked a Guide to a missing file",
+    "command": "make check-fast",
+    "wentRed": true,
+    "redGates": [
+      "Guide pointers"
+    ],
+    "exitCode": 2,
+    "output": "npm run secrets\n\n> skills-example-typescript@0.0.0 secrets\n> node scripts/check-secrets.mjs\n\n✔ Secrets\nnpm run avoided-terms\n\n> skills-example-typescript@0.0.0 avoided-terms\n> node scripts/check-avoided-terms.mjs\n\n✔ Avoided terms\nnpm run guide-pointers\n\n> skills-example-typescript@0.0.0 guide-pointers\n> node scripts/check-guide-pointers.mjs\n\n✘ Guide pointers\n  docs/guides/architecture.md:21 link does not resolve: missing-file.md\nmake: *** [Makefile:64: guide-pointers] Error 1"
+  }
+]
