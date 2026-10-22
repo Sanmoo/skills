@@ -41,12 +41,13 @@ function gitLines(args) {
 function baseRefs(base) {
   // CI checks out a commit without a local branch, so the base usually exists
   // only as a remote-tracking ref. `origin` comes first and the other remotes
-  // follow in byte order, so a clone with extra remotes resolves the same base
-  // as CI. The bare branch name comes last, for a base that exists only locally.
+  // follow in sorted order, so a clone with extra remotes resolves the same
+  // base as CI. The bare branch name comes last, for a base that exists only
+  // locally.
   const remotes = gitLines(["remote"]);
   if (remotes === undefined) return undefined;
-  const others = remotes.filter((remote) => remote !== "origin").sort();
-  const ordered = remotes.includes("origin") ? ["origin", ...others] : others;
+  const rest = remotes.filter((remote) => remote !== "origin").sort();
+  const ordered = remotes.includes("origin") ? ["origin", ...rest] : rest;
   return [...new Set([...ordered.map((remote) => `${remote}/${base}`), base])];
 }
 
