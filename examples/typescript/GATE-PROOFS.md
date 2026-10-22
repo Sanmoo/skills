@@ -1,6 +1,6 @@
 # Gate Proofs
 
-Every Gate was proven on 2026-10-21 by introducing the violation named in its Gate Contract, running the Entry Point of its tier (`make check-fast` for fast Gates, `make check` for full Gates), confirming it exited non-zero and named the Gate, then restoring the tree. The machine-readable run is reproduced by the repository's Gate Proof script; this page records the result. The machine-readable results - each proof's command, exit code, red Gate names, and output excerpt - are committed at [reports/gate-proofs.json](reports/gate-proofs.json).
+Every Gate was proven by introducing the violation named in its Gate Contract, running the Entry Point of its tier (`make check-fast` for fast Gates, `make check` for full Gates), confirming it exited non-zero and named the Gate, then restoring the tree. The committed evidence was regenerated on 2026-10-22. The machine-readable run is reproduced by the repository's Gate Proof script; this page records the result. The machine-readable results - each proof's command, exit code, red Gate names, and output excerpt - are committed at [reports/gate-proofs.json](reports/gate-proofs.json).
 
 | Gate                       | Tier | Tool (version)                                       | Violation introduced                              | Result |
 | -------------------------- | ---- | ---------------------------------------------------- | ------------------------------------------------- | ------ |

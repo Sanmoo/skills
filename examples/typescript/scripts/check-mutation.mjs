@@ -20,51 +20,70 @@ const REPORT = "reports/mutation/mutation.json";
 const full = process.argv.includes("--full");
 const failures = [];
 
-// Returns the command's trimmed stdout, or null when the command failed. A
+// Notes are facts the Gate had to report, not findings; `report` prints them
+// before the verdict so they land in the Gate's recorded output.
+const notes = [];
+
+// Returns the command's trimmed stdout, or undefined when it failed. A
 // successful command that printed nothing yields the empty string.
 function git(args) {
   const result = run("git", args);
-  return result.status === 0 ? result.stdout.trim() : null;
+  return result.status === 0 ? result.stdout.trim() : undefined;
 }
 
 function baseRefs(base) {
   // CI checks out a commit without a local branch, so the base usually exists
-  // only as a remote-tracking ref. Try the name as given, then every remote.
-  const refs = [base];
-  for (const remote of (git(["remote"]) ?? "").split("\n").map((line) => line.trim())) {
-    if (remote !== "") refs.push(`${remote}/${base}`);
+  // only as a remote-tracking ref. Remote-tracking refs come first: a stale
+  // local branch must not narrow the changed set, and CI and a developer's
+  // clone must resolve the same base.
+  const refs = [];
+  for (const remote of (git(["remote"]) ?? "").split("\n")) {
+    const name = remote.trim();
+    if (name !== "") refs.push(`${name}/${base}`);
   }
+  refs.push(base);
   return [...new Set(refs)];
 }
 
-function mergeBaseWith(base) {
+function resolveBase(base) {
   for (const ref of baseRefs(base)) {
-    const mergeBase = git(["merge-base", ref, "HEAD"]);
-    if (mergeBase) return mergeBase;
+    const tip = git(["rev-parse", "--verify", "--quiet", `${ref}^{commit}`]);
+    if (tip) return { ref, tip };
   }
-  return null;
+  return undefined;
+}
+
+// Widening the scope cannot hide a worse mutation score, so it is reported and
+// the Gate continues rather than failing: a day-zero repository has no base
+// branch to resolve at all.
+function widenScope(reason) {
+  notes.push(reason);
+  return undefined;
 }
 
 function changedMutableFiles() {
   const base = process.env.MUTATION_BASE ?? "main";
-  let mergeBase = mergeBaseWith(base);
-  if (mergeBase === null) {
-    // No base branch to compare against (for example a shallow clone):
-    // mutating everything is the safe reading of "changed", but say so.
-    console.log(`  base "${base}" is not resolvable here; mutating the whole codebase`);
-    return null;
+  const resolved = resolveBase(base);
+  if (resolved === undefined) {
+    return widenScope(`base "${base}" is not resolvable here; mutating the whole codebase`);
   }
-  if (mergeBase === git(["rev-parse", "HEAD"])) {
-    // HEAD is the tip of the base branch, so the change to measure is the tip
-    // commit that landed. Without this the Gate mutates nothing.
-    const parent = git(["rev-parse", "HEAD^"]);
-    if (parent === null) {
-      console.log(`  ${base} has no earlier commit here; mutating the whole codebase`);
-      return null;
+  const head = git(["rev-parse", "HEAD"]);
+  const mergeBase = head === undefined ? undefined : git(["merge-base", resolved.tip, head]);
+  if (head === undefined || mergeBase === undefined) {
+    return widenScope(`"${resolved.ref}" and HEAD share no history; mutating the whole codebase`);
+  }
+  let from = mergeBase;
+  if (resolved.tip === head) {
+    // HEAD is the base branch's own tip, so the change to measure is what
+    // landed with it: the tip commit against its first parent. Without this
+    // the Gate mutates nothing on a push to the base branch.
+    const parent = git(["rev-parse", "--verify", "--quiet", `${resolved.tip}^`]);
+    if (parent === undefined) {
+      return widenScope(`${resolved.ref} has no earlier commit here; mutating the whole codebase`);
     }
-    mergeBase = parent;
+    from = parent;
   }
-  const changed = git(["diff", "--name-only", mergeBase, "--", "src"]) ?? "";
+  const changed = git(["diff", "--name-only", from, "--", "src"]) ?? "";
   const untracked = git(["ls-files", "--others", "--exclude-standard", "--", "src"]) ?? "";
   // git diff reports paths from the repository root while git ls-files reports
   // them from the current directory; normalise both to the current directory.
@@ -84,9 +103,9 @@ let args = ["run"];
 let scope = "the whole codebase";
 if (!full) {
   const changed = changedMutableFiles();
-  if (changed !== null) {
+  if (changed !== undefined) {
     if (changed.length === 0) {
-      report("Mutation", []);
+      report("Mutation", [], notes);
       console.log("  no mutable files changed relative to the base branch");
       process.exit(0);
     }
@@ -163,4 +182,4 @@ if (failures.length === 0) {
   }
 }
 
-report("Mutation", failures);
+report("Mutation", failures, notes);
