@@ -74,7 +74,7 @@
       "Mutation"
     ],
     "exitCode": 2,
-    "output": " Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  23:07:50\n   Duration  7.31s (transform 87ms, setup 0ms, import 822ms, tests 6.17s, environment 0ms)\n\n✔ E2E tests\nnpm run mutation\n\n> skills-example-typescript@0.0.0 mutation\n> node scripts/check-mutation.mjs\n\nMutation scope: 2 changed file(s) vs origin/main\n  src/lending/domain/loan.ts (core): 0/79 = 0.0%\n  src/catalog/domain/book.ts (supporting): 48/51 = 94.1%\n  overall: 48/130 = 36.9% (minimum 80%)\n  core (src/lending/): 0/79 = 0.0% (minimum 90%)\n✘ Mutation\n  overall mutation score 36.9% is below 80%\n  core mutation score 0.0% is below 90%\nmake: *** [Makefile:43: mutation] Error 1"
+    "output": " Test Files  1 passed (1)\n      Tests  7 passed (7)\n   Start at  23:17:47\n   Duration  6.09s (transform 46ms, setup 0ms, import 430ms, tests 5.50s, environment 0ms)\n\n✔ E2E tests\nnpm run mutation\n\n> skills-example-typescript@0.0.0 mutation\n> node scripts/check-mutation.mjs\n\nMutation scope: 2 changed file(s) vs origin/main\n  src/lending/domain/loan.ts (core): 0/79 = 0.0%\n  src/catalog/domain/book.ts (supporting): 48/51 = 94.1%\n  overall: 48/130 = 36.9% (minimum 80%)\n  core (src/lending/): 0/79 = 0.0% (minimum 90%)\n✘ Mutation\n  overall mutation score 36.9% is below 80%\n  core mutation score 0.0% is below 90%\nmake: *** [Makefile:43: mutation] Error 1"
   },
   {
     "gate": "Context boundaries",
@@ -85,7 +85,7 @@
       "Context boundaries"
     ],
     "exitCode": 2,
-    "output": "\n RUN  v4.1.12 /home/agent/workspace/examples/typescript\n\n\n Test Files  2 passed (2)\n      Tests  33 passed (33)\n   Start at  23:08:19\n   Duration  210ms (transform 77ms, setup 0ms, import 114ms, tests 23ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✘ Context boundaries\n  error lending-uses-catalog-public-interface: src/lending/domain/boundary-proof.ts → src/catalog/domain/book.ts\n\nx 1 dependency violations (1 errors, 0 warnings). 26 modules, 62 dependencies cruised.\nmake: *** [Makefile:49: boundaries] Error 1"
+    "output": "\n RUN  v4.1.12 /home/agent/workspace/examples/typescript\n\n\n Test Files  2 passed (2)\n      Tests  33 passed (33)\n   Start at  23:18:14\n   Duration  210ms (transform 56ms, setup 0ms, import 101ms, tests 20ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✘ Context boundaries\n  error lending-uses-catalog-public-interface: src/lending/domain/boundary-proof.ts → src/catalog/domain/book.ts\n\nx 1 dependency violations (1 errors, 0 warnings). 26 modules, 62 dependencies cruised.\nmake: *** [Makefile:49: boundaries] Error 1"
   },
   {
     "gate": "Dependency rule",
@@ -96,7 +96,7 @@
       "Dependency rule"
     ],
     "exitCode": 2,
-    "output": "   Start at  23:08:30\n   Duration  203ms (transform 74ms, setup 0ms, import 107ms, tests 19ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✔ Context boundaries\nnpm run dependency-rule\n\n> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✘ Dependency rule\n  error catalog-domain-is-independent: src/catalog/domain/dependency-proof.ts → node_modules/pg/lib/index.js\n\nx 1 dependency violations (1 errors, 0 warnings). 26 modules, 62 dependencies cruised.\nmake: *** [Makefile:52: dependency-rule] Error 1"
+    "output": "   Start at  23:18:28\n   Duration  390ms (transform 89ms, setup 0ms, import 182ms, tests 43ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✔ Context boundaries\nnpm run dependency-rule\n\n> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✘ Dependency rule\n  error catalog-domain-is-independent: src/catalog/domain/dependency-proof.ts → node_modules/pg/lib/index.js\n\nx 1 dependency violations (1 errors, 0 warnings). 26 modules, 62 dependencies cruised.\nmake: *** [Makefile:52: dependency-rule] Error 1"
   },
   {
     "gate": "Static metrics",
@@ -129,7 +129,7 @@
       "Secrets"
     ],
     "exitCode": 2,
-    "output": "> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✔ Dependency rule\nnpm run metrics\n\n> skills-example-typescript@0.0.0 metrics\n> node scripts/check-metrics.mjs\n\n✔ Static metrics\nnpm run secrets\n\n> skills-example-typescript@0.0.0 secrets\n> node scripts/check-secrets.mjs\n\n✘ Secrets\n  secret found in the working tree:\n11:09PM INF scanned ~100383 bytes (100.38 KB) in 20ms\n11:09PM WRN leaks found: 1\nmake: *** [Makefile:58: secrets] Error 1"
+    "output": "> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✔ Dependency rule\nnpm run metrics\n\n> skills-example-typescript@0.0.0 metrics\n> node scripts/check-metrics.mjs\n\n✔ Static metrics\nnpm run secrets\n\n> skills-example-typescript@0.0.0 secrets\n> node scripts/check-secrets.mjs\n\n✘ Secrets\n  secret found in the working tree:\n11:20PM INF scanned ~100187 bytes (100.19 KB) in 21ms\n11:20PM WRN leaks found: 1\nmake: *** [Makefile:58: secrets] Error 1"
   },
   {
     "gate": "Avoided terms",

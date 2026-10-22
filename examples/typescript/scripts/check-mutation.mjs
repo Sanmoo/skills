@@ -42,17 +42,13 @@ function baseRefs(base) {
   // CI checks out a commit without a local branch, so the base usually exists
   // only as a remote-tracking ref. `origin` comes first and the other remotes
   // follow in byte order, so a clone with extra remotes resolves the same base
-  // as CI; the bare branch name is the last resort for a repository with no
-  // remote at all.
+  // as CI. The bare branch name comes last, for a base that exists only locally.
   const remotes = gitLines(["remote"]);
   if (remotes === undefined) return undefined;
-  remotes.sort((a, b) => {
-    if (a === b) return 0;
-    if (a === "origin") return -1;
-    if (b === "origin") return 1;
-    return a < b ? -1 : 1;
-  });
-  return [...new Set([...remotes.map((remote) => `${remote}/${base}`), base])];
+  const ordered = remotes.includes("origin")
+    ? ["origin", ...remotes.filter((remote) => remote !== "origin").sort()]
+    : [...remotes].sort();
+  return [...new Set([...ordered.map((remote) => `${remote}/${base}`), base])];
 }
 
 function resolveBase(base) {
@@ -81,8 +77,7 @@ function normaliseToWorkingDirectory(paths) {
   );
 }
 
-// Returns the changed files, or why they cannot be read. A failed listing is a
-// reason to widen, never an empty changed set.
+// Returns the changed files, or why they cannot be read.
 function mutableFilesSince(from) {
   const changed = gitLines(["diff", "--name-only", from, "--", "src"]);
   const untracked = gitLines(["ls-files", "--others", "--exclude-standard", "--", "src"]);
@@ -99,8 +94,7 @@ function mutableFilesSince(from) {
 }
 
 // Returns the scope to mutate: the changed files, or why they cannot be
-// established. Neither outcome is a failure, because widening is a scope change
-// and a day-zero repository has no base branch to resolve at all.
+// established. Widening is a scope change, not a failure.
 function mutationScope() {
   const base = process.env.MUTATION_BASE ?? "main";
   const resolved = resolveBase(base);
