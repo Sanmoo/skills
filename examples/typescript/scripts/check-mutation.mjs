@@ -20,10 +20,6 @@ const REPORT = "reports/mutation/mutation.json";
 const full = process.argv.includes("--full");
 const failures = [];
 
-// Notes are facts the Gate had to report, not findings; `report` prints them
-// before the verdict so they land in the Gate's recorded output.
-const notes = [];
-
 // Returns the command's trimmed stdout, or undefined when it failed. A
 // successful command that printed nothing yields the empty string.
 function git(args) {
@@ -53,24 +49,41 @@ function resolveBase(base) {
   return undefined;
 }
 
-// Widening the scope cannot hide a worse mutation score, so it is reported and
-// the Gate continues rather than failing: a day-zero repository has no base
-// branch to resolve at all.
-function widenScope(reason) {
-  notes.push(reason);
-  return undefined;
+// git diff reports paths from the repository root while git ls-files reports
+// them from the current directory; normalise both to the current directory.
+function normaliseToProject(paths) {
+  const root = git(["rev-parse", "--show-toplevel"]);
+  if (root === undefined) return paths;
+  const prefix = relative(root, process.cwd()).split("\\").join("/");
+  if (prefix === "" || prefix === ".") return paths;
+  return paths.map((path) =>
+    path.startsWith(`${prefix}/`) ? path.slice(prefix.length + 1) : path,
+  );
 }
 
-function changedMutableFiles() {
+// `notes` collects facts the Gate has to state, not findings: `report` prints
+// them before the verdict, so they land in the Gate's recorded output. An
+// `undefined` result means the Gate mutates the whole codebase; that is not a
+// failure, because a day-zero repository has no base branch to resolve at all.
+function changedMutableFiles(notes) {
+  const wholeCodebase = (reason) => {
+    notes.push(reason);
+    return undefined;
+  };
   const base = process.env.MUTATION_BASE ?? "main";
   const resolved = resolveBase(base);
   if (resolved === undefined) {
-    return widenScope(`base "${base}" is not resolvable here; mutating the whole codebase`);
+    return wholeCodebase(`base "${base}" is not resolvable here; mutating the whole codebase`);
   }
   const head = git(["rev-parse", "HEAD"]);
-  const mergeBase = head === undefined ? undefined : git(["merge-base", resolved.tip, head]);
-  if (head === undefined || mergeBase === undefined) {
-    return widenScope(`"${resolved.ref}" and HEAD share no history; mutating the whole codebase`);
+  if (head === undefined) {
+    return wholeCodebase(`HEAD is not resolvable here; mutating the whole codebase`);
+  }
+  const mergeBase = git(["merge-base", resolved.tip, head]);
+  if (mergeBase === undefined) {
+    return wholeCodebase(
+      `"${resolved.ref}" has no common ancestor with HEAD; mutating the whole codebase`,
+    );
   }
   let from = mergeBase;
   if (resolved.tip === head) {
@@ -79,30 +92,29 @@ function changedMutableFiles() {
     // the Gate mutates nothing on a push to the base branch.
     const parent = git(["rev-parse", "--verify", "--quiet", `${resolved.tip}^`]);
     if (parent === undefined) {
-      return widenScope(`${resolved.ref} has no earlier commit here; mutating the whole codebase`);
+      return wholeCodebase(
+        `${resolved.ref} has no earlier commit here; mutating the whole codebase`,
+      );
     }
     from = parent;
   }
   const changed = git(["diff", "--name-only", from, "--", "src"]) ?? "";
   const untracked = git(["ls-files", "--others", "--exclude-standard", "--", "src"]) ?? "";
-  // git diff reports paths from the repository root while git ls-files reports
-  // them from the current directory; normalise both to the current directory.
-  const root = git(["rev-parse", "--show-toplevel"]);
-  const prefix = root === null ? "" : relative(root, process.cwd()).split("\\").join("/");
-  const normalise = (path) => {
-    if (prefix === "" || prefix === ".") return path;
-    return path.startsWith(`${prefix}/`) ? path.slice(prefix.length + 1) : path;
-  };
-  return `${changed}\n${untracked}`
-    .split("\n")
-    .map((line) => normalise(line.trim()))
-    .filter((path) => path !== "" && MUTABLE.test(path) && !path.endsWith(".test.ts"));
+  const paths = normaliseToProject(
+    `${changed}\n${untracked}`
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((path) => path !== ""),
+  );
+  return paths.filter((path) => MUTABLE.test(path) && !path.endsWith(".test.ts"));
 }
+
+const notes = [];
 
 let args = ["run"];
 let scope = "the whole codebase";
 if (!full) {
-  const changed = changedMutableFiles();
+  const changed = changedMutableFiles(notes);
   if (changed !== undefined) {
     if (changed.length === 0) {
       report("Mutation", [], notes);
