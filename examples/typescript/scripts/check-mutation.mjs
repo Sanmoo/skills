@@ -27,10 +27,12 @@ function git(args) {
   return result.status === 0 ? result.stdout.trim() : undefined;
 }
 
-// A command's non-empty output lines. A failed command contributes none: every
-// caller treats a missing path list as "nothing changed here".
+// A command's non-empty output lines, or undefined when the command failed;
+// callers must not read a failure as "nothing here".
 function gitLines(args) {
-  return (git(args) ?? "")
+  const output = git(args);
+  if (output === undefined) return undefined;
+  return output
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line !== "");
@@ -42,7 +44,7 @@ function baseRefs(base) {
   // follow in byte order, so a clone with extra remotes resolves the same base
   // as CI; the bare branch name is the last resort for a repository with no
   // remote at all.
-  const remotes = gitLines(["remote"]).sort((a, b) => {
+  const remotes = (gitLines(["remote"]) ?? []).sort((a, b) => {
     if (a === b) return 0;
     if (a === "origin") return -1;
     if (b === "origin") return 1;
@@ -73,13 +75,21 @@ function normaliseToProject(paths) {
   );
 }
 
+// Returns the changed files, or why they cannot be read. A failed listing is a
+// reason to widen, never an empty changed set.
 function mutableFilesSince(from) {
-  const paths = normaliseToProject([
-    ...gitLines(["diff", "--name-only", from, "--", "src"]),
-    ...gitLines(["ls-files", "--others", "--exclude-standard", "--", "src"]),
-  ]);
-  if (paths === undefined) return undefined;
-  return paths.filter((path) => MUTABLE.test(path) && !path.endsWith(".test.ts"));
+  const changed = gitLines(["diff", "--name-only", from, "--", "src"]);
+  const untracked = gitLines(["ls-files", "--others", "--exclude-standard", "--", "src"]);
+  if (changed === undefined || untracked === undefined) {
+    return { reason: "the changed files cannot be listed" };
+  }
+  const paths = normaliseToProject([...changed, ...untracked]);
+  if (paths === undefined) {
+    return { reason: "the project root is not resolvable here" };
+  }
+  return {
+    files: paths.filter((path) => MUTABLE.test(path) && !path.endsWith(".test.ts")),
+  };
 }
 
 // Returns the changed set to mutate, or why it cannot be established. Neither
@@ -100,7 +110,7 @@ function changedSet() {
     return { base: resolved.ref, reason: `"${resolved.ref}" has no common ancestor with HEAD` };
   }
   if (resolved.tip !== head) {
-    return fromFiles(resolved.ref, mutableFilesSince(mergeBase));
+    return { base: resolved.ref, ...mutableFilesSince(mergeBase) };
   }
   // HEAD is the base branch's own tip, so the change to measure is what landed
   // with it: the tip commit against its first parent. Without this the Gate
@@ -109,14 +119,7 @@ function changedSet() {
   if (parent === undefined) {
     return { base: resolved.ref, reason: `${resolved.ref} has no earlier commit here` };
   }
-  return fromFiles(resolved.ref, mutableFilesSince(parent));
-}
-
-function fromFiles(base, files) {
-  if (files === undefined) {
-    return { base, reason: "the project root is not resolvable here" };
-  }
-  return { base, files };
+  return { base: resolved.ref, ...mutableFilesSince(parent) };
 }
 
 let args = ["run"];
