@@ -27,38 +27,45 @@ function git(args) {
   return result.status === 0 ? result.stdout.trim() : undefined;
 }
 
+// A command's non-empty output lines. A failed command contributes none: every
+// caller treats a missing path list as "nothing changed here".
+function gitLines(args) {
+  return (git(args) ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
+}
+
 function baseRefs(base) {
   // CI checks out a commit without a local branch, so the base usually exists
   // only as a remote-tracking ref. `origin` comes first and the other remotes
-  // follow in name order, so a clone with extra remotes resolves the same base
+  // follow in byte order, so a clone with extra remotes resolves the same base
   // as CI; the bare branch name is the last resort for a repository with no
   // remote at all.
-  const remotes = (git(["remote"]) ?? "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((name) => name !== "")
-    .sort((a, b) => {
-      if (a === b) return 0;
-      if (a === "origin") return -1;
-      if (b === "origin") return 1;
-      return a.localeCompare(b);
-    });
+  const remotes = gitLines(["remote"]).sort((a, b) => {
+    if (a === b) return 0;
+    if (a === "origin") return -1;
+    if (b === "origin") return 1;
+    return a < b ? -1 : 1;
+  });
   return [...new Set([...remotes.map((remote) => `${remote}/${base}`), base])];
 }
 
 function resolveBase(base) {
   for (const ref of baseRefs(base)) {
     const tip = git(["rev-parse", "--verify", "--quiet", `${ref}^{commit}`]);
-    if (tip) return { ref, tip };
+    if (tip !== undefined) return { ref, tip };
   }
   return undefined;
 }
 
 // git diff reports paths from the repository root while git ls-files reports
 // them from the current directory; normalise both to the current directory.
+// Returns undefined when the root cannot be read, so the caller widens instead
+// of filtering un-normalised paths away.
 function normaliseToProject(paths) {
   const root = git(["rev-parse", "--show-toplevel"]);
-  if (root === undefined) return paths;
+  if (root === undefined) return undefined;
   const prefix = relative(root, process.cwd()).split("\\").join("/");
   if (prefix === "" || prefix === ".") return paths;
   return paths.map((path) =>
@@ -67,56 +74,60 @@ function normaliseToProject(paths) {
 }
 
 function mutableFilesSince(from) {
-  const changed = git(["diff", "--name-only", from, "--", "src"]) ?? "";
-  const untracked = git(["ls-files", "--others", "--exclude-standard", "--", "src"]) ?? "";
-  const paths = normaliseToProject(
-    `${changed}\n${untracked}`
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((path) => path !== ""),
-  );
+  const paths = normaliseToProject([
+    ...gitLines(["diff", "--name-only", from, "--", "src"]),
+    ...gitLines(["ls-files", "--others", "--exclude-standard", "--", "src"]),
+  ]);
+  if (paths === undefined) return undefined;
   return paths.filter((path) => MUTABLE.test(path) && !path.endsWith(".test.ts"));
 }
 
-// Returns the changed set to mutate, or the reason it cannot be established.
-// Neither outcome is a failure: widening is a scope change, and a day-zero
-// repository has no base branch to resolve at all.
+// Returns the changed set to mutate, or why it cannot be established. Neither
+// outcome is a failure: widening is a scope change, and a day-zero repository
+// has no base branch to resolve at all.
 function changedSet() {
   const base = process.env.MUTATION_BASE ?? "main";
   const resolved = resolveBase(base);
   if (resolved === undefined) {
-    return { base, widen: `base "${base}" is not resolvable here` };
+    return { base, reason: `base "${base}" is not resolvable here` };
   }
   const head = git(["rev-parse", "HEAD"]);
   if (head === undefined) {
-    return { base: resolved.ref, widen: "HEAD is not resolvable here" };
+    return { base: resolved.ref, reason: "HEAD is not resolvable here" };
   }
   const mergeBase = git(["merge-base", resolved.tip, head]);
   if (mergeBase === undefined) {
-    return { base: resolved.ref, widen: `"${resolved.ref}" has no common ancestor with HEAD` };
+    return { base: resolved.ref, reason: `"${resolved.ref}" has no common ancestor with HEAD` };
   }
   if (resolved.tip !== head) {
-    return { base: resolved.ref, files: mutableFilesSince(mergeBase) };
+    return fromFiles(resolved.ref, mutableFilesSince(mergeBase));
   }
   // HEAD is the base branch's own tip, so the change to measure is what landed
   // with it: the tip commit against its first parent. Without this the Gate
   // mutates nothing on a push to the base branch.
   const parent = git(["rev-parse", "--verify", "--quiet", `${resolved.tip}^`]);
   if (parent === undefined) {
-    return { base: resolved.ref, widen: `${resolved.ref} has no earlier commit here` };
+    return { base: resolved.ref, reason: `${resolved.ref} has no earlier commit here` };
   }
-  return { base: resolved.ref, files: mutableFilesSince(parent) };
+  return fromFiles(resolved.ref, mutableFilesSince(parent));
 }
 
-const notes = [];
+function fromFiles(base, files) {
+  if (files === undefined) {
+    return { base, reason: "the project root is not resolvable here" };
+  }
+  return { base, files };
+}
+
 let args = ["run"];
 let scope = "the whole codebase";
 if (!full) {
   const changed = changedSet();
   if (changed.files === undefined) {
-    notes.push(`${changed.widen}; mutating the whole codebase`);
+    // A note, not a finding: it never changes the exit code.
+    console.log(`  note: ${changed.reason}; mutating the whole codebase`);
   } else if (changed.files.length === 0) {
-    report("Mutation", [], notes);
+    report("Mutation", []);
     console.log(`  no mutable files changed relative to ${changed.base}`);
     process.exit(0);
   } else {
@@ -193,4 +204,4 @@ if (failures.length === 0) {
   }
 }
 
-report("Mutation", failures, notes);
+report("Mutation", failures);

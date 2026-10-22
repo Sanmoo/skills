@@ -21,4 +21,4 @@ The Mutation Gate treats the unit level as the proof that rules are pinned down,
 - E2E test: `src/http/server.e2e.test.ts`
 - Container harness: `test/support/postgres.ts`
 - Mutation scope and reporters: `stryker.config.mjs`
-- Mutation thresholds and changed-set base: `scripts/check-mutation.mjs` (`MUTATION_BASE` overrides the base branch)
+- Mutation thresholds and changed-set base: `scripts/check-mutation.mjs`
