@@ -45,9 +45,8 @@ function baseRefs(base) {
   // as CI. The bare branch name comes last, for a base that exists only locally.
   const remotes = gitLines(["remote"]);
   if (remotes === undefined) return undefined;
-  const ordered = remotes.includes("origin")
-    ? ["origin", ...remotes.filter((remote) => remote !== "origin").sort()]
-    : [...remotes].sort();
+  const others = remotes.filter((remote) => remote !== "origin").sort();
+  const ordered = remotes.includes("origin") ? ["origin", ...others] : others;
   return [...new Set([...ordered.map((remote) => `${remote}/${base}`), base])];
 }
 

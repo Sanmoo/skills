@@ -75,7 +75,7 @@ Written to [GLOSSARY.md](GLOSSARY.md) as they resolved. Sharpening applied durin
 
 **Q6 - Entry Point mechanism**: `make`, with `make check-fast` and `make check` as the two Entry Points. **Confirmed.**
 
-**Q7 - CI provider**: GitHub Actions. Its check workflow calls the full Entry Point for the repository and for this example; a scheduled workflow calls the full mutation run. **Confirmed.**
+**Q7 - CI provider**: GitHub Actions. Its check workflow calls the full Entry Point for the repository and for this example; a scheduled workflow calls the full mutation run. The checkout must give each Gate what it measures: the history the Secrets Gate scans, and a base branch the Mutation Gate's changed-set comparison can resolve, so the check job fetches full history. **Confirmed.**
 
 **Q8 - Threshold departures**: none. Mutation 80% overall and 90% in core, complexity 10, zero cycles, duplication 3%, vulnerabilities high and critical only - all at the defaults. **Confirmed.**
 
