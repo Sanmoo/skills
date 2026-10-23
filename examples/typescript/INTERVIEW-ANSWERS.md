@@ -81,7 +81,7 @@ Written to [GLOSSARY.md](GLOSSARY.md) as they resolved. Sharpening applied durin
 
 ## Deferred: the E2E level
 
-The e2e tests were removed and their level deferred to a Cucumber/Gherkin rewrite, tracked as [Sanmoo/skills#7](https://github.com/Sanmoo/skills/issues/7). [ADR 0003](docs/adr/0003-defer-the-e2e-level.md) records the decision, what it costs, and what the reanalysis must answer; this page records only what it changed in the answers above: the e2e level of Q2 is reopened rather than answered, and the E2E row of the Q4 table says so instead of naming a runner.
+The e2e level is deferred to a Cucumber/Gherkin rewrite, tracked as [Sanmoo/skills#7](https://github.com/Sanmoo/skills/issues/7); [ADR 0003](docs/adr/0003-defer-the-e2e-level.md) holds the decision, its cost and what the reanalysis must answer.
 
 ## Gate Proofs
 
