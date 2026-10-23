@@ -19,10 +19,10 @@
 // proof. That is why the script is in neither Entry Point, and why `--gate=`
 // exists to iterate on one proof without the rest.
 //
-// The preconditions attribution rests on are checked rather than assumed: the
-// proof list must give each Gate one label and the Entry Point of its tier, the
-// tree must be clean before the run, and each injection must have left a change
-// behind. Any of those failing is a setup error, not evidence.
+// The preconditions attribution rests on are checked rather than assumed: every
+// Gate an Entry Point runs must have exactly one proof with one label, the tree
+// must be clean before each proof and again after it, and each injection must
+// have left a change behind. Any of those failing is a setup error, not evidence.
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { report } from "./lib.mjs";
@@ -56,30 +56,26 @@ function patch(path, transform) {
 const proofs = [
   {
     gate: "Format",
+    target: "format",
     description: "misindented a source file",
-    tier: "fast",
-    command: [MAKE, ["check-fast"]],
     violation: () => tempFile("src/format-proof.ts", "export const formatProof = { a:1 };\n"),
   },
   {
     gate: "Lint",
+    target: "lint",
     description: "added an unused variable",
-    tier: "fast",
-    command: [MAKE, ["check-fast"]],
     violation: () => tempFile("src/lint-proof.ts", "const unusedProof = 1;\n"),
   },
   {
     gate: "Types",
+    target: "types",
     description: "assigned a string to a number",
-    tier: "fast",
-    command: [MAKE, ["check-fast"]],
     violation: () => tempFile("src/types-proof.ts", 'export const wrongType: number = "text";\n'),
   },
   {
     gate: "Unit tests",
+    target: "unit",
     description: "inverted the already-returned condition",
-    tier: "fast",
-    command: [MAKE, ["check-fast"]],
     violation: () =>
       patch("src/lending/domain/loan.ts", (source) =>
         source.replace("if (loan.returnedAt !== null) {", "if (loan.returnedAt === null) {"),
@@ -87,9 +83,8 @@ const proofs = [
   },
   {
     gate: "Integration tests",
+    target: "integration",
     description: "mapped borrowed_at from the wrong column",
-    tier: "full",
-    command: [MAKE, ["check"]],
     violation: () =>
       patch("src/lending/adapters/postgres-loan-repository.ts", (source) =>
         source.replace("borrowedAt: row.borrowed_at,", "borrowedAt: row.due_at,"),
@@ -97,9 +92,8 @@ const proofs = [
   },
   {
     gate: "Mutation",
+    target: "mutation",
     description: "deleted the assertions of the core loan unit test",
-    tier: "full",
-    command: [MAKE, ["check"]],
     violation: () =>
       patch(
         "src/lending/domain/loan.test.ts",
@@ -114,9 +108,8 @@ const proofs = [
   },
   {
     gate: "Context boundaries",
+    target: "boundaries",
     description: "imported a Catalog domain module from Lending",
-    tier: "fast",
-    command: [MAKE, ["check-fast"]],
     violation: () =>
       tempFile(
         "src/lending/domain/boundary-proof.ts",
@@ -126,9 +119,8 @@ const proofs = [
   },
   {
     gate: "Dependency rule",
+    target: "dependency-rule",
     description: "imported pg in the Catalog domain",
-    tier: "fast",
-    command: [MAKE, ["check-fast"]],
     violation: () =>
       tempFile(
         "src/catalog/domain/dependency-proof.ts",
@@ -137,9 +129,8 @@ const proofs = [
   },
   {
     gate: "Static metrics",
+    target: "metrics",
     description: "wrote a function with eleven branches",
-    tier: "fast",
-    command: [MAKE, ["check-fast"]],
     violation: () =>
       tempFile(
         "src/metrics-proof.ts",
@@ -151,9 +142,8 @@ const proofs = [
   },
   {
     gate: "Dependency vulnerabilities",
+    target: "vulnerabilities",
     description: "locked tinypool@2.1.1 (critical advisory)",
-    tier: "full",
-    command: [MAKE, ["check"]],
     violation: () => {
       let packageJson;
       try {
@@ -179,9 +169,8 @@ const proofs = [
   },
   {
     gate: "Secrets",
+    target: "secrets",
     description: "added a well-formed fake cloud access key",
-    tier: "fast",
-    command: [MAKE, ["check-fast"]],
     violation: () => {
       // Assembled at runtime so this proof file contains no key-shaped text.
       const fakeCloudKey = ["AKIA", "3Q7Z2XK9WQ4MLP7V"].join("");
@@ -190,30 +179,73 @@ const proofs = [
   },
   {
     gate: "Avoided terms",
+    target: "avoided-terms",
     description: "named an identifier inventory",
-    tier: "fast",
-    command: [MAKE, ["check-fast"]],
     violation: () => tempFile("src/avoided-proof.ts", "export const inventory = 1;\n"),
   },
   {
     gate: "Guide pointers",
+    target: "guide-pointers",
     description: "linked a Guide to a missing file",
-    tier: "fast",
-    command: [MAKE, ["check-fast"]],
     violation: () =>
       patch("docs/guides/architecture.md", (source) => `${source}\n[broken](missing-file.md)\n`),
   },
 ];
 
-const ENTRY_POINTS = { fast: "check-fast", full: "check" };
+// The Makefile is the authority on which Gates each Entry Point runs, so the
+// script reads it rather than keeping a copy that could drift from it. A Gate
+// added to an Entry Point and left unproven is then a setup error, and a proof
+// cannot claim a tier the Makefile does not give it.
+function entryPointTargets() {
+  const makefile = readFileSync("Makefile", "utf8");
+  function prerequisites(name) {
+    const match = new RegExp(`^${name}:([^\\n]*)`, "m").exec(makefile);
+    if (match === null) {
+      throw new Error(`the Makefile has no "${name}" Entry Point`);
+    }
+    return match[1].split(/\s+/).filter(Boolean);
+  }
+  const fast = prerequisites("check-fast");
+  const full = prerequisites("check").filter(
+    (target) => target !== "check-fast" && !fast.includes(target),
+  );
+  return { fast, full };
+}
+
+const ENTRY_POINTS = entryPointTargets();
+
+// The Entry Point whose prerequisites include this Gate target, or undefined
+// when neither Entry Point runs it.
+function entryPointOf(target) {
+  if (ENTRY_POINTS.fast.includes(target)) return "check-fast";
+  if (ENTRY_POINTS.full.includes(target)) return "check";
+  return undefined;
+}
+
+function tierOf(proof) {
+  return entryPointOf(proof.target) === "check" ? "full" : "fast";
+}
+
+// The fields every record shares; the caller adds what only a finished run can
+// know.
+function recordOf(proof, tree) {
+  return {
+    gate: proof.gate,
+    tier: tierOf(proof),
+    description: proof.description,
+    command: `${MAKE} ${entryPointOf(proof.target)}`,
+    treeChanges: tree,
+  };
+}
 
 // A proof that ran one Gate target would show the Gate works, not that the Entry
-// Point catches it, and that is the whole point. A proof whose command is not the
-// Entry Point of its own tier would not measure the tier it claims. A duplicated
-// label would make "this Gate went red" unattributable. Each is rejected up front.
+// Point catches it, and that is the whole point. A duplicated label would make
+// "this Gate went red" unattributable, and a Gate an Entry Point runs without a
+// proof would go unproven in silence. Each is rejected up front.
 function attributionProblems(proofList) {
   const problems = [];
   const labels = new Set();
+  const targets = new Set();
   for (const proof of proofList) {
     if (labels.has(proof.gate)) {
       problems.push(
@@ -221,23 +253,30 @@ function attributionProblems(proofList) {
       );
     }
     labels.add(proof.gate);
-    const [command, args = []] = proof.command;
-    const expected = ENTRY_POINTS[proof.tier];
-    if (command !== MAKE || args.length !== 1 || args[0] !== expected) {
-      problems.push(
-        `${proof.gate} is ${proof.tier}-tier, so its proof must run \`make ${expected}\` and nothing else`,
-      );
+    if (targets.has(proof.target)) {
+      problems.push(`Gate target "${proof.target}" is proven more than once`);
+    }
+    targets.add(proof.target);
+    if (entryPointOf(proof.target) === undefined) {
+      problems.push(`"${proof.gate}" proves "${proof.target}", which neither Entry Point runs`);
+    }
+  }
+  for (const target of [...ENTRY_POINTS.fast, ...ENTRY_POINTS.full]) {
+    if (!targets.has(target)) {
+      problems.push(`Gate target "${target}" runs in an Entry Point but has no proof`);
     }
   }
   return problems;
 }
 
 // The report this script writes is its own output, so an uncommitted copy of it
-// must not stop the next run; anything else in the tree would.
+// must not stop the next run; anything else changed under the project would.
 const OWN_OUTPUT = "reports/gate-proofs.json";
 
-function changedPaths() {
-  const status = run("git", ["status", "--porcelain"]);
+// Porcelain lines for what is changed in the project right now, status codes
+// included, so the report shows what a Gate could have reacted to.
+function treeChanges() {
+  const status = run("git", ["status", "--porcelain", "--", "./"]);
   if (status.status !== 0) {
     throw new Error("the tree cannot be inspected with git status");
   }
@@ -248,7 +287,7 @@ function changedPaths() {
 }
 
 const problems = attributionProblems(proofs);
-const alreadyDirty = changedPaths();
+const alreadyDirty = treeChanges();
 if (alreadyDirty.length > 0) {
   problems.push(
     "the tree is not clean, so a Gate could react to a change no proof made:",
@@ -272,16 +311,16 @@ for (const proof of selected) {
   let cleanup = () => {};
   let result;
   let setupError;
-  let treeChanges = [];
+  let treeChangesWhileRunning = [];
   try {
     cleanup = proof.violation() ?? (() => {});
     // What the tree looked like while the Entry Point ran is the evidence that
     // this proof's violation was the only change in it.
-    treeChanges = changedPaths();
-    if (treeChanges.length === 0) {
+    treeChangesWhileRunning = treeChanges();
+    if (treeChangesWhileRunning.length === 0) {
       throw new Error("the violation left the tree unchanged, so nothing was there to catch");
     }
-    result = run(...proof.command);
+    result = run(MAKE, [entryPointOf(proof.target)]);
   } catch (error) {
     setupError = error;
   } finally {
@@ -291,14 +330,20 @@ for (const proof of selected) {
       setupError ??= error;
     }
   }
+  // A revert that did not take would ride along into the next proof and be
+  // attributed to it, so it stops this one from counting.
+  if (setupError === undefined) {
+    const leftBehind = treeChanges();
+    if (leftBehind.length > 0) {
+      setupError = new Error(
+        `the violation was not fully reverted, so the next proof would inherit it:\n${leftBehind.join("\n")}`,
+      );
+    }
+  }
   if (setupError !== undefined || result === undefined) {
     const message = setupError instanceof Error ? setupError.message : String(setupError);
     results.push({
-      gate: proof.gate,
-      tier: proof.tier,
-      description: proof.description,
-      command: [proof.command[0], ...proof.command[1]].join(" "),
-      treeChanges,
+      ...recordOf(proof, treeChangesWhileRunning),
       wentRed: false,
       redGates: [],
       exitCode: null,
@@ -311,11 +356,7 @@ for (const proof of selected) {
   const redGates = [...output.matchAll(/^✘ (.+)$/gm)].map((match) => match[1].trim());
   const wentRed = result.status !== 0 && redGates.length === 1 && redGates[0] === proof.gate;
   results.push({
-    gate: proof.gate,
-    tier: proof.tier,
-    description: proof.description,
-    command: [proof.command[0], ...proof.command[1]].join(" "),
-    treeChanges,
+    ...recordOf(proof, treeChangesWhileRunning),
     wentRed,
     redGates,
     exitCode: result.status,

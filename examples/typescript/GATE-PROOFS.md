@@ -2,9 +2,9 @@
 
 Every implemented Gate was proven by introducing the violation named in its Gate Contract, running the Entry Point of its tier (`make check-fast` for fast Gates, `make check` for full Gates) with only that violation present, confirming it exited non-zero and named the Gate, then restoring the tree.
 
-The Entry Point is the same command in every proof of a tier, and the tree is not: each run carries exactly one violation. That is what makes the result attributable, because the Entry Point stops at the first Gate that fails and every Gate names itself, so a correct proof leaves exactly one Gate red and it is the Gate under proof. Applying several violations to one tree would leave several Gates red, the first failure would hide the rest, and no run could say which Gate caught which violation.
+The Entry Point is the same command in every proof of a tier, and the tree is not: each run carries exactly one violation, which is why a red result can be laid at the Gate the Entry Point named. The proof script owns that reasoning and the checks it needs; what this page records is the outcome.
 
-The cost is one Entry Point run per Gate - the full tier's container, mutation run and advisory lookup included - and it is paid deliberately, which is why the script sits in neither Entry Point and why a single proof can be re-run alone. A proof also needs a clean tree, so that the violation it injects is the only change a Gate can react to. A proof list that could not attribute a red Gate, or a run over a tree someone else already changed, is a setup error rather than evidence. The machine-readable run is reproduced by the repository's Gate Proof script; this page records the result. The machine-readable results - each proof's command, exit code, red Gate names, and output excerpt - are committed at [reports/gate-proofs.json](reports/gate-proofs.json).
+The cost is one Entry Point run per Gate - the full tier's container, mutation run and advisory lookup included - and it is paid deliberately, which is why the script sits in neither Entry Point and why a single proof can be re-run alone. Each proof also records the tree changes present while it ran, so the claim that only its violation was there is checkable rather than asserted; the machine-readable run behind this page is committed at [reports/gate-proofs.json](reports/gate-proofs.json), one entry per Gate with its tier, command, violation, tree changes, red Gates, exit code and an output excerpt.
 
 | Gate                       | Tier | Tool (version)                                       | Violation introduced                              | Result |
 | -------------------------- | ---- | ---------------------------------------------------- | ------------------------------------------------- | ------ |
@@ -22,7 +22,7 @@ The cost is one Entry Point run per Gate - the full tier's container, mutation r
 | Avoided terms              | fast | the repository's script                              | named an identifier `inventory`                   | red    |
 | Guide pointers             | fast | the repository's script                              | linked a Guide to a missing file                  | red    |
 
-The full Entry Point was green on the final tree, after every proof was reverted.
+The full Entry Point was green on the final tree, after every proof was reverted, and CI's `example` job runs it on every pull request.
 
 ## The Gate with no row: E2E tests
 
