@@ -7,13 +7,13 @@ SHELL := /bin/bash
 # Fast Entry Point: the offline subset, suitable for a pre-commit hook.
 check-fast: format lint types unit boundaries dependency-rule metrics secrets avoided-terms guide-pointers
 
-# Full Entry Point: every Gate this tree has. CI calls this and the scheduled
-# mutation job calls mutation-full.
-check: check-fast integration mutation vulnerabilities
-
 # TODO: the E2E Gate is deferred and its level will be rewritten in
 # Cucumber/Gherkin (Sanmoo/skills#7), so nothing here runs an e2e Gate; see
 # docs/adr/0003-defer-the-e2e-level.md.
+
+# Full Entry Point: every Gate this tree has. CI calls this and the scheduled
+# mutation job calls mutation-full.
+check: check-fast integration mutation vulnerabilities
 
 # Gate targets, kept separate so a Gate Proof can run one Gate alone.
 .PHONY: install build format lint types unit integration mutation mutation-full

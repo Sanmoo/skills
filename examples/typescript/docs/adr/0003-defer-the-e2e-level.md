@@ -1,6 +1,6 @@
 # Defer the e2e level to a Cucumber/Gherkin rewrite
 
-This tree has no e2e level and therefore no e2e Gate: its tests will be written in Cucumber/Gherkin after a reanalysis of product and architecture, so writing them in the current runner first would leave work here that is known to be replaced. The follow-up is tracked as [Sanmoo/skills#7](https://github.com/Sanmoo/skills/issues/7), and [GATE-PROOFS.md](../../GATE-PROOFS.md) records that the E2E Gate Contract has no row rather than leaving the gap silent.
+This tree has no e2e level and therefore no e2e Gate: its tests will be written in Cucumber/Gherkin after a reanalysis of product and architecture, so writing them in the current runner first would leave work here that is known to be replaced. The follow-up is tracked as [Sanmoo/skills#7](https://github.com/Sanmoo/skills/issues/7).
 
 ## Context
 
@@ -8,7 +8,7 @@ The level existed, in Vitest, driving the built service over HTTP against a real
 
 ## Decision
 
-Remove the level from this tree: test, runner project, Entry Point step, Gate Proof and Gate Proof row. Everything else in the Harness stays as it was, and the E2E Gate Contract stays in the skill: this is a deferral of one Gate, not a change to the floor.
+Remove the level from this tree: test, runner project, Entry Point step, Gate Proof and Gate Proof row. Everything else in the Harness stays as it was, and the E2E Gate Contract stays in the skill: this is a deferral of one Gate, not a change to the floor. [ADR 0002](0002-mutate-domain-models-only.md) is left as written; its context still names the e2e level, and the mutation scope it decides does not depend on this one.
 
 ## Consequences
 
