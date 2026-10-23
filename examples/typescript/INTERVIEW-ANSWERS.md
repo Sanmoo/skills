@@ -46,7 +46,7 @@ Written to [GLOSSARY.md](GLOSSARY.md) as they resolved. Sharpening applied durin
 
 **Q1 - Language and runtime**: TypeScript 5.9.3 on Node 22.23.2. **Confirmed.**
 
-**Q2 - Deliverable and outermost edge**: HTTP service; a client reaches the built artifact over HTTP on the port it reports. The e2e level that would drive that artifact is deferred (see [Deferred: the E2E level](#deferred-the-e2e-level)). **Confirmed for the deliverable; the e2e level is reopened.**
+**Q2 - Deliverable and outermost edge**: HTTP service; a caller reaches the built artifact over HTTP on the port it reports. The e2e level that would drive that artifact is deferred (see [Deferred: the E2E level](#deferred-the-e2e-level)). **Confirmed for the deliverable; the e2e level is reopened.**
 
 **Q3 - Infrastructure per context**: one Postgres 17.2 per context run in an ephemeral container by the integration tests; Lending owns the `lending` schema, Catalog owns the `catalog` schema. One instance is enough at this size; see [ADR 0001](docs/adr/0001-schema-per-context.md). **Confirmed.**
 
@@ -81,13 +81,7 @@ Written to [GLOSSARY.md](GLOSSARY.md) as they resolved. Sharpening applied durin
 
 ## Deferred: the E2E level
 
-A product decision taken during review of this change removed the e2e tests from this tree. They will be rewritten in Cucumber/Gherkin after a reanalysis of product and architecture, so writing them in the current runner first would leave work here that is known to be replaced. This is a departure from the answers above and from the Gate Floor, recorded rather than hidden:
-
-- the example implements no E2E Gate, so the E2E Gate Contract has no Gate Proof here;
-- the full Entry Point runs thirteen Gates, not fourteen;
-- the stack answer for that level is reopened, not answered. Open in the reanalysis: whether the Gherkin runner is a separate one (`@cucumber/cucumber`) or layered over Vitest, and whether this is this example's choice only or a stack answer the interview itself should offer.
-
-`src/main.ts` still reports its listening port, and the build target still produces the artifact, so the level has what it needs to come back.
+The e2e tests were removed and their level deferred to a Cucumber/Gherkin rewrite, tracked as [Sanmoo/skills#7](https://github.com/Sanmoo/skills/issues/7). [ADR 0003](docs/adr/0003-defer-the-e2e-level.md) records the decision, what it costs, and what the reanalysis must answer; this page records only what it changed in the answers above: the e2e level of Q2 is reopened rather than answered, and the E2E row of the Q4 table says so instead of naming a runner.
 
 ## Gate Proofs
 

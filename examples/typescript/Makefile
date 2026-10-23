@@ -7,13 +7,13 @@ SHELL := /bin/bash
 # Fast Entry Point: the offline subset, suitable for a pre-commit hook.
 check-fast: format lint types unit boundaries dependency-rule metrics secrets avoided-terms guide-pointers
 
-# Full Entry Point: every Gate. CI calls this and the scheduled mutation job
-# calls mutation-full.
+# Full Entry Point: every Gate this tree has. CI calls this and the scheduled
+# mutation job calls mutation-full.
 check: check-fast integration mutation vulnerabilities
 
-# TODO: the E2E Gate is deferred, so this tree has no e2e level and no e2e Gate
-# Proof. Its tests will be rewritten in Cucumber/Gherkin after a product and
-# architecture reanalysis; see docs/guides/testing-strategy.md.
+# TODO: the E2E Gate is deferred and its level will be rewritten in
+# Cucumber/Gherkin (Sanmoo/skills#7), so nothing here runs an e2e Gate; see
+# docs/adr/0003-defer-the-e2e-level.md.
 
 # Gate targets, kept separate so a Gate Proof can run one Gate alone.
 .PHONY: install build format lint types unit integration mutation mutation-full
@@ -22,6 +22,8 @@ check: check-fast integration mutation vulnerabilities
 install:
 	npm ci
 
+# The deliverable's artifact. No Entry Point builds it: its only consumer was
+# the deferred e2e level.
 build:
 	npm run build
 
