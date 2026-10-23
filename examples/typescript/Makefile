@@ -9,10 +9,14 @@ check-fast: format lint types unit boundaries dependency-rule metrics secrets av
 
 # Full Entry Point: every Gate. CI calls this and the scheduled mutation job
 # calls mutation-full.
-check: check-fast integration e2e mutation vulnerabilities
+check: check-fast integration mutation vulnerabilities
+
+# TODO: the E2E Gate is deferred, so this tree has no e2e level and no e2e Gate
+# Proof. Its tests will be rewritten in Cucumber/Gherkin after a product and
+# architecture reanalysis; see docs/guides/testing-strategy.md.
 
 # Gate targets, kept separate so a Gate Proof can run one Gate alone.
-.PHONY: install build format lint types unit integration e2e mutation mutation-full
+.PHONY: install build format lint types unit integration mutation mutation-full
 .PHONY: boundaries dependency-rule metrics secrets avoided-terms guide-pointers vulnerabilities
 
 install:
@@ -35,9 +39,6 @@ unit:
 
 integration:
 	npm run integration
-
-e2e: build
-	npm run e2e
 
 mutation:
 	npm run mutation

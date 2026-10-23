@@ -46,9 +46,9 @@ Written to [GLOSSARY.md](GLOSSARY.md) as they resolved. Sharpening applied durin
 
 **Q1 - Language and runtime**: TypeScript 5.9.3 on Node 22.23.2. **Confirmed.**
 
-**Q2 - Deliverable and outermost edge**: HTTP service; the e2e tests drive HTTP requests against the built service running as a child process. **Confirmed.**
+**Q2 - Deliverable and outermost edge**: HTTP service; a client reaches the built artifact over HTTP on the port it reports. The e2e level that would drive that artifact is deferred (see [Deferred: the E2E level](#deferred-the-e2e-level)). **Confirmed for the deliverable; the e2e level is reopened.**
 
-**Q3 - Infrastructure per context**: one Postgres 17.2 per context run in an ephemeral container by the integration and e2e tests; Lending owns the `lending` schema, Catalog owns the `catalog` schema. One instance is enough at this size; see [ADR 0001](docs/adr/0001-schema-per-context.md). **Confirmed.**
+**Q3 - Infrastructure per context**: one Postgres 17.2 per context run in an ephemeral container by the integration tests; Lending owns the `lending` schema, Catalog owns the `catalog` schema. One instance is enough at this size; see [ADR 0001](docs/adr/0001-schema-per-context.md). **Confirmed.**
 
 **Q4 - One tool per Gate Contract**:
 
@@ -59,7 +59,7 @@ Written to [GLOSSARY.md](GLOSSARY.md) as they resolved. Sharpening applied durin
 | Types                      | TypeScript (`tsc --noEmit`, strict)                       | 5.9.3                    |
 | Unit tests                 | Vitest                                                    | 4.1.12                   |
 | Integration tests          | Vitest with Testcontainers (`@testcontainers/postgresql`) | 4.1.12 / 12.2.1          |
-| E2E tests                  | Vitest driving the built service over HTTP                | 4.1.12                   |
+| E2E tests                  | not implemented; runner choice reopened                   | n/a                      |
 | Mutation                   | Stryker with its Vitest runner                            | 10.0.0                   |
 | Context boundaries         | dependency-cruiser                                        | 18.7.0                   |
 | Dependency rule            | dependency-cruiser                                        | 18.7.0                   |
@@ -79,6 +79,16 @@ Written to [GLOSSARY.md](GLOSSARY.md) as they resolved. Sharpening applied durin
 
 **Q8 - Threshold departures**: none. Mutation 80% overall and 90% in core, complexity 10, zero cycles, duplication 3%, vulnerabilities high and critical only - all at the defaults. **Confirmed.**
 
+## Deferred: the E2E level
+
+A product decision taken during review of this change removed the e2e tests from this tree. They will be rewritten in Cucumber/Gherkin after a reanalysis of product and architecture, so writing them in the current runner first would leave work here that is known to be replaced. This is a departure from the answers above and from the Gate Floor, recorded rather than hidden:
+
+- the example implements no E2E Gate, so the E2E Gate Contract has no Gate Proof here;
+- the full Entry Point runs thirteen Gates, not fourteen;
+- the stack answer for that level is reopened, not answered. Open in the reanalysis: whether the Gherkin runner is a separate one (`@cucumber/cucumber`) or layered over Vitest, and whether this is this example's choice only or a stack answer the interview itself should offer.
+
+`src/main.ts` still reports its listening port, and the build target still produces the artifact, so the level has what it needs to come back.
+
 ## Gate Proofs
 
-Every Gate was proven after wiring, one at a time, by introducing the violation named in the Gate Contract. Results are recorded in [GATE-PROOFS.md](GATE-PROOFS.md).
+Every implemented Gate - thirteen of the fourteen Contracts - was proven after wiring, one at a time, by introducing the violation named in the Gate Contract. Results are recorded in [GATE-PROOFS.md](GATE-PROOFS.md), which also records why the E2E contract has no row.

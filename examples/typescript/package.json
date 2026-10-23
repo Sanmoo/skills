@@ -14,7 +14,6 @@
     "types": "node scripts/run-gate.mjs Types -- tsc --noEmit",
     "unit": "node scripts/run-gate.mjs \"Unit tests\" -- vitest run --project unit",
     "integration": "node scripts/run-gate.mjs \"Integration tests\" -- vitest run --project integration",
-    "e2e": "node scripts/run-gate.mjs \"E2E tests\" -- vitest run --project e2e",
     "mutation": "node scripts/check-mutation.mjs",
     "mutation-full": "node scripts/check-mutation.mjs --full",
     "boundaries": "node scripts/check-boundaries.mjs",

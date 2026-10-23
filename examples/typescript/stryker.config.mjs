@@ -1,8 +1,8 @@
 // Mutation Gate configuration.
 //
 // Scope: the domain models that unit tests can kill. Adapters and application
-// services are exercised by integration and e2e tests, which need containers
-// and would make every mutant pay for one; they are covered at those levels.
+// services are exercised by integration tests, which need containers and would
+// make every mutant pay for one; they are covered at that level.
 //
 // The per-context thresholds (80% overall, 90% in the core Lending context)
 // are enforced by scripts/check-mutation.mjs, not by Stryker's global
