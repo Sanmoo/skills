@@ -56,7 +56,7 @@ Write the Guides as described in [GUIDES.md](GUIDES.md).
 
 ## 7. Prove every Gate
 
-Run a **Gate Proof** for each Gate, one at a time: introduce the smallest violation that Gate exists to catch, run the Entry Point of its tier, confirm it goes red _because of that Gate_, then revert the violation. GATE-CONTRACTS.md suggests a violation for each Gate. Keep the violations in an executable proof file so the proofs can be repeated, and keep that file out of both Entry Points. Record the result in `GATE-PROOFS.md`: one row per Gate with its tier, tool and version, the violation, and the outcome.
+Run a **Gate Proof** for each Gate, one at a time: introduce the smallest violation that Gate exists to catch, run the Entry Point of its tier with only that violation present, confirm it goes red _because of that Gate_, then revert the violation before the next proof. One violation per run is what makes the result attributable: the Entry Point stops at the first Gate that fails, so several violations in one tree would leave several Gates red and no run could say which Gate caught which. GATE-CONTRACTS.md suggests a violation for each Gate. Keep the violations in an executable proof file so the proofs can be repeated, and keep that file out of both Entry Points. Record the result in `GATE-PROOFS.md`: one row per Gate with its tier, tool and version, the violation, and the outcome.
 
 **Done when** every Gate has been seen red for its own reason, `GATE-PROOFS.md` records it, and the full Entry Point is green on the final tree.
 
