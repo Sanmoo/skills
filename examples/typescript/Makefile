@@ -11,7 +11,9 @@ check-fast: format lint types unit boundaries dependency-rule metrics secrets av
 # mutation job calls mutation-full.
 check: check-fast integration mutation vulnerabilities
 
-# Gate targets, kept separate so a Gate Proof can run one Gate alone.
+# Gate targets, kept separate so one Gate can be wired and run on its own. No
+# Gate Proof uses them: a proof runs the Entry Point of the Gate's tier, which is
+# what the proof exists to show.
 .PHONY: install build format lint types unit integration mutation mutation-full
 .PHONY: boundaries dependency-rule metrics secrets avoided-terms guide-pointers vulnerabilities
 
