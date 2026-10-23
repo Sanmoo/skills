@@ -85,4 +85,4 @@ The e2e tests were removed and their level deferred to a Cucumber/Gherkin rewrit
 
 ## Gate Proofs
 
-Every implemented Gate - thirteen of the fourteen Contracts - was proven after wiring, one at a time, by introducing the violation named in the Gate Contract. Results are recorded in [GATE-PROOFS.md](GATE-PROOFS.md), which also records why the E2E contract has no row.
+Every Gate this tree has was proven after wiring, one at a time, by introducing the violation named in the Gate Contract. Results are recorded in [GATE-PROOFS.md](GATE-PROOFS.md), which also records why the E2E contract has no row.

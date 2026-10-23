@@ -1,6 +1,6 @@
 # Library Lending example
 
-The smallest thing that is a library lending service: an HTTP service on Postgres with a core **Lending** context and a supporting **Catalog** context, built to demonstrate the Gate Contracts from `bootstrap-harness`. It implements thirteen of the fourteen Contracts; the e2e level is deferred pending a rewrite in Cucumber/Gherkin (see [ADR 0003](docs/adr/0003-defer-the-e2e-level.md)).
+The smallest thing that is a library lending service: an HTTP service on Postgres with a core **Lending** context and a supporting **Catalog** context, built to demonstrate the Gate Contracts from `bootstrap-harness`. One of them, E2E tests, has no Gate here: its level is deferred pending a rewrite in Cucumber/Gherkin (see [ADR 0003](docs/adr/0003-defer-the-e2e-level.md)).
 
 This is a Stack Example, not a supported product.
 
