@@ -1,9 +1,22 @@
 // Runs the Gate Proof for every Gate, one at a time.
 //
-// A Gate Proof introduces the smallest violation the Gate exists to catch,
-// runs the Gate command the Entry Point invokes, confirms it goes red because
-// of that Gate, then restores the tree. It is a one-off proof that the Gate
-// works, not part of either Entry Point.
+// A Gate Proof introduces the smallest violation the Gate exists to catch, runs
+// the Entry Point of that Gate's tier with only that violation present, confirms
+// it went red because of that Gate, then restores the tree. It is a one-off
+// proof that the Gate works, not part of either Entry Point.
+//
+// The Entry Point is the same command in every proof of the same tier, and that
+// is deliberate: what differs between two runs is the tree, which carries
+// exactly one violation each time. Attribution comes from the Entry Point's own
+// output, where every Gate names itself, because it stops at the first Gate that
+// fails - so a correct proof leaves exactly one Gate marked red, and it is the
+// Gate under proof (see `wentRed` below). Several violations in one tree would
+// leave several Gates red, the first failure would hide the rest, and no run
+// could say which Gate caught which violation.
+//
+// The preconditions that attribution rests on are checked before any proof runs:
+// a Gate label used twice, or a proof that runs a single Gate target instead of
+// an Entry Point, is a setup error rather than recorded evidence.
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { report } from "./lib.mjs";
@@ -173,6 +186,34 @@ const proofs = [
   },
 ];
 
+const ENTRY_POINTS = new Set(["check-fast", "check"]);
+
+// A proof that ran one Gate target would show the Gate works, not that an Entry
+// Point catches it, and that is the whole point. A duplicated label would make
+// "this Gate went red" unattributable. Both are rejected up front.
+function invariantProblems(proofList) {
+  const problems = [];
+  const labels = new Set();
+  for (const proof of proofList) {
+    if (labels.has(proof.gate)) {
+      problems.push(
+        `"${proof.gate}" labels more than one proof, so a red run could not say which one it proves`,
+      );
+    }
+    labels.add(proof.gate);
+    const [command, args = []] = proof.command;
+    if (command !== MAKE || args.length !== 1 || !ENTRY_POINTS.has(args[0])) {
+      problems.push(`${proof.gate} runs a single Gate target instead of an Entry Point`);
+    }
+  }
+  return problems;
+}
+
+const problems = invariantProblems(proofs);
+if (problems.length > 0) {
+  report("Gate proofs", problems);
+}
+
 const only = process.argv
   .find((argument) => argument.startsWith("--gate="))
   ?.slice("--gate=".length);
@@ -228,18 +269,25 @@ for (const proof of selected) {
   if (!wentRed) console.log(output.split("\n").slice(-20).join("\n"));
 }
 
-mkdirSync("reports", { recursive: true });
-writeFileSync(
-  "reports/gate-proofs.json",
-  `${JSON.stringify(
-    results.map((result) => ({
-      ...result,
-      output: result.output.split("\n").slice(-20).join("\n"),
-    })),
-    null,
-    2,
-  )}\n`,
-);
+// The committed report only ever holds a complete run: `--gate=` is for
+// iterating on one proof, and writing it over the evidence of the others would
+// lose them.
+if (only === undefined) {
+  mkdirSync("reports", { recursive: true });
+  writeFileSync(
+    "reports/gate-proofs.json",
+    `${JSON.stringify(
+      results.map((result) => ({
+        ...result,
+        output: result.output.split("\n").slice(-20).join("\n"),
+      })),
+      null,
+      2,
+    )}\n`,
+  );
+} else {
+  console.log(`  one proof ran; reports/gate-proofs.json is left as the last complete run`);
+}
 
 report(
   "Gate proofs",
