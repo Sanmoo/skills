@@ -23,24 +23,11 @@
 // Gate an Entry Point runs must have exactly one proof with one label, the tree
 // must be clean before each proof and again after it, and each injection must
 // have left a change behind. Any of those failing is a setup error, not evidence.
-import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { report } from "./lib.mjs";
+import { outputOf, report, run } from "./lib.mjs";
 
 const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
 const MAKE = process.platform === "win32" ? "make.exe" : "make";
-
-function run(command, args) {
-  return spawnSync(command, args, {
-    encoding: "utf8",
-    env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" },
-    timeout: 30 * 60 * 1000,
-  });
-}
-
-function outputOf(result) {
-  return `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
-}
 
 function tempFile(path, content) {
   writeFileSync(path, content);
@@ -199,11 +186,11 @@ const proofs = [
 function entryPointTargets() {
   const makefile = readFileSync("Makefile", "utf8");
   function prerequisites(name) {
-    const match = new RegExp(`^${name}:([^\\n]*)`, "m").exec(makefile);
+    const match = new RegExp(`^${name}\\s*:([^\\n]*)`, "m").exec(makefile);
     if (match === null) {
       throw new Error(`the Makefile has no "${name}" Entry Point`);
     }
-    return match[1].split(/\s+/).filter(Boolean);
+    return match[1].replace(/#.*$/, "").split(/\s+/).filter(Boolean);
   }
   const fast = prerequisites("check-fast");
   const full = prerequisites("check").filter(
@@ -215,25 +202,23 @@ function entryPointTargets() {
 const ENTRY_POINTS = entryPointTargets();
 
 // The Entry Point whose prerequisites include this Gate target, or undefined
-// when neither Entry Point runs it.
+// when neither Entry Point runs it. Its name is also the tier's name.
 function entryPointOf(target) {
   if (ENTRY_POINTS.fast.includes(target)) return "check-fast";
   if (ENTRY_POINTS.full.includes(target)) return "check";
   return undefined;
 }
 
-function tierOf(proof) {
-  return entryPointOf(proof.target) === "check" ? "full" : "fast";
-}
-
 // The fields every record shares; the caller adds what only a finished run can
-// know.
+// know. `treeChanges` is null when the violation never got applied, so an
+// unmeasured tree cannot be read as a clean one.
 function recordOf(proof, tree) {
+  const entryPoint = entryPointOf(proof.target);
   return {
     gate: proof.gate,
-    tier: tierOf(proof),
+    tier: entryPoint === "check" ? "full" : "fast",
     description: proof.description,
-    command: `${MAKE} ${entryPointOf(proof.target)}`,
+    command: `${MAKE} ${entryPoint}`,
     treeChanges: tree,
   };
 }
@@ -283,7 +268,12 @@ function treeChanges() {
   return status.stdout
     .split("\n")
     .map((line) => line.trimEnd())
-    .filter((line) => line !== "" && !line.includes(OWN_OUTPUT));
+    .filter((line) => line !== "" && !isOwnOutput(line));
+}
+
+function isOwnOutput(line) {
+  const path = line.slice(3);
+  return path === OWN_OUTPUT || path.endsWith(`/${OWN_OUTPUT}`);
 }
 
 const problems = attributionProblems(proofs);
@@ -311,16 +301,16 @@ for (const proof of selected) {
   let cleanup = () => {};
   let result;
   let setupError;
-  let treeChangesWhileRunning = [];
+  let treeChangesWhileRunning = null;
   try {
     cleanup = proof.violation() ?? (() => {});
-    // What the tree looked like while the Entry Point ran is the evidence that
-    // this proof's violation was the only change in it.
+    // What the violation left in the tree, recorded before the Entry Point runs
+    // so the report shows what a Gate could have reacted to.
     treeChangesWhileRunning = treeChanges();
     if (treeChangesWhileRunning.length === 0) {
       throw new Error("the violation left the tree unchanged, so nothing was there to catch");
     }
-    result = run(MAKE, [entryPointOf(proof.target)]);
+    result = run(MAKE, [entryPointOf(proof.target)], { timeout: 30 * 60 * 1000 });
   } catch (error) {
     setupError = error;
   } finally {
@@ -330,15 +320,15 @@ for (const proof of selected) {
       setupError ??= error;
     }
   }
-  // A revert that did not take would ride along into the next proof and be
-  // attributed to it, so it stops this one from counting.
-  if (setupError === undefined) {
-    const leftBehind = treeChanges();
-    if (leftBehind.length > 0) {
-      setupError = new Error(
-        `the violation was not fully reverted, so the next proof would inherit it:\n${leftBehind.join("\n")}`,
-      );
-    }
+  // A violation that is still in the tree would ride along into the next proof
+  // and be attributed to it, so the run stops here instead of recording a proof
+  // that could not say what its red Gate reacted to.
+  const leftBehind = treeChanges();
+  if (leftBehind.length > 0) {
+    report("Gate proofs", [
+      `${proof.gate} did not leave the tree as it found it, so no later proof could be attributed:`,
+      ...leftBehind.map((change) => `  ${change}`),
+    ]);
   }
   if (setupError !== undefined || result === undefined) {
     const message = setupError instanceof Error ? setupError.message : String(setupError);
