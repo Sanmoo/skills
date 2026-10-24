@@ -4,11 +4,11 @@
 
 ## Context
 
-The universal contract changed after ADR 0003 was accepted: Gherkin is no longer an option the reanalysis may decline, it is the required form of every e2e level, and only the executor is the stack's choice. The deferral itself is unchanged - the level is absent, the build stays outside the Entry Points, and the full Entry Point runs thirteen Gates - so no other part of the original decision needs revising.
+The universal contract changed after ADR 0003 was accepted: Gherkin is no longer an option the reanalysis may decline, it is the required form of every e2e level, and only the executor is the stack's choice. The level itself stays absent, the build stays outside the Entry Points, and the full Entry Point runs thirteen Gates, so this record carries the same deferral under the new rule rather than amending the original.
 
 ## Decision
 
-Keep the e2e level deferred to #7 under the universal rule. Mark [ADR 0003](0003-defer-the-e2e-level.md) superseded rather than rewriting it: this record replaces its reopened runner question, and #7 replaces this record when the level returns.
+Keep the e2e level deferred to #7 under the universal rule. Mark [ADR 0003](0003-defer-the-e2e-level.md) superseded: this record restates its deferral decision and replaces its reopened runner question, and #7 replaces this record when the level returns.
 
 ## Consequences
 

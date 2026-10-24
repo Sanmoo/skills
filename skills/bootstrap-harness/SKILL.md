@@ -48,7 +48,7 @@ The e2e level starts from the scenarios the domain interview approved. Write the
 
 Implement every Gate in [GATE-CONTRACTS.md](GATE-CONTRACTS.md) with the tools confirmed in phase 3, versions pinned and thresholds in versioned config. Expose them through the two Entry Points: the full one runs every Gate, the fast one runs the Gates marked fast. Make CI call the full Entry Point and nothing else, and make the pre-commit hook call the fast one. Make the CI checkout give each Gate what it measures: the history a history scan covers, and a base branch the changed-set comparison can resolve.
 
-When wiring the e2e Gate, verify that its executor fails rather than passes on a wrong assertion, an undefined step, a pending step, an empty scenario suite, and an artifact that does not start. A configuration that behaves otherwise does not satisfy the Contract.
+When wiring the e2e Gate, verify that its executor fails rather than passes on a wrong assertion and on each case the Contract's E2E section names: no scenarios, an undefined or pending step, and an artifact that does not start. A configuration that behaves otherwise does not satisfy the Contract.
 
 **Done when** every Gate Contract has a Gate and the full Entry Point is green.
 
