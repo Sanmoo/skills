@@ -1,12 +1,32 @@
 # Engineering Harness
 
-The vocabulary for establishing, on day zero of a greenfield project, the agent-oriented documents and deterministic checks that constrain every change to a codebase, independent of its technology stack.
+The vocabulary for establishing an engineering Harness — the agent-oriented documents and deterministic checks that constrain every change to a codebase — on day zero of a greenfield project or through an approved adoption plan in an existing application, independent of technology stack.
 
 ## Language
 
 **Harness**:
 The complete set of Guides and Gates that constrains every change to a codebase, whether made by an agent or a human.
 _Avoid_: Guardrails, scaffold
+
+**Starting path**:
+The path selected by inspecting the repository: **greenfield** or **existing application**. The greenfield path establishes the Harness from day zero; the existing-application path adopts it through an approved plan.
+_Avoid_: Repository type
+
+**Greenfield**:
+A repository with no application source code yet: at most a README, license, ignore files, and editor or tooling config. The greenfield path establishes the Harness from day zero.
+_Avoid_: New project, empty project
+
+**Existing application**:
+A repository that already contains application source, tests, delivered behavior, or tooling that belongs to the application. The adoption path reconciles a Harness with it instead of generating a replacement.
+_Avoid_: Brownfield, legacy application
+
+**Inventory**:
+The lightweight, factual survey of an existing application's deliverable and outermost edge, domain evidence and boundaries, existing tools and checks, tests, Entry Points, CI, and obvious gaps, made before any change. It records what the environment answers instead of asking, and leaves expensive analysis to later stages.
+_Avoid_: Functional audit, application assessment
+
+**Adoption plan**:
+The staged, prioritized proposal for establishing the Harness in an existing application: the scope, Gates, Guide work, proposed changes, validation budget, and cadence of each stage. The maintainer approves it before anything in the application, its tests, or its tooling changes.
+_Avoid_: Migration plan, rewrite plan
 
 **Guide**:
 An agent-oriented document in the Harness that steers a change before it is made, holding only what the code cannot express. The code, including the Gates, is always the source of truth; a Guide points to it rather than restating it.
@@ -21,8 +41,12 @@ The stack-agnostic statement of a Gate's intent and acceptance criteria, which a
 _Avoid_: Gate spec
 
 **Gate Floor**:
-The set of Gates every project must have from day zero, regardless of stack or subdomain.
+The set of Gates every project must have, regardless of stack or subdomain. A greenfield project establishes every one from day zero; an existing application adopts them in approved stages.
 _Avoid_: Minimum gates, baseline gates
+
+**Gate state**:
+The honest classification of every Gate: **adopted**, **pending**, or **blocked**. A Gate is adopted only when it actually runs under the approved scope and cadence, has a repeatable Gate Proof, and enforces the agreed adoption criteria. Missing, unexecuted, unproven, or out-of-scope Gates are pending; Gates the environment or a missing decision prevents from running are blocked. A blocked Gate is not adopted, and a green run under another scope is not adoption.
+_Avoid_: Gate status, gate maturity
 
 **Gate Proof**:
 The deliberate, temporary violation that shows a Gate turns the Entry Point red, required once for every Gate before the Harness counts as established.
