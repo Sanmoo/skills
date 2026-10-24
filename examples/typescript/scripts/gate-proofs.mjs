@@ -272,21 +272,28 @@ function recordOf(proof, tree) {
 // over none, or over a rejected declaration does not say the intended violation
 // was measured, so it cannot count as a Gate Proof.
 function scopeProblems(requested, recorded) {
-  if (recorded.record === null) return [recorded.reason];
+  const { record, reason } = recorded;
+  if (record === null) return [reason];
   const problems = [];
-  if (recorded.record.selection !== SELECTION.explicit) {
+  if (record.selection !== SELECTION.explicit) {
     problems.push(
-      `the Mutation Gate selected by "${recorded.record.selection}" instead of the declared scope`,
+      `the Mutation Gate selected by "${record.selection}" instead of the declared scope`,
     );
   }
-  const analyzed = recorded.record.analyzedFiles;
-  if (analyzed === null) {
-    problems.push(recorded.record.unavailable ?? "the Mutation Gate recorded no analyzed files");
+  if (record.analyzedFiles === null) {
+    problems.push(record.unavailable ?? "the Mutation Gate recorded no analyzed files");
     return problems;
   }
+  // The analysis must be exactly the declared scope. A wider one would let
+  // healthy unrelated code dilute the intended failure, so it cannot count.
   for (const file of requested) {
-    if (!analyzed.includes(file)) {
+    if (!record.analyzedFiles.includes(file)) {
       problems.push(`the declared input "${file}" was not analyzed`);
+    }
+  }
+  for (const file of record.analyzedFiles) {
+    if (!requested.includes(file)) {
+      problems.push(`"${file}" was analyzed although the proof declared no such input`);
     }
   }
   return problems;
@@ -448,9 +455,10 @@ for (const proof of selected) {
     redGates.length === 1 &&
     redGates[0] === proof.gate &&
     foundScopeProblems.length === 0;
+  const scope = scopeOf(proof, recordedScope, foundScopeProblems);
   results.push({
     ...recordOf(proof, treeChangesWhileRunning),
-    scope: scopeOf(proof, recordedScope, foundScopeProblems),
+    scope,
     wentRed,
     redGates,
     exitCode: result.status,
@@ -459,9 +467,7 @@ for (const proof of selected) {
   console.log(`${wentRed ? "✔" : "✘"} Gate Proof: ${proof.gate}`);
   if (proof.scope !== undefined) {
     console.log(`  scope requested: ${proof.scope.join(", ")}`);
-    console.log(
-      `  scope analyzed: ${(recordedScope.record?.analyzedFiles ?? []).join(", ") || "not recorded"}`,
-    );
+    console.log(`  scope analyzed: ${(scope.analyzed ?? []).join(", ") || "not recorded"}`);
   }
   if (!wentRed) {
     console.log(foundScopeProblems.map((problem) => `  ${problem}`).join("\n"));
