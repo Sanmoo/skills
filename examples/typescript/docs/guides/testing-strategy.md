@@ -18,6 +18,8 @@ A business reviewer approves the scenario set for meaning before its step defini
 
 The Mutation Gate treats the unit level as the proof that rules are pinned down, so a new domain rule needs unit tests that fail when the rule is wrong. The mutation scope stops at domain models deliberately; see [ADR 0002](../adr/0002-mutate-domain-models-only.md).
 
+The Mutation Gate's own selection is part of what has to keep working, so it is checked at its executable boundary in `test/harness/`, and the proof runner's evidence bookkeeping in `test/proofs/`; both run with the proof job and never inside an Entry Point. Those checks are not a level of the application: they are the Harness's guard against a selection that silently stops matching, and [the selection code](../../scripts/check-mutation.mjs) owns what they must establish.
+
 ## Pointers
 
 - Unit tests: `src/**/domain/*.test.ts`
@@ -29,4 +31,7 @@ The Mutation Gate treats the unit level as the proof that rules are pinned down,
 - Compiled-service lifecycle: `test/support/service.ts`
 - Container harness: `test/support/postgres.ts`
 - Mutation scope and reporters: `stryker.config.mjs`
-- Mutation thresholds and changed-set base: `scripts/check-mutation.mjs`
+- Mutation thresholds, changed-set base, and proof scope: `scripts/check-mutation.mjs`
+- Gate Proof declarations and their declared scope: `scripts/gate-proofs.mjs`
+- Mutation selection checks: `test/harness/`
+- Gate Proof evidence checks: `test/proofs/`
