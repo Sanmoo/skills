@@ -40,7 +40,7 @@ In each context, build one trivial operation that a request through the outermos
 
 Write the first tests at every level defined in [GATE-CONTRACTS.md](GATE-CONTRACTS.md): unit tests for each context's domain model, integration tests for each adapter against real infrastructure, and e2e scenarios that reach every context through the outermost edge.
 
-The e2e level starts from the scenarios the domain interview approved. Write them as Gherkin feature files in the confirmed scenario language, then the step definitions that drive the built artifact. The scenarios keep the business goal, the conditions, and the observable outcome; requests, selectors, and other delivery mechanics exist only in the step definitions. Keep the portfolio to a few full journeys: a journey may cross behavior already tested below when it adds evidence about the built artifact and the public edge, but it does not copy the integration matrix.
+The e2e level starts from the scenarios the domain interview approved. Write them as Gherkin feature files in the confirmed scenario language, then the step definitions that drive the built artifact. The scenarios carry the business goal, the conditions, and the observable outcome; the step definitions carry the delivery mechanics. Keep the e2e portfolio to the few full journeys the Contract asks for.
 
 **Done when** the deliverable builds and runs, and the approved e2e scenarios reach every context and pass against the built artifact.
 
@@ -48,7 +48,7 @@ The e2e level starts from the scenarios the domain interview approved. Write the
 
 Implement every Gate in [GATE-CONTRACTS.md](GATE-CONTRACTS.md) with the tools confirmed in phase 3, versions pinned and thresholds in versioned config. Expose them through the two Entry Points: the full one runs every Gate, the fast one runs the Gates marked fast. Make CI call the full Entry Point and nothing else, and make the pre-commit hook call the fast one. Make the CI checkout give each Gate what it measures: the history a history scan covers, and a base branch the changed-set comparison can resolve.
 
-When wiring the e2e Gate, verify that its executor fails rather than passes on a wrong assertion and on each vacuous pass the Contract names. A configuration that behaves otherwise does not satisfy the Contract.
+When wiring the e2e Gate, verify that its executor fails rather than passes on a wrong assertion, an undefined step, a pending step, an empty scenario suite, and an artifact that does not start. A configuration that behaves otherwise does not satisfy the Contract.
 
 **Done when** every Gate Contract has a Gate and the full Entry Point is green.
 

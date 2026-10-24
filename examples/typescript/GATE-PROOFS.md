@@ -26,4 +26,4 @@ The full Entry Point was green on the final tree, after every proof was reverted
 
 ## The Gate with no row: E2E tests
 
-The **E2E tests** Gate Contract has no Gate in this tree, so it has no proof; the row is absent on purpose. [ADR 0003](docs/adr/0003-defer-the-e2e-level.md) records the deferral.
+The **E2E tests** Gate Contract has no Gate in this tree, so it has no proof; the row is absent on purpose. [ADR 0004](docs/adr/0004-defer-the-e2e-level-under-the-universal-rule.md) records the current deferral.

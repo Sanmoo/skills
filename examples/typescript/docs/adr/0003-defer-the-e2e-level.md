@@ -1,5 +1,7 @@
 # Defer the e2e level to a Cucumber/Gherkin rewrite
 
+_Superseded by [ADR 0004](0004-defer-the-e2e-level-under-the-universal-rule.md)._
+
 This tree has no e2e level and therefore no e2e Gate: its tests will be written in Cucumber/Gherkin after a reanalysis of product and architecture, so writing them in the current runner first would leave work here that is known to be replaced. The follow-up is tracked as [Sanmoo/skills#7](https://github.com/Sanmoo/skills/issues/7).
 
 ## Context
