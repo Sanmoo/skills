@@ -2,7 +2,7 @@
 
 Each Gate Contract states a Gate's intent and acceptance criteria for any stack. The tool that realizes it is chosen in the stack interview; where a Contract's scenarios need a language, the domain interview settles it. Where acceptance also depends on a judgment no tool can make, the acceptance criteria include a **Human review**; the Gate runs its executable criteria, and neither the run nor the review stands in for the other. Together these Gates form the **Gate Floor**: every project has all of them. A greenfield project establishes every one from day zero; an existing application adopts them in approved stages. Either path counts as established only when every Gate in the Gate Floor is adopted.
 
-Both starting paths use these same Contracts. Adoption records an approved scope, cadence, and adoption criteria for each Gate, and may record specific accepted findings in versioned policy, but it never redefines a Contract, weakens its intent, or creates a second set. The Contract remains the obligation.
+Both starting paths use these same Contracts. Adoption records adoption criteria for each Gate - its approved scope, cadence, and any specific accepted findings in versioned policy - but it never redefines a Contract, weakens its intent, or creates a second set. The Contract remains the obligation.
 
 ## Rules for every Gate
 

@@ -2,7 +2,7 @@
 
 ## Context
 
-The adoption path introduced by [ADR 0002](0002-adoption-path.md) stopped at the maintainer's approval in [SKILL.md](../../skills/bootstrap-harness/SKILL.md), leaving execution to an unnamed later process. That split allowed a Harness to be called adopted because a Gate was configured or green, gave a tool replacement no approval boundary, and left "established" undefined for an existing application that carries debt.
+The adoption path introduced by [ADR 0002](0002-adoption-path.md) stopped at the maintainer's approval in [SKILL.md](../../skills/bootstrap-harness/SKILL.md), leaving the execution of the approved plan, the state each stage reports, and the test for an established Harness outside the skill. The Gate Contracts already required a Gate to run under the approved scope and cadence and to have its Gate Proof, but the workflow did not say how an approved plan reaches that state.
 
 ## Considered Options
 

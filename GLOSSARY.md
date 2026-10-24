@@ -24,6 +24,10 @@ _Avoid_: Brownfield, legacy application
 The lightweight, factual survey of an existing application made before any change. It records what the environment answers instead of asking, and leaves expensive analysis to later stages; the skill's inventory step lists what it covers.
 _Avoid_: Functional audit, application assessment
 
+**Interview answers**:
+The file `INTERVIEW-ANSWERS.md` that records the confirmed answers to the domain, stack, or adoption interview so the run can be repeated and reviewed. It is a decision record, not a Guide or current policy.
+_Avoid_: Questionnaire, survey responses
+
 **Adoption plan**:
 The staged, prioritized proposal for establishing the Harness in an existing application. The maintainer approves it before anything in the application, its tests, or its tooling changes, and executing it adopts Gates stage by stage.
 _Avoid_: Migration plan, rewrite plan
