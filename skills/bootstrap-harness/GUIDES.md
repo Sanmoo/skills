@@ -48,9 +48,9 @@ Written during the domain interview, in the format given in [INTERVIEW.md](INTER
 
 ### `docs/guides/testing-strategy.md`
 
-- Intent: the definition of each test level (unit, integration, e2e), as in [GATE-CONTRACTS.md](GATE-CONTRACTS.md), stated for this project's stack and edge.
-- Judgment: which level a new behavior is tested at; test doubles only for third-party systems at the boundary.
-- Pointers: where each level's tests live, the mutation config with its thresholds.
+- Intent: the definition of each test level (unit, integration, e2e), as in [GATE-CONTRACTS.md](GATE-CONTRACTS.md), stated for this project's stack and edge. E2E is executable Gherkin in the scenario language the domain interview confirmed; a scenario states a business goal, the conditions that precede it, and its observable outcome, while the step definitions hold the delivery mechanics.
+- Judgment: which level a new behavior is tested at; test doubles only for third-party systems at the boundary; what earns a place in the e2e portfolio (a full journey that adds evidence about the built artifact, the connections between components, and the public edge) and what stays at integration instead; and that passing scenarios do not prove the requirements are right, because the correctness of a scenario's meaning is a human judgment.
+- Pointers: where each level's tests live, the e2e feature files with their step definitions, the executor config, the mutation config with its thresholds.
 
 ### `docs/adr/`
 

@@ -24,13 +24,13 @@ If application code exists, tell the user this skill establishes a Harness from 
 
 Run the domain interview in [INTERVIEW.md](INTERVIEW.md), section _Domain_, and write `GLOSSARY.md` as terms resolve. Record every confirmed answer, numbered as in the interview, in `INTERVIEW-ANSWERS.md` beside it, so the same project can be regenerated and reviewed.
 
-**Done when** the user has confirmed every subdomain with its kind (core, supporting, generic), every bounded context with its subdomain, the allowed dependencies between contexts, and the glossary terms of each context, and the answers are recorded.
+**Done when** the user has confirmed every subdomain with its kind (core, supporting, generic), every bounded context with its subdomain, the allowed dependencies between contexts, the glossary terms of each context, the scenario language, and the initial business scenarios, and the answers are recorded.
 
 ## 3. Interview the stack
 
 Read [GATE-CONTRACTS.md](GATE-CONTRACTS.md), then run the stack interview in [INTERVIEW.md](INTERVIEW.md), section _Stack_. Add the confirmed answers to `INTERVIEW-ANSWERS.md`, including the tool and version chosen for every Gate.
 
-**Done when** the user has confirmed the language and runtime, the deliverable type and its outermost edge, the infrastructure of each context, one pinned tool for every Gate Contract, the Entry Point mechanism, the CI provider, and any threshold that departs from the defaults, and the stack answers are recorded.
+**Done when** the user has confirmed the language and runtime, the deliverable type and its outermost edge, the infrastructure of each context, one pinned tool for every Gate Contract including the executor that runs the Gherkin scenarios, the Entry Point mechanism, the CI provider, and any threshold that departs from the defaults, and the stack answers are recorded.
 
 ## 4. Build the Walking Skeleton
 
@@ -38,13 +38,17 @@ Shape the code as a modular monolith with one module per bounded context, named 
 
 In each context, build one trivial operation that a request through the outermost edge reaches. Give each context the infrastructure adapter it needs, and keep its domain model free of infrastructure and framework imports. Expose each context to others only through a public interface.
 
-Write the first tests at every level defined in [GATE-CONTRACTS.md](GATE-CONTRACTS.md): unit tests for each context's domain model, integration tests for each adapter against real infrastructure, and e2e tests that reach every context through the outermost edge.
+Write the first tests at every level defined in [GATE-CONTRACTS.md](GATE-CONTRACTS.md): unit tests for each context's domain model, integration tests for each adapter against real infrastructure, and e2e scenarios that reach every context through the outermost edge.
 
-**Done when** the deliverable builds and runs, and the e2e tests reach every context and pass.
+The e2e level starts from the scenarios the domain interview approved. Write them as Gherkin feature files in the confirmed language, then the step definitions that drive the built artifact. The scenarios keep the business goal, the conditions, and the observable outcome; requests, selectors, and other delivery mechanics exist only in the step definitions. Keeping the wording business-readable is the approval's point, so a scenario whose meaning changes goes back to the user before its step definitions change. Keep the portfolio to a few full journeys: a journey may cross behavior already tested below when it adds evidence about the built artifact and the public edge, but it does not copy the integration matrix.
+
+**Done when** the deliverable builds and runs, and the approved e2e scenarios reach every context and pass against the built artifact.
 
 ## 5. Wire the Gates
 
 Implement every Gate in [GATE-CONTRACTS.md](GATE-CONTRACTS.md) with the tools confirmed in phase 3, versions pinned and thresholds in versioned config. Expose them through the two Entry Points: the full one runs every Gate, the fast one runs the Gates marked fast. Make CI call the full Entry Point and nothing else, and make the pre-commit hook call the fast one. Make the CI checkout give each Gate what it measures: the history a history scan covers, and a base branch the changed-set comparison can resolve.
+
+When wiring the e2e Gate, verify that its executor fails rather than passes on each way the Contract says it must: a wrong assertion, an undefined step, a pending step, an empty scenario suite, and an artifact that does not start. A configuration that behaves otherwise does not satisfy the Contract.
 
 **Done when** every Gate Contract has a Gate and the full Entry Point is green.
 
@@ -75,4 +79,4 @@ Report to the user:
 
 ## Stack Examples
 
-Non-normative realizations of the Gate Contracts for specific stacks live in <https://github.com/Sanmoo/skills/tree/main/examples>. When one matches the chosen stack, consult it for how a Gate looks when done well; the TypeScript example also records its [interview answers](../../examples/typescript/INTERVIEW-ANSWERS.md), [Gate Proofs](../../examples/typescript/GATE-PROOFS.md), and [what generating it exposed in this skill](../../examples/typescript/SKILL-FEEDBACK.md). The Gate Contracts remain the authority.
+Non-normative realizations of the Gate Contracts for specific stacks live in <https://github.com/Sanmoo/skills/tree/main/examples>. When one matches the chosen stack, consult it for how a Gate looks when done well; the TypeScript example also records its [interview answers](../../examples/typescript/INTERVIEW-ANSWERS.md), [Gate Proofs](../../examples/typescript/GATE-PROOFS.md), and [what generating it exposed in this skill](../../examples/typescript/SKILL-FEEDBACK.md). The Gate Contracts remain the authority. An example's Gherkin executor and scenario language are realizations for its stack, never rules for another: a universal obligation comes only from a Gate Contract.
