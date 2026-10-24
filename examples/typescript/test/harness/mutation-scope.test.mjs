@@ -307,11 +307,27 @@ describe("explicit proof scope", () => {
 // The proof runner is driven the same way, with a stand-in for the Entry Point:
 // the stand-in always fails on Mutation and writes whatever scope record the
 // check puts in front of it. What is under test is what the runner does with
-// that record, not what the pinned tools would have measured.
-function proofSandbox(t) {
+// that record, not what the pinned tools would have measured. A complete run
+// needs every proof's violation to apply, so its sandbox also carries the files
+// those proofs patch and a stand-in for the build and dependency commands.
+function proofSandbox(t, { complete = false } = {}) {
   const { root, stubs, git } = sandbox(t);
   writeFileSync(join(root, "Makefile"), readFileSync(join(PROJECT, "Makefile")));
-  writeTree(root, { ".gitignore": "reports/\n", [LOAN_TEST]: "// unit test\n" });
+  const files = { ".gitignore": "reports/\n", [LOAN_TEST]: "// unit test\n" };
+  if (complete) {
+    Object.assign(files, {
+      [LOAN]:
+        "export function returnLoan(loan) {\n  if (loan.returnedAt !== null) {\n    return loan;\n  }\n}\n",
+      [ADAPTER]: "const row = {};\n\nexport const loan = {\n  borrowedAt: row.borrowed_at,\n};\n",
+      "src/http/server.ts": "export const routes = [{ pattern: /^\\/books$/, run: () => {} }];\n",
+      "docs/guides/architecture.md": "# Architecture\n",
+      "package.json": '{"dependencies":{}}\n',
+      "package-lock.json": "{}\n",
+    });
+    writeFileSync(join(stubs, "npm"), "#!/bin/sh\nexit 0\n");
+    chmodSync(join(stubs, "npm"), 0o755);
+  }
+  writeTree(root, files);
   git("add", "-A");
   git("commit", "-m", "base");
   const scope = join(stubs, "scope.json");
@@ -326,8 +342,8 @@ exit 1
 `,
   );
   chmodSync(join(stubs, "make"), 0o755);
-  const run = () => {
-    const result = spawnSync("node", [PROOF_RUNNER, "--gate=Mutation"], {
+  const run = (arguments_ = ["--gate=Mutation"]) => {
+    const result = spawnSync("node", [PROOF_RUNNER, ...arguments_], {
       cwd: root,
       encoding: "utf8",
       env: baseEnvironment([stubs]),
@@ -403,5 +419,31 @@ describe("Gate Proof scope evidence", () => {
 
     assert.equal(result.status, 0, result.output);
     assert.equal(readFileSync(report, "utf8"), '{"complete":true}\n');
+  });
+
+  it("keeps both scopes in the persisted evidence of a complete run", (t) => {
+    // The stand-in Entry Point fails on Mutation for every proof, so the run
+    // reports failures; the report is still written, which is what a shortened
+    // log must not be able to erase.
+    const proofs = proofSandbox(t, { complete: true });
+    proofs.recordScope(DECLARED);
+
+    const result = proofs.run([]);
+
+    const report = JSON.parse(
+      readFileSync(join(proofs.root, "reports", "gate-proofs.json"), "utf8"),
+    );
+    assert.ok(report.length > 1, "a complete run records every proof");
+    const mutation = report.find((record) => record.gate === "Mutation");
+    assert.deepEqual(mutation.scope, {
+      requested: [LOAN],
+      selection: "explicit",
+      analyzed: [LOAN],
+      unavailable: null,
+      problems: [],
+    });
+    assert.equal(mutation.wentRed, true);
+    assert.equal(mutation.command, "make check");
+    assert.match(result.output, /Gate proofs/);
   });
 });

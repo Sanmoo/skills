@@ -309,14 +309,19 @@ function scopeProblems(requested, recorded) {
 // Gate said it selected, and what it analyzed. Requested and effective scope
 // live here rather than in the output, so a shortened log cannot erase them.
 function scopeOf(proof, recorded, problems = []) {
+  const record = recorded?.record;
   return {
     requested: proof.scope ?? null,
-    selection: recorded?.record?.selection ?? null,
-    analyzed: recorded?.record?.analyzedFiles ?? null,
+    selection: record?.selection ?? null,
+    analyzed: record?.analyzedFiles ?? null,
+    // A record that holds `null` here has answered the question: the analysis
+    // produced nothing to mark unavailable. Only a missing record falls through
+    // to why there is no scope to show.
     unavailable:
-      recorded?.record?.unavailable ??
-      recorded?.reason ??
-      (proof.scope === undefined ? "no scope was declared" : "the Entry Point did not run"),
+      record !== undefined
+        ? (record.unavailable ?? null)
+        : (recorded?.reason ??
+          (proof.scope === undefined ? "no scope was declared" : "the Entry Point did not run")),
     problems,
   };
 }
