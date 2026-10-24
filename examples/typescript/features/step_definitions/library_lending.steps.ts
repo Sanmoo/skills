@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { Given, Then, When } from "@cucumber/cucumber";
-import { request } from "../support/http.js";
+import { request, type HttpReply } from "../support/http.js";
 import type { LibraryWorld } from "../support/world.js";
 
 interface BookBody extends Record<string, unknown> {
@@ -22,9 +22,16 @@ interface ErrorBody extends Record<string, unknown> {
   readonly error: string;
 }
 
-function required(value: string, name: string): string {
-  assert.notEqual(value, "", `the scenario has no ${name} yet`);
+function required(value: string | undefined, name: string): string {
+  assert.ok(value !== undefined, `the scenario has no ${name} yet`);
   return value;
+}
+
+function takeOnLoan(world: LibraryWorld, borrower: string): Promise<HttpReply> {
+  return request(world.baseUrl, "POST", "/loans", {
+    bookId: required(world.bookId, "book"),
+    borrower,
+  });
 }
 
 Given(
@@ -40,16 +47,13 @@ Given(
       201,
       `registering the book failed with status ${String(reply.status)}`,
     );
-    const book = reply.body as BookBody;
-    this.bookTitle = book.title;
-    this.bookId = book.id;
+    this.bookId = (reply.body as BookBody).id;
   },
 );
 
 Given(
   "the book {string} is not in the catalog",
   async function (this: LibraryWorld, title: string) {
-    this.bookTitle = title;
     this.bookId = `absent-${randomUUID()}`;
     const reply = await request(this.baseUrl, "GET", `/books/${this.bookId}`);
     assert.equal(reply.status, 404, `${title} unexpectedly exists in the catalog`);
@@ -59,10 +63,7 @@ Given(
 When(
   "the borrower {string} takes the book on loan",
   async function (this: LibraryWorld, borrower: string) {
-    const reply = await request(this.baseUrl, "POST", "/loans", {
-      bookId: required(this.bookId, "book"),
-      borrower,
-    });
+    const reply = await takeOnLoan(this, borrower);
     assert.equal(
       reply.status,
       201,
@@ -75,12 +76,7 @@ When(
 When(
   "the borrower {string} asks to take the book on loan",
   async function (this: LibraryWorld, borrower: string) {
-    const reply = await request(this.baseUrl, "POST", "/loans", {
-      bookId: required(this.bookId, "book"),
-      borrower,
-    });
-    this.lastStatus = reply.status;
-    this.lastBody = reply.body;
+    this.lastReply = await takeOnLoan(this, borrower);
   },
 );
 
@@ -115,11 +111,14 @@ Then("a later consultation shows the loan has been returned", async function (th
 });
 
 Then("the loan request is refused because the book was not found", function (this: LibraryWorld) {
+  const reply = this.lastReply;
+  assert.ok(reply !== undefined, "the scenario has no loan request yet");
   assert.equal(
-    this.lastStatus,
+    reply.status,
     404,
-    `the loan request was answered with status ${String(this.lastStatus)}`,
+    `the loan request was answered with status ${String(reply.status)}`,
   );
-  const body = this.lastBody as ErrorBody;
+  assert.ok(reply.body !== null, "the refused loan request carried no reason");
+  const body = reply.body as ErrorBody;
   assert.match(body.error, /not in the catalog/);
 });

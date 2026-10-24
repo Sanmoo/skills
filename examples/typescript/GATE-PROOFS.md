@@ -8,6 +8,8 @@ The cost is one Entry Point run per Gate - the full tier's container, mutation r
 
 Mutation's changed-set scope adds one visible exception to the one-change rule: the proof also marks `src/lending/domain/loan.ts` as changed with a comment, because a branch that changes no domain code leaves the Gate nothing to mutate. The marker adds no behavior, and the Mutation entry records both paths.
 
+Before the E2E row was recorded, the level was also run with five deliberate faults: a failing assertion, an undefined step, a pending step, no selected scenarios, and no compiled artifact. Each made the Gate exit non-zero. Cucumber's strict mode covers the assertion, undefined and pending cases; `scripts/run-e2e.mjs` covers the empty selection; the readiness wait covers the missing artifact.
+
 | Gate                       | Tier | Tool (version)                                       | Violation introduced                              | Result |
 | -------------------------- | ---- | ---------------------------------------------------- | ------------------------------------------------- | ------ |
 | Format                     | fast | Prettier 3.9.10                                      | misindented a source file                         | red    |

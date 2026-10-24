@@ -112,10 +112,11 @@ const proofs = [
       const restoreTest = patch(
         "src/lending/domain/loan.test.ts",
         () =>
-          'import { describe, expect, it } from "vitest";\n\n' +
+          'import { describe, expect, it } from "vitest";\n' +
+          'import { borrowBook } from "./loan.js";\n\n' +
           'describe("loan", () => {\n' +
           '  it("still runs", () => {\n' +
-          "    expect(true).toBe(true);\n" +
+          '    expect(typeof borrowBook).toBe("function");\n' +
           "  });\n" +
           "});\n",
       );
