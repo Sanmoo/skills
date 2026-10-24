@@ -1,0 +1,49 @@
+name: gate-proofs
+
+# Gate Proofs are execution evidence on demand: every proof deliberately breaks
+# the tree and runs the full Entry Point, so this workflow is manual and never
+# part of pull-request validation. It validates the clean baseline first, then
+# runs the proof runner exactly as a developer would and publishes the report
+# that run generated.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate-proofs:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/typescript
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # The Secrets Gate scans history and the Mutation Gate diffs against
+          # the base branch, so a shallow checkout would make both smaller and
+          # the proofs would be measured against the wrong tree.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2
+        with:
+          working_directory: examples/typescript
+      - run: npm ci
+      - name: Validate the clean baseline
+        run: make check
+      - name: Run the Gate Proofs
+        id: proofs
+        run: npm run gate-proofs
+      - name: Confirm the complete run produced its report
+        if: steps.proofs.outcome == 'success'
+        run: test -s reports/gate-proofs.json
+      - name: Upload the Gate Proof report
+        # A failed proof still leaves its report for diagnosis. A baseline or
+        # setup failure has no report and must not publish anything, while a
+        # successful proof run without its report fails the previous step.
+        if: always() && steps.proofs.outcome != 'skipped'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: gate-proofs-${{ github.sha }}-run-${{ github.run_id }}-attempt-${{ github.run_attempt }}
+          path: examples/typescript/reports/gate-proofs.json
+          if-no-files-found: warn
