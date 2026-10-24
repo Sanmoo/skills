@@ -13,7 +13,9 @@ check: check-fast integration e2e mutation vulnerabilities
 
 # Gate targets, kept separate so one Gate can be wired and run on its own. No
 # Gate Proof uses them: a proof runs the Entry Point of the Gate's tier, which is
-# what the proof exists to show.
+# what the proof exists to show. The Mutation target first checks the wrapper's
+# own scope selection against controlled Git trees, then mutates; the checks are
+# what keeps a broken selection from passing as a smaller measurement.
 .PHONY: install build format lint types unit integration e2e mutation mutation-full
 .PHONY: boundaries dependency-rule metrics secrets avoided-terms guide-pointers vulnerabilities
 
@@ -44,6 +46,7 @@ e2e: build
 	npm run e2e
 
 mutation:
+	npm run mutation-checks
 	npm run mutation
 
 mutation-full:

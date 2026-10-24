@@ -13,6 +13,17 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 - **Third-party code.** Exclude it from traversal, never from rule targets: an exclusion that hides a target also hides the violation. A rule that depends on matching the target path must still see the dependency it forbids.
 - **Own level.** A Contract's obligation stops at its own level; the Gherkin obligation on e2e adds none to unit or integration tests.
 
+## Rules for every Gate Proof
+
+- **One violation.** A proof introduces the smallest violation its Gate exists to catch and nothing else, and the Entry Point of the Gate's tier must exit non-zero naming that Gate, or the proof has shown nothing.
+- **Reachable input.** A Gate that analyzes only the files changed relative to a base can have no eligible input on the branch that carries its proof. Such a proof declares, beside the violation, the smallest set of eligible files the violation needs, and for that execution only the declaration replaces the Gate's changed-set selection. The declaration is setup, not a second violation: no source marker and no artificial comparison base stands in for it. How it reaches the Gate is the stack's choice.
+- **Ordinary Gate, ordinary Entry Point.** The proof still runs the Entry Point of the Gate's tier, and the Gate's analysis, pinned tools, and thresholds are the ones validation uses. An isolated Gate target or a whole-scope command is not a Gate Proof.
+- **Invalid scope fails.** An explicitly empty, missing, or ineligible declared input makes the proof exit non-zero and say why. It must not widen to other files, fall back to the ordinary selection, or be accepted as the intended violation.
+- **Bound to its run.** A declaration applies to that execution only and is restored with the violation, so it reaches neither a later proof nor ordinary validation, including after a failure.
+- **Evidence names both scopes.** The record keeps the requested files and the files actually analyzed, alongside the Entry Point, the violation, the outcome, and the failing Gate, in a form that survives output truncation. A scope that could not be measured is recorded as unavailable, never as an empty set.
+- **Ordinary selection is verified separately.** Explicit-scope enforcement does not show that changed-set discovery still works, so the selection behavior the Contract describes, its legitimate empty set included, is checked on its own.
+- **Fresh evidence.** A recorded outcome belongs to the tree it ran against; an earlier run does not validate a later change.
+
 ## Format
 
 - **Intent**: keep the code in the shape the formatter defines, so diffs carry only meaning.
@@ -70,7 +81,7 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 - **Intent**: prove the tests would notice a wrong change, which coverage alone cannot.
 - **Passes when**: the mutation score is at least **80%** overall and at least **90%** in core contexts. The full Entry Point mutates only code changed relative to the base branch (`main`, or `MUTATION_BASE` when the environment sets it), which on day zero is all of it; the changed set includes the working tree and untracked files, not only commits. A scheduled CI job mutates the whole codebase periodically. When the mutation tool has no per-context threshold, a wrapper reads its machine-readable report and applies the overall and core limits itself. When the changed set cannot be established - for example, no resolvable base branch, no earlier commit to compare against, no shared history with it, or files that cannot be listed or resolved - the Gate states that in its own output and mutates the whole codebase. That is a widening of scope, not a finding, so it does not fail the Gate, and the thresholds still apply to everything mutated. When HEAD is the base branch's own tip, the change to measure is what landed with the tip commit: the tip against its first parent. A push that lands several commits therefore measures only the tip; the scheduled whole-codebase run covers the rest.
 - **Tier**: full.
-- **Gate Proof**: delete the assertions of a core unit test.
+- **Gate Proof**: delete the assertions of a core unit test, declaring the core domain file that test covers as the proof's scope.
 
 ## Context boundaries
 
