@@ -77,7 +77,7 @@ The stack-agnostic statement of a Gate's intent and acceptance criteria, which a
 _Avoid_: Gate spec
 
 **Gate Floor**:
-The set of Gates every project must have, regardless of stack or subdomain.
+The set of Gates every Harness must include before it counts as established, regardless of stack or subdomain. A greenfield project has the whole set from day zero; an existing application can adopt it progressively.
 _Avoid_: Minimum gates, baseline gates
 
 **Gate state**:
@@ -97,7 +97,7 @@ The state in which every Gate in the Gate Floor is adopted: each runs under its 
 _Avoid_: Complete harness, certified harness
 
 **Entry Point**:
-A single command that runs Gates, in two tiers: the full Entry Point is what CI calls for a change, and the fast Entry Point runs the quick subset for local hooks. The full Entry Point has two modes, validation by change and integral validation, and the mode is part of its definition rather than another command. These are the only commands a Guide may name.
+A single command that runs Gates, in two tiers: the full Entry Point is what CI calls for a change and runs the Gates applicable to its chosen validation scope; the fast Entry Point runs the quick subset for local hooks. The full Entry Point has two modes, validation by change and integral validation, and the mode is part of its definition rather than another command. These are the only commands a Guide may name.
 _Avoid_: Check script
 
 **Validation by change**:
