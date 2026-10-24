@@ -49,7 +49,7 @@ Written during the domain interview, in the format given in [INTERVIEW.md](INTER
 ### `docs/guides/testing-strategy.md`
 
 - Intent: the definition of each test level (unit, integration, e2e), as in [GATE-CONTRACTS.md](GATE-CONTRACTS.md), stated for this project's stack and edge, including the scenario language the domain interview confirmed.
-- Judgment: which level a new behavior is tested at; test doubles only for third-party systems at the boundary; what earns a place in the e2e portfolio and what stays at integration instead; and that the scenario approval the Contract requires precedes its step definitions.
+- Judgment: which level a new behavior is tested at; test doubles only for third-party systems at the boundary; and that the scenario approval the Contract requires precedes its step definitions.
 - Pointers: where each level's tests live, the approved business scenarios recorded with the interview answers, the e2e feature files with their step definitions, the executor config, the mutation config with its thresholds.
 
 ### `docs/adr/`
