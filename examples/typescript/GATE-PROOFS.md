@@ -1,6 +1,6 @@
 # Gate Proofs
 
-Every implemented Gate was proven by introducing the violation named in its Gate Contract, running the Entry Point of its tier (`make check-fast` for fast Gates, `make check` for full Gates) with only that violation present, confirming it exited non-zero and named the Gate, then restoring the tree.
+Every Gate was proven by introducing the violation named in its Gate Contract, running the Entry Point of its tier (`make check-fast` for fast Gates, `make check` for full Gates) with only that violation present, confirming it exited non-zero and named the Gate, then restoring the tree.
 
 The Entry Point is the same command in every proof of a tier, and the tree is not: each run carries exactly one violation, which is why a red result can be laid at the Gate the Entry Point named. The proof script owns that reasoning and the checks it needs; what this page records is the outcome.
 
@@ -13,6 +13,7 @@ The cost is one Entry Point run per Gate - the full tier's container, mutation r
 | Types                      | fast | TypeScript 5.9.3                                     | assigned a string to a number                     | red    |
 | Unit tests                 | fast | Vitest 4.1.12                                        | inverted the already-returned condition           | red    |
 | Integration tests          | full | Vitest + Testcontainers 12.2.1 (Postgres 17.2)       | mapped `borrowed_at` from the wrong column        | red    |
+| E2E tests                  | full | Cucumber 13.3.0 (built service over HTTP)            | renamed the route that registers a book           | red    |
 | Mutation                   | full | Stryker 10.0.0 with its Vitest runner                | deleted the assertions of the core loan unit test | red    |
 | Context boundaries         | fast | dependency-cruiser 18.7.0                            | imported a Catalog domain module from Lending     | red    |
 | Dependency rule            | fast | dependency-cruiser 18.7.0                            | imported `pg` in the Catalog domain               | red    |
@@ -23,7 +24,3 @@ The cost is one Entry Point run per Gate - the full tier's container, mutation r
 | Guide pointers             | fast | the repository's script                              | linked a Guide to a missing file                  | red    |
 
 The full Entry Point was green on the final tree, after every proof was reverted, and CI's `example` job runs it on every pull request.
-
-## The Gate with no row: E2E tests
-
-The **E2E tests** Gate Contract has no Gate in this tree, so it has no proof; the row is absent on purpose. [ADR 0004](docs/adr/0004-defer-the-e2e-level-under-the-universal-rule.md) records the current deferral.

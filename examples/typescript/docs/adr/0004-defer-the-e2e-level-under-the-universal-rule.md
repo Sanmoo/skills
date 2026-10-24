@@ -1,5 +1,7 @@
 # Defer the e2e level under the universal Gherkin rule
 
+_Superseded by [ADR 0005](0005-restore-the-e2e-level-with-cucumber.md)._
+
 [ADR 0003](0003-defer-the-e2e-level.md) deferred this tree's e2e level and left open whether the interview should offer Gherkin at all. [Sanmoo/skills#6](https://github.com/Sanmoo/skills/issues/6) settles that for every stack: the e2e level is executable Gherkin in business language, the executor is chosen and pinned in the stack interview, and the scenario language is settled in the domain interview. This tree still has no e2e level, so the deferral stays until [#7](https://github.com/Sanmoo/skills/issues/7) realizes the rule.
 
 ## Context
