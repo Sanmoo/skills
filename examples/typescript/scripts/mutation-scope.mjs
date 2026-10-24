@@ -42,6 +42,18 @@ export function writeScopeRecord({
   );
 }
 
+// A declaration that named something unusable. Nothing was analyzed, and the
+// reason is part of the record rather than only of the log.
+export function rejectedScope(requestedFiles, reason) {
+  return {
+    selection: SELECTION.rejected,
+    requestedFiles,
+    analyzedFiles: null,
+    analyzedFilesUnavailable: reason,
+    analysisCompleted: false,
+  };
+}
+
 // Yields the record, or null with the reason there is none. A missing or
 // unreadable record is not an empty scope.
 export function readScopeRecord() {

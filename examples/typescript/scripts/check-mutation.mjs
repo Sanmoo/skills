@@ -19,7 +19,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { outputOf, report, run } from "./lib.mjs";
-import { MUTATION_SCOPE_ENV, SELECTION, writeScopeRecord } from "./mutation-scope.mjs";
+import {
+  MUTATION_SCOPE_ENV,
+  SELECTION,
+  rejectedScope,
+  writeScopeRecord,
+} from "./mutation-scope.mjs";
 
 const OVERALL_THRESHOLD = 80;
 const CORE_THRESHOLD = 90;
@@ -174,13 +179,9 @@ const declared = declaration === undefined ? undefined : declaredScope(declarati
 // whole-codebase run. Rejecting the combination keeps a mis-scoped invocation
 // from reporting a whole-codebase result as if it were a proof.
 if (full && declared !== undefined) {
-  writeScopeRecord({
-    selection: SELECTION.rejected,
-    requestedFiles: declared.files,
-    analyzedFiles: null,
-    analyzedFilesUnavailable: `${MUTATION_SCOPE_ENV} cannot narrow the scheduled --full run`,
-    analysisCompleted: false,
-  });
+  writeScopeRecord(
+    rejectedScope(declared.files, `${MUTATION_SCOPE_ENV} cannot narrow the scheduled --full run`),
+  );
   report("Mutation", [`${MUTATION_SCOPE_ENV} cannot narrow the scheduled --full run`]);
 }
 if (!full) {
@@ -188,13 +189,7 @@ if (!full) {
     // Nothing runs: a wrong declaration is a setup failure, never evidence that
     // the intended violation was detected, and the record keeps it apart from a
     // scope that analyzed an empty set.
-    writeScopeRecord({
-      selection: SELECTION.rejected,
-      requestedFiles: declared.files,
-      analyzedFiles: null,
-      analyzedFilesUnavailable: declared.problems.join("; "),
-      analysisCompleted: false,
-    });
+    writeScopeRecord(rejectedScope(declared.files, declared.problems.join("; ")));
     report("Mutation", declared.problems);
   }
   if (declared !== undefined) {
@@ -215,7 +210,7 @@ if (!full) {
         requestedFiles: null,
         analyzedFiles: [],
         analyzedFilesUnavailable: null,
-        analysisCompleted: false,
+        analysisCompleted: true,
       });
       report("Mutation", []);
       console.log(`  no mutable files changed relative to ${changed.base}`);

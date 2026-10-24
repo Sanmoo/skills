@@ -15,7 +15,7 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 
 ## Rules for every Gate Proof
 
-- **One violation.** A proof introduces the smallest violation its Gate exists to catch and nothing else, and the Entry Point of the Gate's tier must exit non-zero naming that Gate, or the proof has shown nothing.
+- **One violation.** The proof's tree carries exactly one deliberate violation - the smallest its Gate exists to catch - and the Entry Point of the Gate's tier exits non-zero naming that Gate. Several violations in one tree, or a red Gate that is not the Gate under proof, prove nothing.
 - **Reachable input.** A Gate that analyzes only the files changed relative to a base can have no eligible input on the branch that carries its proof. Such a proof declares, beside the violation, the smallest set of eligible files the violation needs, and for that execution only the declaration replaces the Gate's changed-set selection. The declaration is setup, not a second violation: no source marker and no artificial comparison base stands in for it. How it reaches the Gate is the stack's choice.
 - **Ordinary Gate, ordinary Entry Point.** The proof still runs the Entry Point of the Gate's tier, and the Gate's analysis, pinned tools, and thresholds are the ones validation uses. An isolated Gate target or a whole-scope command is not a Gate Proof.
 - **Invalid scope fails.** An explicitly empty, missing, or ineligible declared input makes the proof exit non-zero and say why. It must not widen to other files, fall back to the ordinary selection, or be accepted as the intended violation.
