@@ -1,6 +1,6 @@
 # Interviews
 
-Both interviews run on the greenfield path. The adoption path runs _Adoption_ instead, after the inventory, with the same discipline: the agent discovers facts, the maintainer confirms them and makes every decision.
+The _Domain_ and _Stack_ interviews run on the greenfield path. The adoption path runs _Adoption_ instead, after the inventory, with the same discipline: the agent discovers facts, the maintainer confirms them and makes every decision.
 
 Interviews run in **rounds**. Map the open decisions as a tree: each decision unlocks the decisions that hang off it. The **frontier** is every decision whose prerequisites are settled. Ask the whole frontier in one round, number each question, and give your recommended answer. Then wait for the user's answers, recompute the frontier, and ask the next round.
 
