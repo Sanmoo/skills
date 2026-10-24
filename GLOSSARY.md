@@ -45,7 +45,7 @@ The set of Gates every project must have, regardless of stack or subdomain. A gr
 _Avoid_: Minimum gates, baseline gates
 
 **Gate state**:
-The honest classification of every Gate: **adopted**, **pending**, or **blocked**. A Gate is adopted only when it actually runs under the approved scope and cadence, has a repeatable Gate Proof, and enforces the agreed adoption criteria. Missing, unexecuted, unproven, or out-of-scope Gates are pending; Gates the environment or a missing decision prevents from running are blocked. A blocked Gate is not adopted, and a green run under another scope is not adoption.
+The honest classification of every Gate: **adopted**, **pending**, or **blocked**. A Gate is adopted only when it actually runs under the approved scope and cadence, has a Gate Proof, and enforces the agreed adoption criteria; otherwise it is pending, or blocked when the environment or a missing decision prevents it from running. A blocked Gate is not adopted.
 _Avoid_: Gate status, gate maturity
 
 **Gate Proof**:

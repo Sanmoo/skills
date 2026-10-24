@@ -16,7 +16,7 @@ Work the phases in order. Start a phase only when the previous one meets its com
 
 ## 1. Select the starting path
 
-Inspect the repository. It is **greenfield** when it holds no application source code: at most a README, license, ignore files, and editor or tooling config. It is an **existing application** when it already holds application source, tests, delivered behavior, or tooling that belongs to the application.
+Inspect the repository. It is **greenfield** when it holds no application source code, no tests of application behavior, and no delivered behavior; it may hold a README, license, ignore files, and editor or tooling config, including a task runner or CI config for the project to come. It is an **existing application** when it already holds application source, tests of application behavior, delivered behavior, or tooling that belongs to the application. When both descriptions seem to fit, application source, tests, or delivered behavior wins: route to the adoption path.
 
 State the selected path and the evidence for it to the user, then follow that path's phases. The greenfield path keeps its day-zero expectations. The adoption path starts with an inventory and reaches an approved plan before anything in the application, its tests, or its tooling changes.
 
@@ -74,7 +74,7 @@ A changed-set Gate may have no eligible input on the branch that carries its pro
 
 ## Adoption path
 
-The adoption path reconciles a Harness with an application that already exists. It does not build a replacement Walking Skeleton, restructure the application, rename its domain, reformat it, or replace working tools. It changes nothing in the application, its tests, or its tooling before the maintainer approves the plan.
+The adoption path reconciles a Harness with an application that already exists. It does not build a replacement Walking Skeleton, restructure the application, rename its domain, reformat it, or replace working tools. It changes nothing in the application, its tests, or its tooling before the maintainer approves the plan. Its steps are numbered A1 to A3 so the greenfield phases 2 to 7 keep their numbers.
 
 ### A1. Inventory the existing application
 
@@ -97,29 +97,23 @@ Keep the inventory lightweight and factual. Read manifests, lockfiles, source la
 
 Run the adoption interview in [INTERVIEW.md](INTERVIEW.md), section _Adoption_. Present the discovered facts; the maintainer confirms or corrects them and decides the domain classifications, boundaries to preserve, regression priorities, tools to retain or replace, stages, scopes, budgets, and cadence. Do not decide any of these unilaterally and do not invent a domain model where the application already has one.
 
-Record every confirmed answer in `INTERVIEW-ANSWERS.md` under _Adoption_, and keep the inventory's evidence beside it.
+Record every confirmed answer in the adoption record outside the application until the plan is approved, and keep the inventory's evidence beside it.
 
 **Done when** the maintainer has confirmed the inventory, the domain understanding, the boundaries, the existing checks and tools to retain or replace, the regression priorities, and the scope, budget, and cadence of every planned stage, and the answers are recorded.
 
 ### A3. Write the adoption plan and obtain approval
 
-Write `ADOPTION-PLAN.md` beside `INTERVIEW-ANSWERS.md`. Make it staged and prioritized: order stages by the protection they buy, not by tool convenience. Each stage names its scope, the Gate Contracts it realizes, the Gates it expects to adopt, the Guides it writes or reconciles, the tests and tooling changes it proposes, its validation budget and cadence, and what remains pending or blocked. Record every Gate's current [Gate state](GATE-CONTRACTS.md#gate-states) as adopted, pending, or blocked; a tool that exists in the tree is not an adopted Gate.
+Draft `ADOPTION-PLAN.md` in a scratch location outside the application. Make it staged and prioritized: order stages by the protection they buy, not by tool convenience. Each stage names its scope, the Gate Contracts it realizes, the Gates it expects to adopt, the Guides it writes or reconciles, the tests and tooling changes it proposes, its validation budget and cadence, and what remains pending or blocked. Record every Gate's current [Gate state](GATE-CONTRACTS.md#gate-states) as adopted, pending, or blocked; a tool that exists in the tree is not an adopted Gate.
 
-Present the plan to the maintainer and obtain approval before anything in the application, its tests, or its tooling changes. Drafting the plan touches none of them.
+Present the plan to the maintainer and obtain approval before anything in the application, its tests, or its tooling changes. Drafting and approving touch none of them.
 
-**Done when** the maintainer has approved the plan and the approved plan is recorded.
+After approval, write `ADOPTION-PLAN.md` and merge the confirmed answers into `INTERVIEW-ANSWERS.md` under _Adoption_ in the repository, formatted with the project's formatter so the fast Entry Point stays green. The run ends at approval: execution of the approved plan is the next stage, and no Gate is adopted by the existence of the plan.
 
-### A4. Execute the approved plan
-
-Execute the plan one stage at a time and change only what the approved stage names. Reconcile rather than replace: retain a tool or check that satisfies the agreed criteria, and propose a replacement with its reason and cost before making it.
-
-Each stage ends with an honest Gate-state report. A Gate is adopted only when it actually runs under the approved scope and cadence and its Gate Proof is recorded; until then it is pending, or blocked when something outside the stage prevents it. Scheduling, configuring, or a green run under another scope is not adoption. A blocked Gate is never faked or counted as adopted; its absence of protection stays stated.
-
-**Done when** the plan's stages are complete or are explicitly reported as pending or blocked, and every Gate is reported in one of the three states.
+**Done when** the maintainer has approved the plan, the approved plan and answers are recorded, and the fast Entry Point is green after that write.
 
 ## Gate states and blockers
 
-A Gate is **adopted** only when it actually runs under the approved scope and cadence, has a repeatable Gate Proof, and enforces the agreed adoption criteria. Otherwise it is **pending**, or **blocked** when the environment or a missing decision prevents it from running. [GATE-CONTRACTS.md](GATE-CONTRACTS.md) holds the full rules; every report and claim uses those three states.
+The [Gate states](GATE-CONTRACTS.md#gate-states) are **adopted**, **pending**, and **blocked**. [GATE-CONTRACTS.md](GATE-CONTRACTS.md) holds their rules; every report and claim uses one of them.
 
 On the greenfield path, every Gate in the Gate Floor runs before the Harness counts as established. When the environment cannot run one, stop at that phase and report the blocker and what the user must provide. Blockers include a missing container runtime, no network for the vulnerability database, and a host binary a Gate shells out to; check what each tool needs before starting phase 7. The run resumes from that phase once the blocker is cleared.
 

@@ -11,8 +11,9 @@ The rehearsal used the [TypeScript Stack Example](../../examples/typescript/AGEN
 - Content manifest: `(cd <copy> && find . -type f -print0 | sort -z | xargs -0 sha256sum) | sha256sum`.
 - Before: `5ef02abba37a7f5f5d543b858518ab5e8de76b4ffb454b58386e44a6e0cc463c`.
 - After: `5ef02abba37a7f5f5d543b858518ab5e8de76b4ffb454b58386e44a6e0cc463c`.
+- Reproduction: the copy is ephemeral; a fresh `git archive fc129fe:examples/typescript` on 2026-10-24 produced the same 68-file manifest `5ef02abb…463c`.
 
-Both hashes are identical and no write command ran inside the copy. The inventory, the confirmed answers, and the plan were recorded in this file, outside the copy. The copy's code, tests, and tooling are byte-identical before and after the rehearsal.
+Both hashes are identical and no write command ran inside the copy. The inventory, the confirmed answers, and the proposed plan were recorded in this file, outside the copy, following the skill's rule that those records stay outside the application until the plan is approved. The run ends at approval, so no record was written into the copy; a real run writes them into the repository after approval, formatted so the fast Entry Point stays green. The copy's code, tests, and tooling are byte-identical before and after the rehearsal.
 
 ## Inventory (facts discovered by the agent)
 
@@ -31,17 +32,17 @@ Everything above is a fact the repository states; no maintenance decision was ma
 
 ## Interview rounds and confirmed decisions
 
-The rehearsal ran the adoption interview from [INTERVIEW.md](../../skills/bootstrap-harness/INTERVIEW.md) after the inventory. The maintainer was not present in this disposable-copy session. The written decisions in [issue #2](https://github.com/Sanmoo/skills/issues/2) and [issue #13](https://github.com/Sanmoo/skills/issues/13) are the confirmed answers to Q1-Q9 below; the agent discovered the facts and did not decide any of them. The plan's approval is recorded here. The skill still requires a live maintainer confirmation for a real application; the rehearsal does not add a second, weaker rule.
+The rehearsal ran the adoption interview from [INTERVIEW.md](../../skills/bootstrap-harness/INTERVIEW.md) after the inventory. The maintainer was not present in this disposable-copy session. The written decisions in [issue #2](https://github.com/Sanmoo/skills/issues/2) and [issue #13](https://github.com/Sanmoo/skills/issues/13) are the confirmed answers to the adoption interview questions Q1-Q9 below; the agent discovered the facts and did not decide any of them. The plan's approval is recorded here. The skill still requires a live maintainer confirmation for a real application; the rehearsal does not add a second, weaker rule.
 
 Confirmed answers:
 
 1. **Q1 - Deliverable and outermost edge.** Keep the HTTP service and its HTTP edge; the two Gherkin journeys are the e2e target.
 2. **Q2 - Domain understanding.** Keep Lending (core) and Catalog (supporting), their names, their public interfaces, and their vocabulary.
 3. **Q3 - Boundaries.** Keep the declared context map and the dependency rule; no observed mismatch requires a boundary change.
-4. **Q4 - Observed behavior and regression priorities.** Treat the existing tests and Gherkin journeys as the regression contract. No functional audit of business correctness.
+4. **Q4 - Observed behavior and regression priorities.** Treat the existing tests and Gherkin journeys as the regression contract. No revalidation of business correctness.
 5. **Q5 - Existing tools and checks.** Retain every existing tool and check; no replacement is proposed.
 6. **Q6 - Entry Points and CI.** Retain `make check-fast`, `make check`, and the containing repository's workflow arrangement.
-7. **Q7 - Gaps and blocked work.** No application, test, or tooling change is required. A standalone CI workflow is only a proposal if the copy is promoted out of the containing repository, and would be a separate approved change.
+7. **Q7 - Gaps and blocked work.** No application, test, or tooling change is required. The copy's CI arrangement is the containing repository's workflows; the inventory records it and no change is proposed.
 8. **Q8 - Stages, scope, budget, and cadence.** The whole example; the existing full Entry Point and its current cadence; no universal CI target.
 9. **Q9 - Plan approval.** The plan below is approved before any change. Drafting it changed nothing in the copy.
 
@@ -71,16 +72,7 @@ The plan is staged and prioritized by the protection each stage buys. It is appr
 - **Exit:** a Gate is adopted only after it runs under this scope and its proof turns the appropriate Entry Point red because of that Gate; a Gate that cannot run is blocked with the missing prerequisite.
 - **Gate states after the stage:** adopted, pending, or blocked, one per Gate, recorded with its proof.
 
-### Stage 3 - Decide the standalone CI arrangement (priority 3, conditional)
-
-- **Scope:** only the CI arrangement, not the application.
-- **Gate Contracts:** none changed.
-- **Guides:** no change.
-- **Changes:** none in the copy. Its CI is the containing repository's workflows; if the copy is later promoted to a standalone repository, propose a workflow that runs the full Entry Point and gives each Gate the checkout it needs, then obtain approval before adding it.
-- **Validation budget and cadence:** not applicable until the copy is promoted.
-- **Gate states after the stage:** unchanged.
-
-### Stage 4 - Report the final state (priority 4)
+### Stage 3 - Report the final state (priority 3)
 
 - **Scope:** the whole copy.
 - **Gate Contracts:** all fourteen, reported by state.
@@ -92,4 +84,4 @@ The plan is staged and prioritized by the protection each stage buys. It is appr
 
 It establishes that the adoption path selects an existing application, produces a factual inventory without expensive analysis, records the confirmed decisions adapted to adoption, and reaches a staged, prioritized plan approved under the maintainer's written decisions, while the copy's code, tests, and tooling remain untouched.
 
-It does not execute the plan. Gate adoption, Gate Proofs under the approved plan, establishment, and the final Gate-state report are the next stage of the work; this record makes no adoption claim for any Gate and no establishment claim for the copy.
+It does not execute the plan. Gate adoption, Gate Proofs under the approved plan, establishment, and the final Gate-state report are the next stage of the work; this record makes no adoption claim for any Gate and no establishment claim for the copy. It also cannot demonstrate a pending-to-adopted transition: a Gate cannot be adopted before execution, and the later execution stage covers that transition.
