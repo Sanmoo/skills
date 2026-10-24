@@ -120,9 +120,9 @@ Each stage adopts its Gates under the adoption criteria the maintainer approved.
 
 A Gate is adopted only when it meets the [adopted Gate state](GATE-CONTRACTS.md#gate-states) under the approved scope and cadence. A Gate that does not run, cannot fail, selects no meaningful input, passes vacuously, or is not yet in scope stays pending, or blocked when something outside the stage prevents it. Neither a configured Gate nor a green run under another scope is adoption.
 
-End each stage with an honest stage completion report: what the stage changed, which Gates it adopted, which remain pending or blocked and why, and where each proof is recorded. A stage may complete with pending or blocked Gates; its report says so instead of hiding them. A later approved stage may adopt a Gate an earlier stage left pending only by running it under its approved criteria and proving it; no stage inherits adoption from another.
+End each stage by recording its completion and Gate states in `ADOPTION-PLAN.md` and reporting the same to the maintainer: what the stage changed, which Gates it adopted, which remain pending or blocked and why, and where each proof is recorded. A stage may complete with pending or blocked Gates; its record and report say so instead of hiding them. A later approved stage may adopt a Gate an earlier stage left pending only by running it under its approved criteria and proving it; no stage inherits adoption from another.
 
-**Done when** every approved stage has been executed or explicitly reported as pending or blocked, and every Gate the plan adopted has its repeatable Gate Proof recorded.
+**Done when** every approved stage has been executed or explicitly reported as pending or blocked, its completion and Gate states are recorded in `ADOPTION-PLAN.md`, and every Gate the plan adopted has its repeatable Gate Proof recorded.
 
 ### A5. Complete and report establishment
 
