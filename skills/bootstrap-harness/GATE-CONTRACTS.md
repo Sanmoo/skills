@@ -10,6 +10,7 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 - **Warnings are errors.** A finding either fails the Gate or is excluded in config with a comment stating why.
 - **Tiered.** Fast Gates run in both Entry Points. Full Gates run only in the full Entry Point, which CI calls.
 - **Core thresholds.** Where a contract sets a stricter threshold for core, the Gate config applies it to the modules of core contexts.
+- **Verified selection.** A Gate whose inputs are selected from the change under test verifies that selection at its own executable boundary, so a selection that silently stops matching fails the Gate instead of measuring less than the Contract asks.
 - **Third-party code.** Exclude it from traversal, never from rule targets: an exclusion that hides a target also hides the violation. A rule that depends on matching the target path must still see the dependency it forbids.
 - **Own level.** A Contract's obligation stops at its own level; the Gherkin obligation on e2e adds none to unit or integration tests.
 

@@ -16,7 +16,7 @@ check: check-fast integration e2e mutation vulnerabilities
 # what the proof exists to show. The Mutation target first checks the wrapper's
 # own scope selection against controlled Git trees, then mutates; the checks are
 # what keeps a broken selection from passing as a smaller measurement.
-.PHONY: install build format lint types unit integration e2e mutation mutation-full
+.PHONY: install build format lint types unit integration e2e mutation mutation-full mutation-checks
 .PHONY: boundaries dependency-rule metrics secrets avoided-terms guide-pointers vulnerabilities
 
 install:
@@ -45,12 +45,17 @@ integration:
 e2e: build
 	npm run e2e
 
-mutation:
-	npm run mutation-checks
+mutation: mutation-checks
 	npm run mutation
 
-mutation-full:
+mutation-full: mutation-checks
 	npm run mutation-full
+
+# The Gate Proof runner and the wrapper's scope selection are checked at the
+# same executable boundary, against controlled Git trees, so a broken selection
+# cannot pass as a smaller measurement.
+mutation-checks:
+	node scripts/run-gate.mjs "Mutation scope checks" -- node --test "test/harness/**/*.test.mjs"
 
 boundaries:
 	npm run boundaries

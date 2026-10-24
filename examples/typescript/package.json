@@ -17,7 +17,6 @@
     "e2e": "node scripts/run-gate.mjs \"E2E tests\" -- node --import tsx scripts/run-e2e.mjs",
     "mutation": "node scripts/check-mutation.mjs",
     "mutation-full": "node scripts/check-mutation.mjs --full",
-    "mutation-checks": "node --test \"test/harness/**/*.test.mjs\"",
     "boundaries": "node scripts/check-boundaries.mjs",
     "dependency-rule": "node scripts/check-dependency-rule.mjs",
     "metrics": "node scripts/check-metrics.mjs",
