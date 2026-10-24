@@ -133,5 +133,3 @@ On the adoption path, report the selected path, the confirmed inventory, the app
 ## Stack Examples
 
 Non-normative realizations of the Gate Contracts for specific stacks live in <https://github.com/Sanmoo/skills/tree/main/examples>. When one matches the chosen stack, consult it for how a Gate looks when done well; the TypeScript example also records its [interview answers](../../examples/typescript/INTERVIEW-ANSWERS.md), [Gate Proofs](../../examples/typescript/GATE-PROOFS.md), and [what generating it exposed in this skill](../../examples/typescript/SKILL-FEEDBACK.md). The Gate Contracts remain the authority. An example's Gherkin executor and scenario language are realizations for its stack, never rules for another: a universal obligation comes only from a Gate Contract.
-
-The adoption path's plan rehearsal against a disposable copy of the TypeScript example is recorded in [the adoption-plan rehearsal](https://github.com/Sanmoo/skills/blob/main/docs/evidence/adoption-plan-rehearsal.md): it reached an approved plan without changing the copy.

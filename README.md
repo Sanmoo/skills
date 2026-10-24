@@ -22,4 +22,4 @@ npx skills add Sanmoo/skills --skill <name>
 
 ## Stack Examples
 
-Non-normative realizations of the Gate Contracts for specific stacks live in [examples/](examples/). Start with the [TypeScript example](examples/typescript/AGENTS.md), which also records its [interview answers](examples/typescript/INTERVIEW-ANSWERS.md) and [Gate Proofs](examples/typescript/GATE-PROOFS.md). The adoption path's plan rehearsal against a disposable copy of that example is recorded in [docs/evidence/adoption-plan-rehearsal.md](docs/evidence/adoption-plan-rehearsal.md).
+Non-normative realizations of the Gate Contracts for specific stacks live in [examples/](examples/). Start with the [TypeScript example](examples/typescript/AGENTS.md), which also records its [interview answers](examples/typescript/INTERVIEW-ANSWERS.md) and [Gate Proofs](examples/typescript/GATE-PROOFS.md).
