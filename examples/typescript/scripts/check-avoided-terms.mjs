@@ -1,13 +1,15 @@
 // Gate: Avoided terms.
 //
 // Reads _Avoid_ lists straight from GLOSSARY.md and rejects any identifier in
-// src/ that uses one of those terms. Identifiers are split on camelCase and
-// snake_case boundaries; matching is case-insensitive and whole-word.
+// the TypeScript source that uses one of those terms. Identifiers are split on
+// camelCase and snake_case boundaries; matching is case-insensitive and
+// whole-word.
 import { readFileSync, readdirSync } from "node:fs";
 import ts from "typescript";
 import { report } from "./lib.mjs";
 
 const SKIP_DIRECTORIES = /(^|\/)(node_modules|dist|reports|coverage|\.stryker-tmp)(\/|$)/;
+const SOURCE_DIRECTORIES = ["src", "features", "test"];
 
 function avoidedTerms(glossary) {
   return glossary
@@ -18,7 +20,7 @@ function avoidedTerms(glossary) {
     .filter(Boolean);
 }
 
-function sourceFiles(directory = "src") {
+function sourceFiles(directory) {
   const files = [];
   const walk = (dir) => {
     for (const item of readdirSync(dir, { withFileTypes: true })) {
@@ -60,7 +62,7 @@ function matches(tokens, term) {
 const terms = avoidedTerms(readFileSync("GLOSSARY.md", "utf8"));
 const failures = [];
 
-for (const file of sourceFiles()) {
+for (const file of SOURCE_DIRECTORIES.flatMap(sourceFiles)) {
   const text = readFileSync(file, "utf8");
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const visit = (node) => {

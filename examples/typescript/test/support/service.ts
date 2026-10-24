@@ -38,43 +38,42 @@ function waitForReadiness(child: ChildProcess): Promise<number> {
     let output = "";
     let settled = false;
 
-    const settle = (error: Error | undefined, port: number): void => {
-      if (settled) return;
+    const finish = (): boolean => {
+      if (settled) return false;
       settled = true;
       clearTimeout(timer);
       child.stdout?.off("data", onStdout);
       child.stderr?.off("data", onStderr);
       child.off("exit", onExit);
       child.off("error", onError);
-      if (error === undefined) resolve(port);
-      else reject(error);
+      return true;
+    };
+    const succeed = (port: number): void => {
+      if (finish()) resolve(port);
+    };
+    const fail = (message: string): void => {
+      if (finish()) reject(new Error(message));
     };
 
     const onStdout = (chunk: Buffer): void => {
       output += chunk.toString("utf8");
       const match = READINESS.exec(output);
-      if (match?.[1] !== undefined) settle(undefined, Number(match[1]));
+      if (match?.[1] !== undefined) succeed(Number(match[1]));
     };
     const onStderr = (chunk: Buffer): void => {
       output += chunk.toString("utf8");
     };
     const onExit = (code: number | null, signal: NodeJS.Signals | null): void => {
-      settle(
-        new Error(
-          `service exited before reporting readiness (code ${String(code)}, signal ${String(signal)}): ${output}`,
-        ),
-        0,
+      fail(
+        `service exited before reporting readiness (code ${String(code)}, signal ${String(signal)}): ${output}`,
       );
     };
     const onError = (error: Error): void => {
-      settle(new Error(`service failed to start: ${error.message}`), 0);
+      fail(`service failed to start: ${error.message}`);
     };
 
     const timer = setTimeout(() => {
-      settle(
-        new Error(`service did not report readiness within ${START_TIMEOUT_MS} ms: ${output}`),
-        0,
-      );
+      fail(`service did not report readiness within ${START_TIMEOUT_MS} ms: ${output}`);
     }, START_TIMEOUT_MS);
     child.stdout?.on("data", onStdout);
     child.stderr?.on("data", onStderr);
@@ -93,7 +92,6 @@ function waitForExit(child: ChildProcess): Promise<void> {
 }
 
 async function stopChild(child: ChildProcess): Promise<void> {
-  if (child.exitCode !== null || child.signalCode !== null) return;
   const exited = waitForExit(child);
   child.kill("SIGTERM");
   const timer = setTimeout(() => {
