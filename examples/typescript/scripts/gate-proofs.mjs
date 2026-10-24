@@ -41,6 +41,10 @@ import {
   readScopeRecord,
 } from "./mutation-scope.mjs";
 
+// The runner passes a declared scope explicitly and never inherits one: a scope
+// exported in the operator's shell must not reach a proof that declares none.
+delete process.env[MUTATION_SCOPE_ENV];
+
 const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
 const MAKE = process.platform === "win32" ? "make.exe" : "make";
 // The Mutation Gate's scope record and the transport that carries a declared
