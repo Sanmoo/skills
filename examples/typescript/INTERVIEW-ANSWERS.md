@@ -83,6 +83,8 @@ Written to [GLOSSARY.md](GLOSSARY.md) as they resolved. Sharpening applied durin
 
 The e2e level is deferred to a Cucumber/Gherkin rewrite, tracked as [Sanmoo/skills#7](https://github.com/Sanmoo/skills/issues/7); [ADR 0003](docs/adr/0003-defer-the-e2e-level.md) holds the decision, its cost and what the reanalysis must answer.
 
+The universal half of that reanalysis is settled: [Sanmoo/skills#6](https://github.com/Sanmoo/skills/issues/6) now requires executable Gherkin in business language for every stack, with the executor chosen and pinned in the stack interview and the scenario language settled in the domain interview. This tree still has no e2e level, and #7 is the change that applies the rule here and supersedes ADR 0003's reopened runner question; until then the answers above stay as generated.
+
 ## Gate Proofs
 
 Every Gate this tree has was proven after wiring, one at a time, by introducing the violation named in the Gate Contract. Results are recorded in [GATE-PROOFS.md](GATE-PROOFS.md), which also records why the E2E contract has no row.
