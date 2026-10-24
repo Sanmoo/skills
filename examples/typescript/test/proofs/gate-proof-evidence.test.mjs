@@ -57,11 +57,13 @@ function proofSandbox(t, { complete = false } = {}) {
   git("add", "-A");
   git("commit", "-m", "base");
   const scope = join(stubs, "scope.json");
+  const scopeSeen = join(stubs, "scope-seen");
   writeFileSync(
     join(stubs, "make"),
     `#!/bin/sh
 mkdir -p reports/mutation
 if [ -f "${scope}" ]; then cp "${scope}" reports/mutation/scope.json; fi
+printf '%s' "$MUTATION_SCOPE" > "${scopeSeen}"
 echo "✘ Mutation"
 i=0
 while [ $i -lt 30 ]; do echo "  mutant $i survived"; i=$((i + 1)); done
@@ -69,11 +71,11 @@ exit 1
 `,
   );
   chmodSync(join(stubs, "make"), 0o755);
-  const run = (arguments_ = ["--gate=Mutation"]) => {
+  const run = (arguments_ = ["--gate=Mutation"], environment = {}) => {
     const result = spawnSync("node", [PROOF_RUNNER, ...arguments_], {
       cwd: root,
       encoding: "utf8",
-      env: baseEnvironment([stubs]),
+      env: { ...baseEnvironment([stubs]), ...environment },
     });
     return {
       status: result.status,
@@ -88,6 +90,7 @@ exit 1
     run,
     recordScope: (record) => writeFileSync(scope, JSON.stringify(record)),
     forgetScope: () => rmSync(scope, { force: true }),
+    scopeSeenByEntryPoint: () => (existsSync(scopeSeen) ? readFileSync(scopeSeen, "utf8") : ""),
   };
 }
 
@@ -184,6 +187,16 @@ describe("Gate Proof scope evidence", () => {
 
     assert.equal(result.status, 0, result.output);
     assert.equal(readFileSync(report, "utf8"), '{"complete":true}\n');
+  });
+
+  it("keeps an exported scope out of a proof that declared none", (t) => {
+    // The operator's shell may carry a scope; a proof that declares none must
+    // not inherit it.
+    const proofs = proofSandbox(t);
+
+    proofs.run(["--gate=Format"], { MUTATION_SCOPE: LOAN });
+
+    assert.equal(proofs.scopeSeenByEntryPoint(), "");
   });
 
   it("deletes the previous analysis report so a proof cannot read stale scope", (t) => {
