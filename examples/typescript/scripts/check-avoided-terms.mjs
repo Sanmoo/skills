@@ -7,9 +7,9 @@
 import { readFileSync, readdirSync } from "node:fs";
 import ts from "typescript";
 import { report } from "./lib.mjs";
+import { SOURCE_TREES } from "./source-trees.mjs";
 
 const SKIP_DIRECTORIES = /(^|\/)(node_modules|dist|reports|coverage|\.stryker-tmp)(\/|$)/;
-const SOURCE_DIRECTORIES = ["src", "features", "test"];
 
 function avoidedTerms(glossary) {
   return glossary
@@ -62,7 +62,7 @@ function matches(tokens, term) {
 const terms = avoidedTerms(readFileSync("GLOSSARY.md", "utf8"));
 const failures = [];
 
-for (const file of SOURCE_DIRECTORIES.flatMap(sourceFiles)) {
+for (const file of SOURCE_TREES.flatMap(sourceFiles)) {
   const text = readFileSync(file, "utf8");
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const visit = (node) => {
