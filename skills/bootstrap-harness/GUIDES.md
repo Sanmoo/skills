@@ -30,7 +30,7 @@ An adopted Harness ends with the same inventory as a greenfield one. The differe
 
 ### Records and reports that are not Guides
 
-`INTERVIEW-ANSWERS.md` records the confirmed interview answers so the run can be repeated. `GATE-PROOFS.md` is the Gate Proof record: each Gate's proof and outcome, and the tree it ran against. Neither is a Guide or a source of current policy; they are a decision record and run history. `ADOPTION-PLAN.md` is the stage record above. They live at the repository root beside the Guides but are not part of the inventory, and changing one never changes a rule the code enforces.
+`INTERVIEW-ANSWERS.md` records the confirmed interview answers so the run can be repeated. `GATE-PROOFS.md` is the Gate Proof record: each Gate's proof and outcome for a run. Neither is a Guide or a source of current policy; they are a decision record and run history. The raw report a run writes is uncommitted output; the Gate Proof record holds the row per Gate that ties the proof to its run. `ADOPTION-PLAN.md` is the stage record above. They live at the repository root beside the Guides but are not part of the inventory, and changing one never changes a rule the code enforces.
 
 The final report is a message to the maintainer, not a Guide. It states every Gate's state, the evidence or blocker, and whether the Harness is established; it does not become a durable document alongside the inventory. What must outlive the session is the executable Gate configuration and proof file, plus the Gate Proof record that ties each proof to its outcome; the report never restates current policy.
 

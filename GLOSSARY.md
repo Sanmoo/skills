@@ -29,7 +29,7 @@ The file `INTERVIEW-ANSWERS.md` that records the confirmed answers to the domain
 _Avoid_: Questionnaire, survey responses
 
 **Adoption plan**:
-The staged, prioritized proposal for establishing the Harness in an existing application. The maintainer approves it before anything in the application, its tests, or its tooling changes, and executing it adopts Gates stage by stage.
+The staged, prioritized proposal for establishing the Harness in an existing application. The maintainer approves it before anything in the application, its tests, or its tooling changes; the approved plan is recorded as `ADOPTION-PLAN.md`, each stage adds its completion and Gate states to that record, and executing it adopts Gates stage by stage.
 _Avoid_: Migration plan, rewrite plan
 
 **Adoption criteria**:
@@ -61,7 +61,7 @@ The repeatable, attributable violation that shows a Gate turns the appropriate E
 _Avoid_: Smoke test
 
 **Gate Proof record**:
-The committed file, `GATE-PROOFS.md`, that records each Gate's proof and outcome so the proof can be repeated and its result inspected. It is history about the tree a proof ran against, not current certification.
+The committed file, `GATE-PROOFS.md`, that records each Gate's proof and outcome for a run so the proof can be repeated and its result inspected. It is history about that run, not current certification, and it is not the raw report the run writes.
 _Avoid_: Proof log, evidence file
 
 **Established Harness**:
