@@ -118,7 +118,7 @@ Execute the plan one stage at a time and change only what the approved stage nam
 
 Each stage adopts its Gates under the adoption criteria the maintainer approved. For every Gate the stage adopts, run a Gate Proof as phase 7 describes, under those criteria: introduce one deliberate violation that the Gate rejects and that lies outside any finding the criteria accept, run the Entry Point of its tier with only that violation present, confirm it goes red _because of that Gate_, then revert the violation before the next proof. Keep the proof executable and repeatable, out of both Entry Points, so anyone can re-run it. Record the Gate Proof and its outcome in `GATE-PROOFS.md`, with the row phase 7 records; a raw run report is evidence of that run and is not committed in its place.
 
-A Gate is adopted only when it actually runs under the approved scope and cadence, enforces the adoption criteria, and has its repeatable Gate Proof. A Gate that does not run, cannot fail, selects no meaningful input, passes vacuously, or is not yet in scope stays pending, or blocked when something outside the stage prevents it. Neither a configured Gate nor a green run under another scope is adoption.
+A Gate is adopted only when it meets the [adopted Gate state](GATE-CONTRACTS.md#gate-states) under the approved scope and cadence. A Gate that does not run, cannot fail, selects no meaningful input, passes vacuously, or is not yet in scope stays pending, or blocked when something outside the stage prevents it. Neither a configured Gate nor a green run under another scope is adoption.
 
 End each stage with an honest stage completion report: what the stage changed, which Gates it adopted, which remain pending or blocked and why, and where each proof is recorded. A stage may complete with pending or blocked Gates; its report says so instead of hiding them. A later approved stage may adopt a Gate an earlier stage left pending only by running it under its approved criteria and proving it; no stage inherits adoption from another.
 
@@ -128,9 +128,9 @@ End each stage with an honest stage completion report: what the stage changed, w
 
 Report every Gate in the Gate Floor with its [Gate state](GATE-CONTRACTS.md#gate-states): adopted, pending, or blocked, together with the evidence or blocker for each. Name the tools and checks retained and every replacement made with its approval and reason, the Guides reconciled, and the Gate Proofs recorded.
 
-State explicitly whether the Harness counts as established. It does when every Gate in the Gate Floor is adopted: each actually runs under the approved scope and cadence, enforces the adoption criteria, and has a repeatable Gate Proof that turns the appropriate Entry Point red because of it. Establishment does not require eliminating debt or meeting every greenfield default threshold; specific findings the adoption criteria accept do not prevent it. A pending or blocked Gate does prevent it, and the report names which Gate and why.
+State explicitly whether the Harness counts as established, which [GATE-CONTRACTS.md](GATE-CONTRACTS.md#establishment) defines as every Gate in the Gate Floor being adopted. Establishment does not require eliminating debt or meeting every greenfield default threshold; specific findings the adoption criteria accept do not prevent it. A pending or blocked Gate does prevent it, and the report names which Gate and why.
 
-**Done when** every Gate has one of the three states with its evidence or blocker, the establishment statement is explicit, the retained and replaced tools are reported, and the full Entry Point is green on the final tree.
+**Done when** every Gate has one of the three states with its evidence or blocker, the establishment statement is explicit, the retained and replaced tools are reported, and the full Entry Point has been run on the final tree with its result reported.
 
 ## Gate states and blockers
 
@@ -149,7 +149,7 @@ On the greenfield path, report to the user:
 - the ADRs written;
 - any blocker that remains.
 
-On the adoption path, report the selected path, the confirmed inventory, the approved plan and its stage order, the state of every Gate in the Gate Floor with the evidence or blocker for each, the tools and checks retained or replaced with the approval and reason, and an explicit statement of whether the Harness is established. Do not report a Gate as adopted unless it actually ran under the approved scope and cadence, enforced the adoption criteria, and its proof turned the appropriate Entry Point red because of that Gate. Do not call the Harness established while any Gate in the Gate Floor is pending or blocked.
+On the adoption path, report the selected path, the confirmed inventory, the approved plan and its stage order, the state of every Gate in the Gate Floor with the evidence or blocker for each, the tools and checks retained or replaced with the approval and reason, and an explicit statement of whether the Harness is established. Do not report a Gate as adopted unless it meets the [adopted Gate state](GATE-CONTRACTS.md#gate-states), and do not call the Harness established while any Gate in the Gate Floor is pending or blocked.
 
 ## Stack Examples
 
