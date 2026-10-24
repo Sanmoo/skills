@@ -36,15 +36,15 @@ The rehearsal ran the adoption interview from [INTERVIEW.md](../../skills/bootst
 
 Confirmed answers:
 
-1. **Q1 - Deliverable and outermost edge.** Keep the HTTP service and its HTTP edge; the two Gherkin journeys are the e2e target.
-2. **Q2 - Domain understanding.** Keep Lending (core) and Catalog (supporting), their names, their public interfaces, and their vocabulary.
-3. **Q3 - Boundaries.** Keep the declared context map and the dependency rule; no observed mismatch requires a boundary change.
-4. **Q4 - Observed behavior and regression priorities.** Treat the existing tests and Gherkin journeys as the regression contract. No revalidation of business correctness.
-5. **Q5 - Existing tools and checks.** Retain every existing tool and check; no replacement is proposed.
-6. **Q6 - Entry Points and CI.** Retain `make check-fast`, `make check`, and the containing repository's workflow arrangement.
-7. **Q7 - Gaps and blocked work.** No application, test, or tooling change is required. The copy's CI arrangement is the containing repository's workflows; the inventory records it and no change is proposed.
-8. **Q8 - Stages, scope, budget, and cadence.** The whole example; the existing full Entry Point and its current cadence; no universal CI target.
-9. **Q9 - Plan approval.** The plan below is approved before any change. Drafting it changed nothing in the copy.
+1. **Q1:** Keep the HTTP service and its HTTP edge; the two Gherkin journeys are the e2e target.
+2. **Q2:** Keep Lending (core) and Catalog (supporting), their names, their public interfaces, and their vocabulary.
+3. **Q3:** Keep the declared context map and the dependency rule; no observed mismatch requires a boundary change.
+4. **Q4:** Treat the existing tests and Gherkin journeys as the regression contract. No revalidation of business correctness.
+5. **Q5:** Retain every existing tool and check; no replacement is proposed.
+6. **Q6:** Retain `make check-fast`, `make check`, and the containing repository's workflow arrangement.
+7. **Q7:** No application, test, or tooling change is required. The copy's CI arrangement is the containing repository's workflows; the inventory records it and no change is proposed.
+8. **Q8:** The whole example; the existing full Entry Point and its current cadence; no universal CI target.
+9. **Q9:** The plan below is approved before any change. Drafting it changed nothing in the copy.
 
 One further confirmed decision fixes the route itself: the starting path is **existing application**, because the copy contains application source, tests, delivered behavior, and tooling.
 
@@ -84,4 +84,4 @@ The plan is staged and prioritized by the protection each stage buys. It is appr
 
 It establishes that the adoption path selects an existing application, produces a factual inventory without expensive analysis, records the confirmed decisions adapted to adoption, and reaches a staged, prioritized plan approved under the maintainer's written decisions, while the copy's code, tests, and tooling remain untouched.
 
-It does not execute the plan. Gate adoption, Gate Proofs under the approved plan, establishment, and the final Gate-state report are the next stage of the work; this record makes no adoption claim for any Gate and no establishment claim for the copy. It also cannot demonstrate a pending-to-adopted transition: a Gate cannot be adopted before execution, and the later execution stage covers that transition.
+It does not execute the plan. Gate adoption, Gate Proofs under the approved plan, establishment, and the final Gate-state report are the next stage of the work, tracked as [Sanmoo/skills#14](https://github.com/Sanmoo/skills/issues/14); this record makes no adoption claim for any Gate and no establishment claim for the copy. It also cannot demonstrate a pending-to-adopted transition: a Gate cannot be adopted before execution, and the later execution stage covers that transition.
