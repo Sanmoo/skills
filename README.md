@@ -2,7 +2,7 @@
 
 Personal agent skills by Samuel Santos, installable with the [skills CLI](https://github.com/vercel-labs/skills).
 
-`bootstrap-harness` has two starting paths: it establishes a Harness from day zero in a greenfield repository, and adopts one in an existing application through a staged plan the maintainer approves.
+`bootstrap-harness` has two starting paths: it establishes a Harness from day zero in a greenfield repository, and adopts one in an existing application through a staged plan the maintainer approves and the skill executes stage by stage, reporting the Harness established only when every Gate is adopted.
 
 List the available skills:
 
