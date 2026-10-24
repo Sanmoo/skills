@@ -125,7 +125,7 @@ Settle these decisions, in dependency order:
 
    Recommended: protect the highest-value workflows first, take the cheap high-signal Gates early, and stage expensive checks rather than requiring every analysis before adoption begins. Name each Gate's scope and cadence, and the specific findings the maintainer accepts if any; a Gate without agreed criteria, or whose check would pass vacuously, stays pending. Agree a budget and cadence for this project; do not import a universal CI target.
 
-9. **Plan approval.** Does the plan record every confirmed decision, every Gate's current state, and the adoption criteria and Gate Proof for every Gate it expects to adopt, and do you approve it?
+9. **Plan approval.** Does the plan record every confirmed decision, every Gate's current state, and, for every Gate it expects to adopt, its adoption criteria and the Gate Proof it will carry, and do you approve it?
 
    Recommended: approve the plan before any change. Drafting it touches nothing in the application, its tests, or its tooling, and no stage starts until the maintainer approves. Approval adopts no Gate; execution and proof do.
 
