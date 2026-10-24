@@ -289,10 +289,6 @@ function attributionProblems(proofList) {
   return problems;
 }
 
-// The report this script writes is its own output, so a leftover copy of it
-// must not stop the next run; anything else changed under the project would.
-const OWN_OUTPUT = "reports/gate-proofs.json";
-
 // Porcelain lines for what is changed in the project right now, status codes
 // included, so the report shows what a Gate could have reacted to.
 function treeChanges() {
@@ -303,12 +299,7 @@ function treeChanges() {
   return status.stdout
     .split("\n")
     .map((line) => line.trimEnd())
-    .filter((line) => line !== "" && !isOwnOutput(line));
-}
-
-function isOwnOutput(line) {
-  const path = line.slice(3);
-  return path === OWN_OUTPUT || path.endsWith(`/${OWN_OUTPUT}`);
+    .filter((line) => line !== "");
 }
 
 const problems = attributionProblems(proofs);

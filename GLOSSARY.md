@@ -29,7 +29,7 @@ The deliberate, temporary violation that shows a Gate turns the Entry Point red,
 _Avoid_: Smoke test
 
 **Entry Point**:
-A single command that runs Gates, in two tiers: the full Entry Point runs every Gate and is what CI calls; the fast Entry Point runs the quick subset for local hooks. These are the only commands a Guide may name.
+A single command that runs Gates, in two tiers: the full Entry Point runs every Gate and is what CI calls for a change; the fast Entry Point runs the quick subset for local hooks. These are the only commands a Guide may name.
 _Avoid_: Check script
 
 **Walking Skeleton**:
