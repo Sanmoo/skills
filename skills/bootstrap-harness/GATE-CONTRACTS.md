@@ -50,7 +50,7 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 ## E2E tests
 
 - **Intent**: prove the deliverable works as shipped, through scenarios a business reviewer can read and validate. The stack interview chooses and pins the executor, the domain interview confirms the scenario language, and unit and integration tests keep their roles and carry no Gherkin obligation. The Gate proves the deliverable behaves as the scenarios say; a failing scenario makes the Entry Point exit non-zero, while whether the scenarios say the right thing is a human judgment that no parser, linter, or passing run establishes.
-- **Passes when**: every e2e scenario passes, and the level meets every executable criterion below.
+- **Passes when**: every e2e scenario passes, and the level meets every criterion below.
   - **Executable Gherkin.** The e2e level is a suite of Gherkin feature files run by the pinned executor.
   - **Outermost edge.** Each scenario drives the deliverable, built as it ships, through its outermost edge. Together the scenarios reach every bounded context.
   - **Built before run.** The Entry Point builds the deliverable before this level runs, so local and CI validation exercise the same artifact.
