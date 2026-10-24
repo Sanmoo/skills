@@ -1,10 +1,10 @@
 name: gate-proofs
 
 # Gate Proofs are execution evidence on demand: every proof deliberately breaks
-# the tree and runs the full Entry Point, so this workflow is manual and never
-# part of pull-request validation. It validates the clean baseline first, then
-# runs the proof runner exactly as a developer would and publishes the report
-# that run generated.
+# the tree and runs the Entry Point of its tier, so this workflow is manual and
+# never part of pull-request validation. It validates the clean baseline first,
+# then runs the proof runner exactly as a developer would and publishes the
+# report that run generated.
 on:
   workflow_dispatch:
 
