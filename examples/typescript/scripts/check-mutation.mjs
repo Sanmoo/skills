@@ -20,8 +20,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { outputOf, report, run } from "./lib.mjs";
 import {
+  MUTATION_REPORT,
   MUTATION_SCOPE_ENV,
   SELECTION,
+  changedSetScope,
   rejectedScope,
   writeScopeRecord,
 } from "./mutation-scope.mjs";
@@ -30,7 +32,6 @@ const OVERALL_THRESHOLD = 80;
 const CORE_THRESHOLD = 90;
 const CORE_PREFIX = "src/lending/";
 const MUTABLE = /^src\/(catalog|lending)\/domain\/.*\.ts$/;
-const REPORT = "reports/mutation/mutation.json";
 
 const full = process.argv.includes("--full");
 const failures = [];
@@ -205,13 +206,7 @@ if (!full) {
     } else if (changed.files.length === 0) {
       // A legitimate empty set is not an error; the record keeps it distinct
       // from a scope that could not be measured.
-      writeScopeRecord({
-        selection: SELECTION.changedSet,
-        requestedFiles: null,
-        analyzedFiles: [],
-        analyzedFilesUnavailable: null,
-        analysisCompleted: true,
-      });
+      writeScopeRecord(changedSetScope([]));
       report("Mutation", []);
       console.log(`  no mutable files changed relative to ${changed.base}`);
       process.exit(0);
@@ -246,16 +241,16 @@ function score(mutants) {
 // exit status was: a run that failed can still have left an analyzable report,
 // and calling that "unavailable" would be wrong.
 let analyzedFiles = null;
-let analyzedUnavailable = `no readable report at ${REPORT}`;
+let analyzedFilesUnavailable = `no readable report at ${MUTATION_REPORT}`;
 let reportJson;
-if (existsSync(REPORT)) {
+if (existsSync(MUTATION_REPORT)) {
   try {
-    reportJson = JSON.parse(readFileSync(REPORT, "utf8"));
+    reportJson = JSON.parse(readFileSync(MUTATION_REPORT, "utf8"));
   } catch {
-    failures.push(`mutation report at ${REPORT} is not valid JSON`);
+    failures.push(`mutation report at ${MUTATION_REPORT} is not valid JSON`);
   }
 } else if (failures.length === 0) {
-  failures.push(`no mutation report at ${REPORT}`);
+  failures.push(`no mutation report at ${MUTATION_REPORT}`);
 }
 
 if (reportJson !== undefined) {
@@ -264,7 +259,7 @@ if (reportJson !== undefined) {
     return { path: normalized, mutants: file.mutants ?? [] };
   });
   analyzedFiles = files.map((file) => file.path);
-  analyzedUnavailable = null;
+  analyzedFilesUnavailable = null;
 
   if (files.length === 0) {
     failures.push("Stryker mutated no code");
@@ -306,7 +301,7 @@ writeScopeRecord({
   selection,
   requestedFiles,
   analyzedFiles,
-  analyzedFilesUnavailable: analyzedUnavailable,
+  analyzedFilesUnavailable,
   analysisCompleted: reportJson !== undefined && mutation.status === 0,
 });
 report("Mutation", failures);

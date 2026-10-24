@@ -34,6 +34,7 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { outputOf, report, run } from "./lib.mjs";
 import {
+  MUTATION_REPORT,
   MUTATION_SCOPE_ENV,
   MUTATION_SCOPE_RECORD,
   SELECTION,
@@ -402,8 +403,10 @@ for (const proof of selected) {
   let setupError;
   let treeChangesWhileRunning = null;
   try {
-    // An earlier run's scope record must not be read as this run's evidence.
+    // An earlier run's scope record or analysis report must not be read as this
+    // run's evidence.
     rmSync(MUTATION_SCOPE_RECORD, { force: true });
+    rmSync(MUTATION_REPORT, { force: true });
     cleanup = proof.violation() ?? (() => {});
     // What the violation left in the tree, recorded before the Entry Point runs
     // so the report shows what a Gate could have reacted to.
