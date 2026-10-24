@@ -87,7 +87,7 @@
       "E2E tests"
     ],
     "exitCode": 2,
-    "output": "  1) A borrower takes a catalogued book on loan and returns it # features/library_lending.feature:3\n       Given the library holds the book \"Piranesi\" by \"Susanna Clarke\" # features/step_definitions/library_lending.steps.ts:30\n           AssertionError [ERR_ASSERTION]: registering the book failed with status 404\n           \n           404 !== 201\n           \n               + expected - actual\n           \n               -404\n               +201\n           \n               at LibraryWorld.<anonymous> (/home/agent/workspace/examples/typescript/features/step_definitions/library_lending.steps.ts:38:12)\n               at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n\n2 hooks (2 passed)\n2 scenarios (1 passed, 1 failed)\n10 steps (5 passed, 4 skipped, 1 failed)\n0m 4.176s (0m 4.153s executing your code)\n✘ E2E tests\nmake: *** [Makefile:44: e2e] Error 1"
+    "output": "  1) A borrower takes a catalogued book on loan and returns it # features/library_lending.feature:3\n       Given the library holds the book \"Piranesi\" by \"Susanna Clarke\" # features/step_definitions/library_lending.steps.ts:37\n           AssertionError [ERR_ASSERTION]: registering the book failed with status 404\n           \n           404 !== 201\n           \n               + expected - actual\n           \n               -404\n               +201\n           \n               at LibraryWorld.<anonymous> (/home/agent/workspace/examples/typescript/features/step_definitions/library_lending.steps.ts:45:12)\n               at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n\n2 hooks (2 passed)\n2 scenarios (1 passed, 1 failed)\n10 steps (5 passed, 4 skipped, 1 failed)\n0m 3.886s (0m 3.865s executing your code)\n✘ E2E tests\nmake: *** [Makefile:44: e2e] Error 1"
   },
   {
     "gate": "Mutation",
@@ -103,7 +103,7 @@
       "Mutation"
     ],
     "exitCode": 2,
-    "output": "  stryker exited with 1:\n\u001b[32m09:33:42 (13161) INFO ProjectReader\u001b[39m Found 1 of 89 file(s) to be mutated.\n\u001b[32m09:33:42 (13161) INFO Instrumenter\u001b[39m Instrumented 1 source file(s) with 79 mutant(s)\n\u001b[32m09:33:43 (13161) INFO ConcurrencyTokenProvider\u001b[39m Creating 2 test runner process(es).\n\u001b[32m09:33:44 (13161) INFO DryRunExecutor\u001b[39m Starting initial test run (vitest test runner with \"perTest\" coverage analysis). This may take a while.\n\u001b[33m09:33:44 (13198) WARN VitestTestRunner\u001b[39m Vitest failed to find test files related to mutated files. Either disable `vitest.related` or import your source files directly from your test files. See https://stryker-mutator.io/docs/stryker-js/troubleshooting/#vitest-failed-to-find-test-files-related-to-mutated-files\n\u001b[32m09:33:44 (13161) INFO DryRunExecutor\u001b[39m No tests were found\n\u001b[91m09:33:44 (13161) ERROR Stryker\u001b[39m No tests were executed. Stryker will exit prematurely. Please check your configuration.\n/home/agent/workspace/examples/typescript/node_modules/tree-kill/index.js:108\n        allData.match(/\\d+/g).forEach(function (pid) {\n                             ^\n\nTypeError: Cannot read properties of null (reading 'forEach')\n    at ChildProcess.onClose (/home/agent/workspace/examples/typescript/node_modules/tree-kill/index.js:108:30)\n    at ChildProcess.emit (node:events:519:28)\n    at maybeClose (node:internal/child_process:1101:16)\n    at ChildProcess._handle.onexit (node:internal/child_process:304:5)\n\nNode.js v22.23.2\nmake: *** [Makefile:47: mutation] Error 1"
+    "output": "............\n\n2 hooks (2 passed)\n2 scenarios (2 passed)\n10 steps (10 passed)\n0m 3.901s (0m 3.879s executing your code)\n✔ E2E tests\nnpm run mutation\n\n> skills-example-typescript@0.0.0 mutation\n> node scripts/check-mutation.mjs\n\nMutation scope: 1 changed file(s) vs origin/main\n  src/lending/domain/loan.ts (core): 0/79 = 0.0%\n  overall: 0/79 = 0.0% (minimum 80%)\n  core (src/lending/): 0/79 = 0.0% (minimum 90%)\n✘ Mutation\n  overall mutation score 0.0% is below 80%\n  core mutation score 0.0% is below 90%\nmake: *** [Makefile:47: mutation] Error 1"
   },
   {
     "gate": "Context boundaries",
@@ -118,7 +118,7 @@
       "Context boundaries"
     ],
     "exitCode": 2,
-    "output": "\n RUN  v4.1.12 /home/agent/workspace/examples/typescript\n\n\n Test Files  2 passed (2)\n      Tests  33 passed (33)\n   Start at  09:33:51\n   Duration  194ms (transform 75ms, setup 0ms, import 105ms, tests 18ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✘ Context boundaries\n  error lending-uses-catalog-public-interface: src/lending/domain/boundary-proof.ts → src/catalog/domain/book.ts\n\nx 1 dependency violations (1 errors, 0 warnings). 23 modules, 58 dependencies cruised.\nmake: *** [Makefile:53: boundaries] Error 1"
+    "output": "\n RUN  v4.1.12 /home/agent/workspace/examples/typescript\n\n\n Test Files  2 passed (2)\n      Tests  33 passed (33)\n   Start at  09:46:15\n   Duration  213ms (transform 60ms, setup 0ms, import 103ms, tests 20ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✘ Context boundaries\n  error lending-uses-catalog-public-interface: src/lending/domain/boundary-proof.ts → src/catalog/domain/book.ts\n\nx 1 dependency violations (1 errors, 0 warnings). 23 modules, 58 dependencies cruised.\nmake: *** [Makefile:53: boundaries] Error 1"
   },
   {
     "gate": "Dependency rule",
@@ -133,7 +133,7 @@
       "Dependency rule"
     ],
     "exitCode": 2,
-    "output": "   Start at  09:33:59\n   Duration  205ms (transform 68ms, setup 0ms, import 104ms, tests 20ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✔ Context boundaries\nnpm run dependency-rule\n\n> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✘ Dependency rule\n  error catalog-domain-is-independent: src/catalog/domain/dependency-proof.ts → node_modules/pg/lib/index.js\n\nx 1 dependency violations (1 errors, 0 warnings). 23 modules, 58 dependencies cruised.\nmake: *** [Makefile:56: dependency-rule] Error 1"
+    "output": "   Start at  09:46:24\n   Duration  191ms (transform 58ms, setup 0ms, import 89ms, tests 17ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✔ Context boundaries\nnpm run dependency-rule\n\n> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✘ Dependency rule\n  error catalog-domain-is-independent: src/catalog/domain/dependency-proof.ts → node_modules/pg/lib/index.js\n\nx 1 dependency violations (1 errors, 0 warnings). 23 modules, 58 dependencies cruised.\nmake: *** [Makefile:56: dependency-rule] Error 1"
   },
   {
     "gate": "Static metrics",
@@ -179,7 +179,7 @@
       "Secrets"
     ],
     "exitCode": 2,
-    "output": "> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✔ Dependency rule\nnpm run metrics\n\n> skills-example-typescript@0.0.0 metrics\n> node scripts/check-metrics.mjs\n\n✔ Static metrics\nnpm run secrets\n\n> skills-example-typescript@0.0.0 secrets\n> node scripts/check-secrets.mjs\n\n✘ Secrets\n  secret found in the working tree:\n9:34AM INF scanned ~128274 bytes (128.27 KB) in 19.3ms\n9:34AM WRN leaks found: 1\nmake: *** [Makefile:62: secrets] Error 1"
+    "output": "> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✔ Dependency rule\nnpm run metrics\n\n> skills-example-typescript@0.0.0 metrics\n> node scripts/check-metrics.mjs\n\n✔ Static metrics\nnpm run secrets\n\n> skills-example-typescript@0.0.0 secrets\n> node scripts/check-secrets.mjs\n\n✘ Secrets\n  secret found in the working tree:\n9:47AM INF scanned ~129473 bytes (129.47 KB) in 19.2ms\n9:47AM WRN leaks found: 1\nmake: *** [Makefile:62: secrets] Error 1"
   },
   {
     "gate": "Avoided terms",
