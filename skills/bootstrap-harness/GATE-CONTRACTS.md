@@ -1,6 +1,6 @@
 # Gate Contracts
 
-Each Gate Contract states a Gate's intent and acceptance criteria for any stack. The tool that realizes it is chosen in the stack interview, and the scenario language in the domain interview. Where acceptance also depends on a judgment no tool can make, the acceptance criteria include a **Human review**; the Gate runs its executable criteria, and neither the run nor the review stands in for the other. Together these Gates form the **Gate Floor**: every project has all of them from day zero.
+Each Gate Contract states a Gate's intent and acceptance criteria for any stack. The tool that realizes it is chosen in the stack interview; where a Contract's scenarios need a language, the domain interview settles it. Where acceptance also depends on a judgment no tool can make, the acceptance criteria include a **Human review**; the Gate runs its executable criteria, and neither the run nor the review stands in for the other. Together these Gates form the **Gate Floor**: every project has all of them from day zero.
 
 ## Rules for every Gate
 
