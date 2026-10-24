@@ -1,7 +1,8 @@
 node_modules/
 dist/
+# Gate output, including Gate Proof evidence: it describes one run of the
+# tree, so CI publishes it as an artifact instead of Git tracking it.
 reports/*
-!reports/gate-proofs.json
 coverage/
 .stryker-tmp/
 *.tsbuildinfo
