@@ -111,7 +111,7 @@ Settle these decisions, in dependency order:
 
 5. **Existing tools and checks.** Which existing tools and checks satisfy the agreed criteria and are retained, and which do you want replaced?
 
-   Recommended: retain every tool and check that meets its Gate Contract under the adoption criteria; propose a replacement with its reason, compatibility cost, and migration work, and make it only after approval. A check that cannot fail or exercises no meaningful input is not retained as a Gate; it stays pending.
+   Recommended: retain every tool and check that meets its Gate Contract under the adoption criteria; propose a replacement with its reason, compatibility cost, and migration work, and make it only after approval. A check that cannot fail or exercises no meaningful input does not satisfy its Contract, so its Gate stays pending; the check itself may remain as project tooling.
 
 6. **Entry Points and CI.** Do the existing Entry Points and CI arrangement provide the fast and full tiers and call the full Entry Point?
 

@@ -18,7 +18,7 @@ Both starting paths use these same Contracts. Adoption records an approved scope
 
 ## Gate states
 
-- **Adopted**: the Gate actually runs under the approved scope and cadence, enforces the agreed adoption criteria, and has a repeatable Gate Proof whose violation - outside any finding those criteria accept - turns the appropriate Entry Point red because of that Gate. A green run that does not meet all three is not adoption.
+- **Adopted**: the Gate actually runs under the approved scope and cadence (the day-zero defaults on the greenfield path, the adoption criteria on the adoption path), enforces its Contract under those criteria, and has a repeatable Gate Proof whose violation - outside any accepted finding - turns the appropriate Entry Point red because of that Gate. A green run that does not meet all three is not adoption.
 - **Pending**: the Gate is not adopted and nothing outside the work prevents it from being adopted. Missing, unexecuted, unproven, not-yet-in-scope, and vacuously passing Gates are pending. A check passes vacuously when it reports success without exercising its Contract: no meaningful input, an empty selection, a skipped suite, or a result that cannot fail. A pending Gate is not protection; its absence is reported, not hidden.
 - **Blocked**: the Gate cannot run because the environment, a missing tool, a missing decision, or another external dependency prevents it. Record what the maintainer must provide. A blocked Gate is not adopted, and scheduling it later does not make it adopted.
 
@@ -28,7 +28,7 @@ A run can be green while its Gate remains pending: green is a result, not a stat
 
 Adoption criteria are the approved scope, cadence, and specific existing findings the maintainer accepts for a Gate. They specialize how its Contract applies to this application - which code or contexts a Gate covers, when it runs, and which present findings are accepted - and never relax the Contract's intent or replace its acceptance criteria. A Gate that does not run under the approved criteria, or that passes vacuously, remains pending.
 
-An existing tool or check that satisfies its Contract under those criteria is retained. A replacement is proposed with its reason, compatibility cost, and migration work, and made only after the maintainer approves it. Two checks for one Contract are not two Gates; the plan names the one that serves as the Gate.
+An existing tool or check that satisfies its Contract under those criteria is retained. A replacement is proposed with its reason, compatibility cost, and migration work, and made only after the maintainer approves it.
 
 An adopted Gate is proved against the criteria, not around them: its Gate Proof introduces a violation the Gate must reject, outside any accepted finding. A proof whose violation falls inside the accepted tolerance shows that the Gate tolerates what it was told to tolerate, not that it rejects what it must reject.
 
@@ -38,7 +38,7 @@ A Harness is established when every Gate in the Gate Floor is adopted. Establish
 
 ## Rules for every Gate Proof
 
-- **One violation.** The proof's tree carries exactly one deliberate violation - the smallest its Gate exists to catch, and outside anything the Gate's adoption criteria accept (the greenfield path accepts none) - and the Entry Point of the Gate's tier exits non-zero naming that Gate. Several violations in one tree, or a red Gate that is not the Gate under proof, prove nothing.
+- **One violation.** The proof's tree carries exactly one deliberate violation - the smallest its Gate exists to catch, and outside any finding the approved criteria accept (the greenfield path accepts none) - and the Entry Point of the Gate's tier exits non-zero naming that Gate. Several violations in one tree, or a red Gate that is not the Gate under proof, prove nothing.
 - **Repeatable.** The violation lives in an executable proof file kept out of both Entry Points, so any later run can repeat the proof. A manual edit that leaves no reproducible definition is not a Gate Proof.
 - **Reachable input.** A Gate that analyzes only the files changed relative to a base can have no eligible input on the branch that carries its proof. Such a proof declares, beside the violation, the smallest set of eligible files the violation needs, and for that execution only the declaration replaces the Gate's changed-set selection. The declaration is setup, not a second violation: no source marker and no artificial comparison base stands in for it. How it reaches the Gate is the stack's choice.
 - **Ordinary Gate, ordinary Entry Point.** The proof still runs the Entry Point of the Gate's tier, and the Gate's analysis, pinned tools, and thresholds are the ones validation uses. An isolated Gate target or a whole-scope command is not a Gate Proof.
