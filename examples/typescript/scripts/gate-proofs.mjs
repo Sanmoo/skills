@@ -78,6 +78,23 @@ const proofs = [
       ),
   },
   {
+    gate: "E2E tests",
+    target: "e2e",
+    description: "renamed the route that registers a book",
+    violation: () => {
+      const restore = patch("src/http/server.ts", (source) =>
+        source.replace("pattern: /^\\/books$/,", "pattern: /^\\/catalogue$/,"),
+      );
+      // The proof builds the broken tree into dist/; rebuild on cleanup so a
+      // later e2e run does not see the violation.
+      return () => {
+        restore();
+        const build = run(NPM, ["run", "build"]);
+        if (build.status !== 0) console.error(outputOf(build));
+      };
+    },
+  },
+  {
     gate: "Mutation",
     target: "mutation",
     description: "deleted the assertions of the core loan unit test",

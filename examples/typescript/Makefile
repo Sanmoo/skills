@@ -9,19 +9,19 @@ check-fast: format lint types unit boundaries dependency-rule metrics secrets av
 
 # Full Entry Point: every Gate this tree has. CI calls this and the scheduled
 # mutation job calls mutation-full.
-check: check-fast integration mutation vulnerabilities
+check: check-fast integration e2e mutation vulnerabilities
 
 # Gate targets, kept separate so one Gate can be wired and run on its own. No
 # Gate Proof uses them: a proof runs the Entry Point of the Gate's tier, which is
 # what the proof exists to show.
-.PHONY: install build format lint types unit integration mutation mutation-full
+.PHONY: install build format lint types unit integration e2e mutation mutation-full
 .PHONY: boundaries dependency-rule metrics secrets avoided-terms guide-pointers vulnerabilities
 
 install:
 	npm ci
 
-# The deliverable's artifact. No Entry Point builds it: its only consumer was
-# the deferred e2e level.
+# The deliverable's artifact. The e2e Gate builds it before running the
+# compiled service, so validation exercises what ships.
 build:
 	npm run build
 
@@ -39,6 +39,9 @@ unit:
 
 integration:
 	npm run integration
+
+e2e: build
+	npm run e2e
 
 mutation:
 	npm run mutation
@@ -66,7 +69,3 @@ guide-pointers:
 
 vulnerabilities:
 	npm run vulnerabilities
-
-# TODO: the E2E Gate is deferred and its level will be rewritten in
-# Cucumber/Gherkin (Sanmoo/skills#7), so nothing here runs an e2e Gate; see
-# docs/adr/0004-defer-the-e2e-level-under-the-universal-rule.md.

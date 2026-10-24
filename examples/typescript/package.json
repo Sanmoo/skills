@@ -14,6 +14,7 @@
     "types": "node scripts/run-gate.mjs Types -- tsc --noEmit",
     "unit": "node scripts/run-gate.mjs \"Unit tests\" -- vitest run --project unit",
     "integration": "node scripts/run-gate.mjs \"Integration tests\" -- vitest run --project integration",
+    "e2e": "node scripts/run-gate.mjs \"E2E tests\" -- node --import tsx scripts/run-e2e.mjs",
     "mutation": "node scripts/check-mutation.mjs",
     "mutation-full": "node scripts/check-mutation.mjs --full",
     "boundaries": "node scripts/check-boundaries.mjs",
@@ -29,6 +30,7 @@
     "pg": "8.23.1"
   },
   "devDependencies": {
+    "@cucumber/cucumber": "13.3.0",
     "@eslint/js": "10.0.1",
     "@stryker-mutator/core": "10.0.0",
     "@stryker-mutator/vitest-runner": "10.0.0",
@@ -40,6 +42,7 @@
     "jscpd": "5.4.2",
     "prettier": "3.9.10",
     "testcontainers": "12.2.1",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
     "typescript-eslint": "8.72.0",
     "vitest": "4.1.12"
