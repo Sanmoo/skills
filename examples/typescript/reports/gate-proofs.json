@@ -72,7 +72,7 @@
       "Integration tests"
     ],
     "exitCode": 2,
-    "output": "-   \"borrowedAt\": 2026-01-10T09:00:00.000Z,\n+   \"borrowedAt\": 2026-01-24T09:00:00.000Z,\n    \"borrower\": \"Ada Lovelace\",\n    \"dueAt\": 2026-01-24T09:00:00.000Z,\n    \"id\": \"loan-3\",\n    \"returnedAt\": 2026-01-20T09:00:00.000Z,\n  }\n\n ❯ src/lending/adapters/postgres-loan-repository.integration.test.ts:67:48\n     65|     await repository.save(returned);\n     66|\n     67|     await expect(repository.findById(\"loan-3\")).resolves.toEqual(retur…\n       |                                                ^\n     68|   });\n     69| });\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯\n\n✘ Integration tests\nmake: *** [Makefile:41: integration] Error 1"
+    "output": "     45|\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯\n\n FAIL  |integration| src/lending/application/lending-service.integration.test.ts > Lending > records a return and refuses to return the same loan twice\nInvalidLoanError: return moment must not precede the loan\n ❯ returnLoan src/lending/domain/loan.ts:69:11\n     67|   }\n     68|   if (now.getTime() < loan.borrowedAt.getTime()) {\n     69|     throw new InvalidLoanError(\"return moment must not precede the loa…\n       |           ^\n     70|   }\n     71|   return Object.freeze({ ...loan, returnedAt: new Date(now.getTime()) …\n ❯ LendingService.returnLoan src/lending/application/lending-service.ts:55:22\n ❯ src/lending/application/lending-service.integration.test.ts:56:22\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯\n\n✘ Integration tests\nmake: *** [Makefile:41: integration] Error 1"
   },
   {
     "gate": "E2E tests",
@@ -87,7 +87,7 @@
       "E2E tests"
     ],
     "exitCode": 2,
-    "output": "       Given the library holds the book \"Piranesi\" by \"Susanna Clarke\" # features/step_definitions/library_lending.steps.ts:47\n           AssertionError [ERR_ASSERTION]: registering the book: expected 201, got 404\n           \n           404 !== 201\n           \n               + expected - actual\n           \n               -404\n               +201\n           \n               at expectStatus (/home/agent/workspace/examples/typescript/features/step_definitions/library_lending.steps.ts:31:10)\n               at LibraryWorld.<anonymous> (/home/agent/workspace/examples/typescript/features/step_definitions/library_lending.steps.ts:55:5)\n               at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n\n2 hooks (2 passed)\n2 scenarios (1 passed, 1 failed)\n10 steps (5 passed, 4 skipped, 1 failed)\n0m 3.870s (0m 3.845s executing your code)\n✘ E2E tests\nmake: *** [Makefile:44: e2e] Error 1"
+    "output": "       Given the library holds the book \"Piranesi\" by \"Susanna Clarke\" # features/step_definitions/library_lending.steps.ts:46\n           AssertionError [ERR_ASSERTION]: registering the book: expected 201, got 404\n           \n           404 !== 201\n           \n               + expected - actual\n           \n               -404\n               +201\n           \n               at expectStatus (/home/agent/workspace/examples/typescript/features/step_definitions/library_lending.steps.ts:30:10)\n               at LibraryWorld.<anonymous> (/home/agent/workspace/examples/typescript/features/step_definitions/library_lending.steps.ts:54:5)\n               at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n\n2 hooks (2 passed)\n2 scenarios (1 passed, 1 failed)\n10 steps (5 passed, 4 skipped, 1 failed)\n0m 3.962s (0m 3.935s executing your code)\n✘ E2E tests\nmake: *** [Makefile:44: e2e] Error 1"
   },
   {
     "gate": "Mutation",
@@ -103,7 +103,7 @@
       "Mutation"
     ],
     "exitCode": 2,
-    "output": "............\n\n2 hooks (2 passed)\n2 scenarios (2 passed)\n10 steps (10 passed)\n0m 3.906s (0m 3.885s executing your code)\n✔ E2E tests\nnpm run mutation\n\n> skills-example-typescript@0.0.0 mutation\n> node scripts/check-mutation.mjs\n\nMutation scope: 1 changed file(s) vs origin/main\n  src/lending/domain/loan.ts (core): 0/79 = 0.0%\n  overall: 0/79 = 0.0% (minimum 80%)\n  core (src/lending/): 0/79 = 0.0% (minimum 90%)\n✘ Mutation\n  overall mutation score 0.0% is below 80%\n  core mutation score 0.0% is below 90%\nmake: *** [Makefile:47: mutation] Error 1"
+    "output": "      throw er; // Unhandled 'error' event\n      ^\n\nError: spawn ps ENOENT\n    at ChildProcess._handle.onexit (node:internal/child_process:285:19)\n    at onErrorNT (node:internal/child_process:483:16)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)\nEmitted 'error' event on ChildProcess instance at:\n    at ChildProcess._handle.onexit (node:internal/child_process:291:12)\n    at onErrorNT (node:internal/child_process:483:16)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {\n  errno: -2,\n  code: 'ENOENT',\n  syscall: 'spawn ps',\n  path: 'ps',\n  spawnargs: [ '-o', 'pid', '--no-headers', '--ppid', 45245 ]\n}\n\nNode.js v22.23.2\nmake: *** [Makefile:47: mutation] Error 1"
   },
   {
     "gate": "Context boundaries",
@@ -118,7 +118,7 @@
       "Context boundaries"
     ],
     "exitCode": 2,
-    "output": "\n RUN  v4.1.12 /home/agent/workspace/examples/typescript\n\n\n Test Files  2 passed (2)\n      Tests  33 passed (33)\n   Start at  10:04:38\n   Duration  188ms (transform 56ms, setup 0ms, import 89ms, tests 18ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✘ Context boundaries\n  error lending-uses-catalog-public-interface: src/lending/domain/boundary-proof.ts → src/catalog/domain/book.ts\n\nx 1 dependency violations (1 errors, 0 warnings). 23 modules, 58 dependencies cruised.\nmake: *** [Makefile:53: boundaries] Error 1"
+    "output": "\n RUN  v4.1.12 /home/agent/workspace/examples/typescript\n\n\n Test Files  2 passed (2)\n      Tests  33 passed (33)\n   Start at  10:12:40\n   Duration  252ms (transform 80ms, setup 0ms, import 122ms, tests 26ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✘ Context boundaries\n  error lending-uses-catalog-public-interface: src/lending/domain/boundary-proof.ts → src/catalog/domain/book.ts\n\nx 1 dependency violations (1 errors, 0 warnings). 23 modules, 58 dependencies cruised.\nmake: *** [Makefile:53: boundaries] Error 1"
   },
   {
     "gate": "Dependency rule",
@@ -133,7 +133,7 @@
       "Dependency rule"
     ],
     "exitCode": 2,
-    "output": "   Start at  10:04:46\n   Duration  195ms (transform 68ms, setup 0ms, import 102ms, tests 18ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✔ Context boundaries\nnpm run dependency-rule\n\n> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✘ Dependency rule\n  error catalog-domain-is-independent: src/catalog/domain/dependency-proof.ts → node_modules/pg/lib/index.js\n\nx 1 dependency violations (1 errors, 0 warnings). 23 modules, 58 dependencies cruised.\nmake: *** [Makefile:56: dependency-rule] Error 1"
+    "output": "   Start at  10:12:50\n   Duration  206ms (transform 49ms, setup 0ms, import 99ms, tests 18ms, environment 0ms)\n\n✔ Unit tests\nnpm run boundaries\n\n> skills-example-typescript@0.0.0 boundaries\n> node scripts/check-boundaries.mjs\n\n✔ Context boundaries\nnpm run dependency-rule\n\n> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✘ Dependency rule\n  error catalog-domain-is-independent: src/catalog/domain/dependency-proof.ts → node_modules/pg/lib/index.js\n\nx 1 dependency violations (1 errors, 0 warnings). 23 modules, 58 dependencies cruised.\nmake: *** [Makefile:56: dependency-rule] Error 1"
   },
   {
     "gate": "Static metrics",
@@ -179,7 +179,7 @@
       "Secrets"
     ],
     "exitCode": 2,
-    "output": "> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✔ Dependency rule\nnpm run metrics\n\n> skills-example-typescript@0.0.0 metrics\n> node scripts/check-metrics.mjs\n\n✔ Static metrics\nnpm run secrets\n\n> skills-example-typescript@0.0.0 secrets\n> node scripts/check-secrets.mjs\n\n✘ Secrets\n  secret found in the working tree:\n10:05AM INF scanned ~130700 bytes (130.70 KB) in 34.9ms\n10:05AM WRN leaks found: 1\nmake: *** [Makefile:62: secrets] Error 1"
+    "output": "> skills-example-typescript@0.0.0 dependency-rule\n> node scripts/check-dependency-rule.mjs\n\n✔ Dependency rule\nnpm run metrics\n\n> skills-example-typescript@0.0.0 metrics\n> node scripts/check-metrics.mjs\n\n✔ Static metrics\nnpm run secrets\n\n> skills-example-typescript@0.0.0 secrets\n> node scripts/check-secrets.mjs\n\n✘ Secrets\n  secret found in the working tree:\n10:13AM INF scanned ~130879 bytes (130.88 KB) in 22.7ms\n10:13AM WRN leaks found: 1\nmake: *** [Makefile:62: secrets] Error 1"
   },
   {
     "gate": "Avoided terms",
