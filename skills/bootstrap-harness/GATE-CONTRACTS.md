@@ -1,6 +1,8 @@
 # Gate Contracts
 
-Each Gate Contract states a Gate's intent and acceptance criteria for any stack. The tool that realizes it is chosen in the stack interview; where a Contract's scenarios need a language, the domain interview settles it. Where acceptance also depends on a judgment no tool can make, the acceptance criteria include a **Human review**; the Gate runs its executable criteria, and neither the run nor the review stands in for the other. Together these Gates form the **Gate Floor**: every project has all of them from day zero.
+Each Gate Contract states a Gate's intent and acceptance criteria for any stack. The tool that realizes it is chosen in the stack interview; where a Contract's scenarios need a language, the domain interview settles it. Where acceptance also depends on a judgment no tool can make, the acceptance criteria include a **Human review**; the Gate runs its executable criteria, and neither the run nor the review stands in for the other. Together these Gates form the **Gate Floor**: every project has all of them. A greenfield project establishes every one from day zero; an existing application adopts them in approved stages.
+
+Both starting paths use these same Contracts. Adoption records an approved scope, cadence, and adoption criteria for each Gate, and may record specific accepted findings in versioned policy, but it never redefines a Contract, weakens its intent, or creates a second set. The Contract remains the obligation.
 
 ## Rules for every Gate
 
@@ -12,6 +14,16 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 - **Core thresholds.** Where a contract sets a stricter threshold for core, the Gate config applies it to the modules of core contexts.
 - **Third-party code.** Exclude it from traversal, never from rule targets: an exclusion that hides a target also hides the violation. A rule that depends on matching the target path must still see the dependency it forbids.
 - **Own level.** A Contract's obligation stops at its own level; the Gherkin obligation on e2e adds none to unit or integration tests.
+- **Honest state.** Every claim about a Gate uses the state vocabulary below. A configured, scheduled, or differently scoped run is not adoption.
+- **Shared Contract.** Adoption narrows where and how often a Gate runs through approved policy; it never replaces or forks the Contract.
+
+## Gate states
+
+- **Adopted**: the Gate actually runs under the approved scope and cadence, has a repeatable Gate Proof whose violation turns the appropriate Entry Point red because of that Gate, and enforces the agreed adoption criteria. A green run that does not meet all three is not adoption.
+- **Pending**: the Gate is not adopted and nothing outside the work prevents it from being adopted. Missing, unexecuted, unproven, and not-yet-in-scope Gates are pending. A pending Gate is not protection; its absence is reported, not hidden.
+- **Blocked**: the Gate cannot run because the environment, a missing tool, a missing decision, or another external dependency prevents it. Record what the maintainer must provide. A blocked Gate is not adopted, and scheduling it later does not make it adopted.
+
+A run can be green while its Gate remains pending: green is a result, not a state. Do not claim a Gate is adopted because it is configured, because it is on a schedule, or because it passed under a scope the maintainer did not approve.
 
 ## Rules for every Gate Proof
 
