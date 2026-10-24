@@ -13,11 +13,11 @@ The path selected by inspecting the repository: **greenfield** or **existing app
 _Avoid_: Repository type
 
 **Greenfield**:
-A repository with no application source code yet: at most a README, license, ignore files, and editor or tooling config. The greenfield path establishes the Harness from day zero.
+A repository with no application source code yet. The greenfield path establishes the Harness from day zero.
 _Avoid_: New project, empty project
 
 **Existing application**:
-A repository that already contains application source, tests, delivered behavior, or application-specific tooling. The adoption path reconciles a Harness with it instead of generating a replacement. A task runner, formatter, or CI config alone does not make a source-less repository an existing application.
+A repository that already contains application source, tests, delivered behavior, or application-specific tooling; the adoption path reconciles a Harness with it instead of generating a replacement. A repository with only tooling config and no application source, tests, or delivered behavior is greenfield.
 _Avoid_: Brownfield, legacy application
 
 **Inventory**:
