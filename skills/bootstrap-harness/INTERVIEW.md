@@ -1,6 +1,8 @@
 # Interviews
 
-Both interviews run in **rounds**. Map the open decisions as a tree: each decision unlocks the decisions that hang off it. The **frontier** is every decision whose prerequisites are settled. Ask the whole frontier in one round, number each question, and give your recommended answer. Then wait for the user's answers, recompute the frontier, and ask the next round.
+The _Domain_ and _Stack_ interviews run on the greenfield path. The adoption path runs _Adoption_ instead, after the inventory, with the same discipline: the agent discovers facts, the maintainer confirms them and makes every decision.
+
+Interviews run in **rounds**. Map the open decisions as a tree: each decision unlocks the decisions that hang off it. The **frontier** is every decision whose prerequisites are settled. Ask the whole frontier in one round, number each question, and give your recommended answer. Then wait for the user's answers, recompute the frontier, and ask the next round.
 
 Format each question as:
 
@@ -12,7 +14,7 @@ Recommended: <answer and the reason for it>
 
 Decisions belong to the user. Facts belong to you: look up anything the environment or current documentation can answer instead of asking. When the user supplies a briefing or product document, use it to sharpen your recommendations; the user still confirms every decision.
 
-Record every confirmed answer in `INTERVIEW-ANSWERS.md` beside `GLOSSARY.md`, numbered as the questions below are. The answer file is what makes the run repeatable, and it is where the reason for a surprising choice stays readable after the conversation is gone. The approved initial scenarios belong there too: they are the behavioral contract the e2e level implements.
+Record every confirmed answer in `INTERVIEW-ANSWERS.md` beside `GLOSSARY.md` on the greenfield path, numbered as the questions below are. On the adoption path, keep the answers in a working location outside the application until the plan is approved; the _Adoption_ section says when to merge them. The answer file is what makes the run repeatable, and it is where the reason for a surprising choice stays readable after the conversation is gone. The approved initial scenarios belong there too: they are the behavioral contract the e2e level implements.
 
 An interview ends when its frontier is empty and the user confirms the summary you present.
 
@@ -84,3 +86,47 @@ Settle these decisions:
 6. **Entry Point mechanism.** The task runner native to the ecosystem, or `make` when there is none. The full and fast Entry Points are two named commands of that mechanism.
 7. **CI provider.** Any provider works, since its only job is to call the full Entry Point (plus the periodic full mutation run) on a checkout able to run every Gate as written; [SKILL.md](SKILL.md) phase 5 states what that checkout must provide.
 8. **Threshold departures.** Present the defaults from GATE-CONTRACTS.md. When the user changes one, record why in an ADR only if the change is surprising and hard to reverse; otherwise the config value alone suffices.
+
+## Adoption
+
+Read [GATE-CONTRACTS.md](GATE-CONTRACTS.md) and complete the inventory in [SKILL.md](SKILL.md) phase A1 before this interview. Bring the inventory to the maintainer: every fact points at the evidence you inspected, and every inference is labelled for confirmation. The frontier is the set of decisions the inventory cannot make. Ask it in rounds; do not ask the maintainer for facts the environment already answers.
+
+Settle these decisions, in dependency order:
+
+1. **Deliverable and outermost edge.** Does the inventory's deliverable and outermost edge match the artefact the business and the e2e level must drive?
+
+   Recommended: confirm what the repository actually delivers; the existing outermost edge is the e2e target. A different edge needs a stated reason and a place in the plan.
+
+2. **Domain understanding.** Are these the bounded contexts, their kinds, and their language?
+
+   Recommended: preserve the contexts, names, and terms the code and existing docs already use, and classify each as core, supporting, or generic from the evidence. Do not invent a model where the application already has one. Present a conflict between evidence sources as a decision for the maintainer.
+
+3. **Boundaries.** Which boundaries and allowed dependencies are intended, and which observed edges are accidental?
+
+   Recommended: treat the enforced context map and public interfaces as the starting declaration and preserve them. Stage an accidental edge for a separate, approved decision; do not refactor it automatically.
+
+4. **Observed behavior and regression priorities.** Which workflows form the regression contract, and where does their evidence live?
+
+   Recommended: start from the existing tests and the workflows the application already exercises. Preserve surprising but stable observed behavior; do not revalidate business correctness. Stage further characterization where evidence is thin. Exceptionally strong evidence of an obvious error is a localized decision, never an automatic correction and never a reason to stop unrelated adoption.
+
+5. **Existing tools and checks.** Which existing tools and checks satisfy the agreed criteria and are retained, and which do you want replaced?
+
+   Recommended: retain every tool and check that meets its Gate Contract; propose a replacement with its reason, compatibility cost, and migration work, and make it only after approval.
+
+6. **Entry Points and CI.** Do the existing Entry Points and CI arrangement provide the fast and full tiers and call the full Entry Point?
+
+   Recommended: retain working Entry Point names and adapt only what does not meet the Contract. CI calls the full Entry Point and nothing else, on a checkout that gives each Gate what it measures.
+
+7. **Gaps and blocked work.** Which discovered gaps are staged now, which stay pending, and which are blocked?
+
+   Recommended: order gaps by the protection they buy. A missing, unexecuted, or unproven check is pending. A check the environment cannot run is blocked, with what the maintainer must provide recorded beside it.
+
+8. **Stages, scope, budget, and cadence.** What are the stages, their priorities, the scope of each, and the project's validation budget and cadence?
+
+   Recommended: protect the highest-value workflows first, take the cheap high-signal Gates early, and stage expensive checks rather than requiring every analysis before adoption begins. Agree a budget and cadence for this project; do not import a universal CI target.
+
+9. **Plan approval.** Does the plan record every confirmed decision and every Gate's current state, and do you approve it?
+
+   Recommended: approve the plan before any change. Drafting it touches nothing in the application, its tests, or its tooling, and no stage starts until the maintainer approves.
+
+This interview ends when the frontier is empty, every stage has its scope, budget, and cadence, and the maintainer approves the plan. Keep every confirmed answer outside the application until that approval. After approval, keep the answers and the approved plan in the working record; the next stage records them in `INTERVIEW-ANSWERS.md` under _Adoption_ and `ADOPTION-PLAN.md` before its first change. This step changes nothing in the application, its tests, or its tooling.
