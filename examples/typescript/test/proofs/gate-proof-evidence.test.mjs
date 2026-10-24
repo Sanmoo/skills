@@ -186,6 +186,27 @@ describe("Gate Proof scope evidence", () => {
     assert.equal(readFileSync(report, "utf8"), '{"complete":true}\n');
   });
 
+  it("carries a failed scoped proof no further than its own run", (t) => {
+    // The Mutation proof does not go red, because the Gate analyzed the wrong
+    // file. The proofs after it must be unscoped, and the tree must be as it
+    // was found.
+    const proofs = proofSandbox(t, { complete: true });
+    proofs.recordScope({ ...DECLARED, analyzedFiles: [BOOK] });
+
+    proofs.run([]);
+
+    const report = JSON.parse(
+      readFileSync(join(proofs.root, "reports", "gate-proofs.json"), "utf8"),
+    );
+    const mutation = report.find((record) => record.gate === "Mutation");
+    assert.equal(mutation.wentRed, false);
+    assert.ok(mutation.scope.problems.length > 0);
+    for (const record of report.slice(report.indexOf(mutation) + 1)) {
+      assert.equal(record.scope.requested, null, `${record.gate} inherited a scope`);
+    }
+    assert.equal(proofs.git("status", "--porcelain"), "", "the tree must be restored");
+  });
+
   it("keeps both scopes in the persisted evidence of a complete run", (t) => {
     // The stand-in Entry Point fails on Mutation for every proof, so the run
     // reports failures; the report is still written, which is what a shortened

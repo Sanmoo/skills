@@ -8,7 +8,7 @@
 // analyzed. Everything here drives the same executable the Entry Point drives,
 // against controlled Git trees and a stand-in for the pinned mutation tool, so
 // the checks observe selection, exit status and persisted evidence rather than
-// any helper's name or layout. The Gate runs them before it measures.
+// any helper's name or layout. The proof job runs them before the proofs.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -134,7 +134,7 @@ describe("ordinary Mutation selection", () => {
       requestedFiles: null,
       analyzedFiles: [],
       analyzedFilesUnavailable: null,
-      analysisCompleted: false,
+      analysisCompleted: true,
     });
   });
 
@@ -201,6 +201,15 @@ describe("explicit proof scope", () => {
     assert.equal(result.status, 0, result.output);
     assert.deepEqual(gate.toolArguments(), ["run", "--mutate", LOAN]);
     assert.match(result.output, /Mutation scope: explicit: src\/lending\/domain\/loan\.ts/);
+    // The recorded scope is the declared one too, so the unrelated changed file
+    // cannot dilute the result through the evidence either.
+    assert.deepEqual(gate.scopeRecord(), {
+      selection: "explicit",
+      requestedFiles: [LOAN],
+      analyzedFiles: [LOAN],
+      analyzedFilesUnavailable: null,
+      analysisCompleted: true,
+    });
   });
 
   it("records the requested files and the files actually analyzed", (t) => {
