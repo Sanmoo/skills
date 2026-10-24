@@ -119,7 +119,7 @@ Settle these decisions, in dependency order:
 
 7. **Gaps and blocked work.** Which discovered gaps are staged now, which stay pending, and which are blocked?
 
-   Recommended: order gaps by the protection they buy. A missing, unexecuted, or unproven check is pending. A check the environment cannot run is blocked, with what the maintainer must provide recorded beside it. No Gate is adopted because it is planned or configured.
+   Recommended: order gaps by the protection they buy. A missing, unexecuted, or unproven check is pending. A check the environment cannot run is blocked, with what the maintainer must provide recorded beside it.
 
 8. **Stages, scope, budget, and cadence.** What are the stages, their priorities, the scope of each, and the project's validation budget and cadence?
 
@@ -129,4 +129,4 @@ Settle these decisions, in dependency order:
 
    Recommended: approve the plan before any change. Drafting it touches nothing in the application, its tests, or its tooling, and no stage starts until the maintainer approves.
 
-This interview ends when the frontier is empty, every stage has its scope, budget, and cadence, and the maintainer approves the plan. Keep every confirmed answer outside the application until that approval. After approval, hand the answers and the approved plan to the execution stage; it records them in `INTERVIEW-ANSWERS.md` under _Adoption_ and `ADOPTION-PLAN.md` before its first change. This step changes nothing in the application, its tests, or its tooling.
+This interview ends when the frontier is empty, every stage has its scope, budget, and cadence, and the maintainer approves the plan. Keep every confirmed answer outside the application until that approval. After approval, keep the answers and the approved plan in the working record; the next stage records them in `INTERVIEW-ANSWERS.md` under _Adoption_ and `ADOPTION-PLAN.md` before its first change. This step changes nothing in the application, its tests, or its tooling.

@@ -14,7 +14,7 @@ Both starting paths use these same Contracts. Adoption records an approved scope
 - **Core thresholds.** Where a contract sets a stricter threshold for core, the Gate config applies it to the modules of core contexts.
 - **Third-party code.** Exclude it from traversal, never from rule targets: an exclusion that hides a target also hides the violation. A rule that depends on matching the target path must still see the dependency it forbids.
 - **Own level.** A Contract's obligation stops at its own level; the Gherkin obligation on e2e adds none to unit or integration tests.
-- **Honest state.** Every claim about a Gate uses the state vocabulary below. A configured, scheduled, or differently scoped run is not adoption.
+- **Honest state.** Every claim about a Gate uses the state vocabulary below.
 
 ## Gate states
 

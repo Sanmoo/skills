@@ -9,11 +9,11 @@ The complete set of Guides and Gates that constrains every change to a codebase,
 _Avoid_: Guardrails, scaffold
 
 **Starting path**:
-The path selected by inspecting the repository: **greenfield** or **existing application**. The greenfield path establishes the Harness from day zero; the existing-application path adopts it through an approved plan.
+The path selected by inspecting the repository: **greenfield** or **existing application**. The greenfield path establishes the Harness from day zero; the adoption path reconciles it with an existing application.
 _Avoid_: Repository type
 
 **Greenfield**:
-A repository with no application source code yet. The greenfield path establishes the Harness from day zero.
+A repository with no application source code, no tests of application behavior, and no delivered behavior yet. The greenfield path establishes the Harness from day zero.
 _Avoid_: New project, empty project
 
 **Existing application**:
