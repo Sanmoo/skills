@@ -16,7 +16,7 @@ Work the phases in order. Start a phase only when the previous one meets its com
 
 ## 1. Select the starting path
 
-Inspect the repository. It is **greenfield** when it holds no application source code, no tests of application behavior, and no delivered behavior. It may hold a README, license, ignore files, and editor or tooling config, including a task runner or CI config for the project to come; a task runner, formatter, or CI config alone does not make it an existing application. It is an **existing application** when it already holds application source, tests of application behavior, delivered behavior, or application-specific tooling — tooling whose configuration names the application's code, such as a boundary rule, a migration script, or a test suite. When both descriptions seem to fit, application source, tests, or delivered behavior wins: route to the adoption path.
+Inspect the repository. It is **greenfield** when it holds no application source code, no tests of application behavior, and no delivered behavior. It may hold a README, license, ignore files, and editor or tooling config, including a task runner, formatter, or CI config for the project to come; tooling config alone never makes a repository an existing application. It is an **existing application** when it holds application source, tests of application behavior, delivered behavior, or application-specific tooling that operates on that existing code. If there is no application source, tests, or delivered behavior, the path is greenfield regardless of what tooling config exists.
 
 State the selected path and the evidence for it to the user, then follow that path's phases. The greenfield path keeps its day-zero expectations. The adoption path starts with an inventory and reaches an approved plan before anything in the application, its tests, or its tooling changes.
 
@@ -95,9 +95,9 @@ Keep the inventory lightweight and factual. Read manifests, lockfiles, source la
 
 ### A2. Confirm the inventory and adoption decisions
 
-Run the adoption interview in [INTERVIEW.md](INTERVIEW.md), section _Adoption_. Present the discovered facts; the maintainer confirms or corrects them and decides the domain classifications, boundaries to preserve, regression priorities, tools to retain or replace, stages, scopes, budgets, and cadence. Do not decide any of these unilaterally and do not invent a domain model where the application already has one.
+Run the interview in [INTERVIEW.md](INTERVIEW.md), section _Adoption_. Present the discovered facts; the maintainer confirms or corrects them and decides the domain classifications, boundaries to preserve, regression priorities, tools to retain or replace, stages, scopes, budgets, and cadence. Do not decide any of these unilaterally and do not invent a domain model where the application already has one.
 
-Record every confirmed answer in the adoption record outside the application until the plan is approved, and keep the inventory's evidence beside it.
+Keep the confirmed answers and the inventory's evidence outside the application until the plan is approved.
 
 **Done when** the maintainer has confirmed the inventory, the domain understanding, the boundaries, the existing checks and tools to retain or replace, the regression priorities, and the scope, budget, and cadence of every planned stage, and the answers are recorded.
 
