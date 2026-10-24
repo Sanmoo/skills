@@ -107,7 +107,7 @@ Settle these decisions, in dependency order:
 
 4. **Observed behavior and regression priorities.** Which workflows form the regression contract, and where does their evidence live?
 
-   Recommended: start from the existing tests and the workflows the application already exercises. Preserve surprising but stable observed behavior; do not audit business correctness. Stage further characterization where evidence is thin. Exceptionally strong evidence of an obvious error is a localized decision, never an automatic correction and never a reason to stop unrelated adoption.
+   Recommended: start from the existing tests and the workflows the application already exercises. Preserve surprising but stable observed behavior; do not revalidate business correctness. Stage further characterization where evidence is thin. Exceptionally strong evidence of an obvious error is a localized decision, never an automatic correction and never a reason to stop unrelated adoption.
 
 5. **Existing tools and checks.** Which existing tools and checks satisfy the agreed criteria and are retained, and which do you want replaced?
 
@@ -129,4 +129,4 @@ Settle these decisions, in dependency order:
 
    Recommended: approve the plan before any change. Drafting it touches nothing in the application, its tests, or its tooling, and no stage starts until the maintainer approves.
 
-An adoption interview ends when the frontier is empty, every stage has its scope, budget, and cadence, and the maintainer approves the plan. Record every confirmed answer in `INTERVIEW-ANSWERS.md` under _Adoption_, and record the approved plan in `ADOPTION-PLAN.md` beside it.
+An adoption interview ends when the frontier is empty, every stage has its scope, budget, and cadence, and the maintainer approves the plan. Record every confirmed answer in the adoption record outside the application until that approval. After approval, merge them into `INTERVIEW-ANSWERS.md` under _Adoption_ and record the approved plan in `ADOPTION-PLAN.md` beside it, formatted so the fast Entry Point stays green.
