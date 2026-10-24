@@ -1,6 +1,6 @@
 # Gate Contracts
 
-Each Gate Contract states a Gate's intent and acceptance criteria for any stack. The tool that realizes it is chosen in the stack interview. Where acceptance also depends on a judgment no tool can make, the Contract states it as **Human review**, separate from the criteria the Gate runs. Together these Gates form the **Gate Floor**: every project has all of them from day zero.
+Each Gate Contract states a Gate's intent and acceptance criteria for any stack. The tool that realizes it is chosen in the stack interview. Where acceptance also depends on a judgment no tool can make, a Contract may state it as **Human review**, separate from the criteria the Gate runs. Together these Gates form the **Gate Floor**: every project has all of them from day zero.
 
 ## Rules for every Gate
 
