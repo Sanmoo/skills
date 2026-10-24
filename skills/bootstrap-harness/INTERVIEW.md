@@ -111,7 +111,7 @@ Settle these decisions, in dependency order:
 
 5. **Existing tools and checks.** Which existing tools and checks satisfy the agreed criteria and are retained, and which do you want replaced?
 
-   Recommended: retain every tool and check that meets its Gate Contract; propose a replacement with its reason, compatibility cost, and migration work, and make it only after approval.
+   Recommended: retain every tool and check that meets its Gate Contract under the adoption criteria; propose a replacement with its reason, compatibility cost, and migration work, and make it only after approval. A check that cannot fail or exercises no meaningful input is not retained as a Gate; it stays pending.
 
 6. **Entry Points and CI.** Do the existing Entry Points and CI arrangement provide the fast and full tiers and call the full Entry Point?
 
@@ -119,14 +119,14 @@ Settle these decisions, in dependency order:
 
 7. **Gaps and blocked work.** Which discovered gaps are staged now, which stay pending, and which are blocked?
 
-   Recommended: order gaps by the protection they buy. A missing, unexecuted, or unproven check is pending. A check the environment cannot run is blocked, with what the maintainer must provide recorded beside it.
+   Recommended: order gaps by the protection they buy. A missing, unexecuted, unproven, or vacuously passing check is pending. A check the environment cannot run is blocked, with what the maintainer must provide recorded beside it.
 
-8. **Stages, scope, budget, and cadence.** What are the stages, their priorities, the scope of each, and the project's validation budget and cadence?
+8. **Stages, scope, budget, cadence, and adoption criteria.** What are the stages, their priorities, the scope of each, and the project's validation budget and cadence? For every Gate the plan adopts, what are its adoption criteria: the scope and cadence it runs under, and any specific existing findings the maintainer accepts?
 
-   Recommended: protect the highest-value workflows first, take the cheap high-signal Gates early, and stage expensive checks rather than requiring every analysis before adoption begins. Agree a budget and cadence for this project; do not import a universal CI target.
+   Recommended: protect the highest-value workflows first, take the cheap high-signal Gates early, and stage expensive checks rather than requiring every analysis before adoption begins. Name each Gate's scope and cadence, and the specific findings the maintainer accepts if any; a Gate without agreed criteria, or whose check would pass vacuously, stays pending. Agree a budget and cadence for this project; do not import a universal CI target.
 
-9. **Plan approval.** Does the plan record every confirmed decision and every Gate's current state, and do you approve it?
+9. **Plan approval.** Does the plan record every confirmed decision, every Gate's current state, and the adoption criteria and Gate Proof for every Gate it expects to adopt, and do you approve it?
 
-   Recommended: approve the plan before any change. Drafting it touches nothing in the application, its tests, or its tooling, and no stage starts until the maintainer approves.
+   Recommended: approve the plan before any change. Drafting it touches nothing in the application, its tests, or its tooling, and no stage starts until the maintainer approves. Approval adopts no Gate; execution and proof do.
 
-This interview ends when the frontier is empty, every stage has its scope, budget, and cadence, and the maintainer approves the plan. Keep every confirmed answer outside the application until that approval. After approval, keep the answers and the approved plan in the working record; the next stage records them in `INTERVIEW-ANSWERS.md` under _Adoption_ and `ADOPTION-PLAN.md` before its first change. This step changes nothing in the application, its tests, or its tooling.
+This interview ends when the frontier is empty, every stage has its scope, budget, and cadence, every Gate the plan will adopt has its adoption criteria, and the maintainer approves the plan. Keep every confirmed answer outside the application until that approval. After approval, record the answers in `INTERVIEW-ANSWERS.md` under _Adoption_ and the approved plan in `ADOPTION-PLAN.md` before the first change. This step changes nothing in the application, its tests, or its tooling.

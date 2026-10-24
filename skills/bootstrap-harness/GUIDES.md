@@ -22,11 +22,13 @@ Write each line as the behavior you want ("name types after glossary terms"), an
 
 A greenfield project creates the inventory below from scratch.
 
-An existing application reconciles the documents it already has with the same inventory. Inventory the existing Guides, map each one to the inventory, and keep a Guide that already satisfies the three content rules. The adoption plan names, stage by stage, which missing Guides are created and which existing ones are amended, merged, or retired; none of that happens before the maintainer approves the plan. Do not create a parallel documentation set, and do not restate current thresholds, tool inventories, or commands merely to avoid touching an existing document later.
+An existing application reconciles the documents it already has with the same inventory. Inventory the existing Guides, map each one to the inventory, and keep a Guide that already satisfies the three content rules. The adoption plan names, stage by stage, which missing Guides are created and which existing ones are amended, merged, or retired; none of that happens before the maintainer approves the plan. A stage executes only the Guide changes it names, and a Guide that already satisfies the inventory is left as it is. Do not create a parallel documentation set, and do not restate current thresholds, tool inventories, or commands merely to avoid touching an existing document later.
 
 An adopted Harness ends with the same inventory as a greenfield one. The difference is the route: existing documents are the starting material, and changing one is a planned, approved change like any other.
 
-`ADOPTION-PLAN.md` is a stage record, not a Guide, and is not part of this inventory. It is written when the approved plan is executed, before the first change, and holds the approved stages and decisions; once a stage is executed, the code and its config are the current truth, so the plan must not become a second source of thresholds, tool versions, or commands.
+`ADOPTION-PLAN.md` is a stage record, not a Guide, and is not part of this inventory. It is written when the approved plan is executed, before the first change, and holds the approved stages, their adoption criteria, and their decisions. Each stage adds its completion and Gate states to that record; once a stage is executed, the code and its config are the current truth, so the plan must not become a second source of thresholds, tool versions, or commands. The proofs and outcomes themselves live in the project's committed proof record, `GATE-PROOFS.md`, which the plan points at instead of copying.
+
+The final report is a message to the maintainer, not a Guide. It states every Gate's state, the evidence or blocker, and whether the Harness is established; it does not become a durable document alongside the inventory. What must outlive the session is executable - the Gate configuration, the proof file, and the proof record - so the report never restates current policy.
 
 ## Inventory
 
