@@ -8,7 +8,7 @@
 // accepts, and the tree it restores - rather than what the pinned tools measure.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import {
@@ -184,6 +184,19 @@ describe("Gate Proof scope evidence", () => {
 
     assert.equal(result.status, 0, result.output);
     assert.equal(readFileSync(report, "utf8"), '{"complete":true}\n');
+  });
+
+  it("deletes the previous analysis report so a proof cannot read stale scope", (t) => {
+    const proofs = proofSandbox(t);
+    proofs.recordScope(DECLARED);
+    mkdirSync(join(proofs.root, "reports", "mutation"), { recursive: true });
+    const stale = join(proofs.root, "reports", "mutation", "mutation.json");
+    writeFileSync(stale, '{"files":{"src/lending/domain/loan.ts":{"mutants":[]}}}\n');
+
+    const result = proofs.run();
+
+    assert.equal(result.status, 0, result.output);
+    assert.equal(existsSync(stale), false, "the previous report must not survive");
   });
 
   it("carries a failed scoped proof no further than its own run", (t) => {

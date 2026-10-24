@@ -9,6 +9,7 @@ import { dirname } from "node:path";
 // A stack chooses how a declared proof scope reaches its Gate. This one carries
 // it in the environment of the single execution, so it cannot outlive the run.
 export const MUTATION_SCOPE_ENV = "MUTATION_SCOPE";
+export const MUTATION_REPORT = "reports/mutation/mutation.json";
 export const MUTATION_SCOPE_RECORD = "reports/mutation/scope.json";
 
 // How a run arrived at its inputs. `rejected` is a declared scope that named
@@ -40,6 +41,17 @@ export function writeScopeRecord({
       2,
     )}\n`,
   );
+}
+
+// A legitimately empty changed set: the selection succeeded and found nothing.
+export function changedSetScope(files) {
+  return {
+    selection: SELECTION.changedSet,
+    requestedFiles: null,
+    analyzedFiles: files,
+    analyzedFilesUnavailable: null,
+    analysisCompleted: true,
+  };
 }
 
 // A declaration that named something unusable. Nothing was analyzed, and the
