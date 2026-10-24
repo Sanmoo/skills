@@ -192,7 +192,7 @@ if (full && declared !== undefined) {
     selection: SELECTION.rejected,
     requestedFiles: declared.files,
     analyzedFiles: null,
-    unavailable: `${MUTATION_SCOPE_ENV} cannot narrow the scheduled --full run`,
+    analyzedFilesUnavailable: `${MUTATION_SCOPE_ENV} cannot narrow the scheduled --full run`,
   });
   report("Mutation", [`${MUTATION_SCOPE_ENV} cannot narrow the scheduled --full run`]);
 }
@@ -205,7 +205,7 @@ if (!full) {
       selection: SELECTION.rejected,
       requestedFiles: declared.files,
       analyzedFiles: null,
-      unavailable: declared.problems.join("; "),
+      analyzedFilesUnavailable: declared.problems.join("; "),
     });
     report("Mutation", declared.problems);
   }
@@ -226,7 +226,7 @@ if (!full) {
         selection: SELECTION.changedSet,
         requestedFiles: null,
         analyzedFiles: [],
-        unavailable: null,
+        analyzedFilesUnavailable: null,
       });
       report("Mutation", []);
       console.log(`  no mutable files changed relative to ${changed.base}`);
@@ -318,5 +318,10 @@ if (reportJson !== undefined) {
   }
 }
 
-writeScopeRecord({ selection, requestedFiles, analyzedFiles, unavailable: analyzedUnavailable });
+writeScopeRecord({
+  selection,
+  requestedFiles,
+  analyzedFiles,
+  analyzedFilesUnavailable: analyzedUnavailable,
+});
 report("Mutation", failures);

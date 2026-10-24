@@ -21,13 +21,22 @@ export const SELECTION = {
 };
 
 // `analyzedFiles` is null when the analysis produced no readable scope, and
-// `unavailable` says so, so a reader cannot mistake that for a run that
+// `analyzedFilesUnavailable` says so, so a reader cannot mistake that for a run that
 // analyzed an empty set.
-export function writeScopeRecord({ selection, requestedFiles, analyzedFiles, unavailable }) {
+export function writeScopeRecord({
+  selection,
+  requestedFiles,
+  analyzedFiles,
+  analyzedFilesUnavailable,
+}) {
   mkdirSync(dirname(MUTATION_SCOPE_RECORD), { recursive: true });
   writeFileSync(
     MUTATION_SCOPE_RECORD,
-    `${JSON.stringify({ selection, requestedFiles, analyzedFiles, unavailable }, null, 2)}\n`,
+    `${JSON.stringify(
+      { selection, requestedFiles, analyzedFiles, analyzedFilesUnavailable },
+      null,
+      2,
+    )}\n`,
   );
 }
 
