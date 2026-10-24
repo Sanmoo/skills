@@ -1,5 +1,9 @@
 import { AfterAll, Before, BeforeAll, setDefaultTimeout } from "@cucumber/cucumber";
-import { startPostgres, type PostgresHarness } from "../../test/support/postgres.js";
+import {
+  resetLibraryData,
+  startPostgres,
+  type PostgresHarness,
+} from "../../test/support/postgres.js";
 import { startService, type RunningService } from "../../test/support/service.js";
 import type { LibraryWorld } from "./world.js";
 
@@ -40,7 +44,7 @@ Before(async function (this: LibraryWorld) {
     throw new Error("the e2e infrastructure did not start");
   }
   this.baseUrl = service.baseUrl;
-  await postgres.pool.query("truncate table catalog.books, lending.loans");
+  await resetLibraryData(postgres.pool);
 });
 
 AfterAll(async () => {

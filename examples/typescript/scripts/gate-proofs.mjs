@@ -92,7 +92,9 @@ const proofs = [
       return () => {
         restore();
         const build = run(NPM, ["run", "build"]);
-        if (build.status !== 0) console.error(outputOf(build));
+        if (build.status !== 0) {
+          throw new Error(`rebuilding dist after the E2E proof failed: ${outputOf(build)}`);
+        }
       };
     },
   },

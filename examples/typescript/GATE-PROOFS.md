@@ -1,14 +1,14 @@
 # Gate Proofs
 
-Every Gate was proven by introducing the violation named in its Gate Contract, running the Entry Point of its tier (`make check-fast` for fast Gates, `make check` for full Gates) with only that violation present, confirming it exited non-zero and named the Gate, then restoring the tree.
+Every Gate was proven by introducing the violation named in its Gate Contract, running the Entry Point of its tier (`make check-fast` for fast Gates, `make check` for full Gates) with only the change under proof present (the Mutation proof adds the scope marker described below), confirming it exited non-zero and named the Gate, then restoring the tree.
 
-The Entry Point is the same command in every proof of a tier, and the tree is not: each run carries exactly one violation, which is why a red result can be laid at the Gate the Entry Point named. The proof script owns that reasoning and the checks it needs; what this page records is the outcome.
+The Entry Point is the same command in every proof of a tier, and the tree is not: each run carries exactly one behavioral violation, which is why a red result can be laid at the Gate the Entry Point named. The proof script owns that reasoning and the checks it needs; what this page records is the outcome.
 
 The cost is one Entry Point run per Gate - the full tier's container, mutation run and advisory lookup included - and it is paid deliberately, which is why the script sits in neither Entry Point and why a single proof can be re-run alone. Each proof also records the changes its violation left in the tree, so the claim that only that violation was present is checkable rather than asserted; the machine-readable run behind this page, with one entry per Gate, is committed at [reports/gate-proofs.json](reports/gate-proofs.json).
 
 Mutation's changed-set scope adds one visible exception to the one-change rule: the proof also marks `src/lending/domain/loan.ts` as changed with a comment, because a branch that changes no domain code leaves the Gate nothing to mutate. The marker adds no behavior, and the Mutation entry records both paths.
 
-Before the E2E row was recorded, the level was also run with five deliberate faults: a failing assertion, an undefined step, a pending step, no selected scenarios, and no compiled artifact. Each made the Gate exit non-zero. Cucumber's strict mode covers the assertion, undefined and pending cases; `scripts/run-e2e.mjs` covers the empty selection; the readiness wait covers the missing artifact.
+Before the E2E row was recorded, the level was also exercised by hand with five deliberate faults: a failing assertion, an undefined step, a pending step, no selected scenarios, and no compiled artifact. Each made the Gate exit non-zero. Cucumber's strict mode covers the assertion, undefined and pending cases; `scripts/run-e2e.mjs` covers the empty selection; the readiness wait covers the missing artifact.
 
 | Gate                       | Tier | Tool (version)                                       | Violation introduced                              | Result |
 | -------------------------- | ---- | ---------------------------------------------------- | ------------------------------------------------- | ------ |

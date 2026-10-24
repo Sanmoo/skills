@@ -10,7 +10,7 @@ Boundaries are enforced, not trusted. The compiler cannot see a context boundary
 
 Put a concept in an existing context when the context already owns the decision it drives. Open a new context only when the concept needs a model of its own and its language conflicts with the existing one; a boundary is cheap to split later and costly to merge. Lending calls Catalog through `src/catalog/index.ts` and nothing else; adding another edge means changing the context map in code first.
 
-Open an ADR when a decision is hard to reverse, surprising without context, and the result of a real trade-off. Schema ownership and mutation scope are examples in `docs/adr/`.
+Open an ADR when a decision is hard to reverse, surprising without context, and the result of a real trade-off. Schema ownership and mutation scope are examples in `docs/adr/`. The context map describes production modules under `src/`; test lifecycle code is not a context and does not add an edge when it resets the ephemeral database it owns.
 
 ## Pointers
 
