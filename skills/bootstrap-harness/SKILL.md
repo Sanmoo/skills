@@ -107,9 +107,9 @@ Draft `ADOPTION-PLAN.md` in a scratch location outside the application. Make it 
 
 Present the plan to the maintainer and obtain approval before anything in the application, its tests, or its tooling changes. Drafting and approving touch none of them.
 
-After approval, hand the plan and the confirmed answers to the execution stage; it records them as `ADOPTION-PLAN.md` and in `INTERVIEW-ANSWERS.md` under _Adoption_ before its first change. The run ends at approval: execution of the approved plan is the next stage, and no Gate is adopted by the existence of the plan.
+After approval, keep the plan and the confirmed answers in the working record; the next stage of the work records them in the repository before its first change. The run ends at approval: execution is the next stage of the work, and no Gate is adopted by the existence of the plan.
 
-**Done when** the maintainer has approved the plan, the approved plan and answers are handed to the execution stage, and nothing in the application, its tests, or its tooling has changed.
+**Done when** the maintainer has approved the plan, the plan and answers are recorded in the working record, and nothing in the application, its tests, or its tooling has changed.
 
 ## Gate states and blockers
 
@@ -134,4 +134,4 @@ On the adoption path, report the selected path, the confirmed inventory, the app
 
 Non-normative realizations of the Gate Contracts for specific stacks live in <https://github.com/Sanmoo/skills/tree/main/examples>. When one matches the chosen stack, consult it for how a Gate looks when done well; the TypeScript example also records its [interview answers](../../examples/typescript/INTERVIEW-ANSWERS.md), [Gate Proofs](../../examples/typescript/GATE-PROOFS.md), and [what generating it exposed in this skill](../../examples/typescript/SKILL-FEEDBACK.md). The Gate Contracts remain the authority. An example's Gherkin executor and scenario language are realizations for its stack, never rules for another: a universal obligation comes only from a Gate Contract.
 
-The adoption path's plan rehearsal against a disposable copy of the TypeScript example is recorded in [the adoption-plan rehearsal](../../docs/evidence/adoption-plan-rehearsal.md): it reached an approved plan without changing the copy.
+The adoption path's plan rehearsal against a disposable copy of the TypeScript example is recorded in [the adoption-plan rehearsal](https://github.com/Sanmoo/skills/blob/main/docs/evidence/adoption-plan-rehearsal.md): it reached an approved plan without changing the copy.
