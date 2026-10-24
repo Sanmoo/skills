@@ -28,7 +28,7 @@ An adopted Harness ends with the same inventory as a greenfield one. The differe
 
 `ADOPTION-PLAN.md` is a stage record, not a Guide, and is not part of this inventory. It is written when the approved plan is executed, before the first change, and holds the approved stages, their adoption criteria, and their decisions. Each stage adds its completion and Gate states to that record; once a stage is executed, the code and its config are the current truth, so the plan must not become a second source of thresholds, tool versions, or commands. The proofs and outcomes themselves live in the project's committed proof record, `GATE-PROOFS.md`, which the plan points at instead of copying.
 
-The final report is a message to the maintainer, not a Guide. It states every Gate's state, the evidence or blocker, and whether the Harness is established; it does not become a durable document alongside the inventory. What must outlive the session is executable - the Gate configuration, the proof file, and the proof record - so the report never restates current policy.
+The final report is a message to the maintainer, not a Guide. It states every Gate's state, the evidence or blocker, and whether the Harness is established; it does not become a durable document alongside the inventory. What must outlive the session is the executable Gate configuration and proof file, plus the committed proof record that ties each proof to its outcome; the report never restates current policy.
 
 ## Inventory
 

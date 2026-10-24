@@ -110,19 +110,19 @@ Present the plan to the maintainer and obtain approval before anything in the ap
 
 After approval, record the approved plan in the repository as `ADOPTION-PLAN.md` and the confirmed answers in `INTERVIEW-ANSWERS.md` under _Adoption_ before the first change. Approval adopts no Gate by itself.
 
-**Done when** the maintainer has approved the plan, the plan and answers are recorded in the working record, and nothing in the application, its tests, or its tooling has changed.
+**Done when** the maintainer has approved the plan, the approved plan and answers are recorded in the repository as `ADOPTION-PLAN.md` and `INTERVIEW-ANSWERS.md`, and nothing in the application, its tests, or its tooling has changed.
 
 ### A4. Execute the approved plan stage by stage
 
 Execute the plan one stage at a time and change only what the approved stage names. Reconcile rather than replace: retain a tool or check that satisfies its Contract under the agreed adoption criteria, and propose a replacement with its reason, compatibility cost, and migration work before making it; a replacement happens only with the maintainer's approval. Do not generate a Walking Skeleton: the existing application, its tests, and its tooling are what the Gates run against.
 
-Each stage adopts its Gates under the adoption criteria the maintainer approved. For every Gate the stage adopts, run a **Gate Proof**: introduce one deliberate violation that the Gate rejects, outside any finding the adoption criteria accept, run the Entry Point of its tier with only that violation present, confirm it goes red _because of that Gate_, then revert the violation before the next proof. Keep the proof executable and repeatable, out of both Entry Points, so anyone can re-run it. Record the Gate Proof and its outcome in `GATE-PROOFS.md`; a raw run report is evidence of that run and is not committed in its place.
+Each stage adopts its Gates under the adoption criteria the maintainer approved. For every Gate the stage adopts, run a Gate Proof as phase 7 describes, under those criteria: introduce one deliberate violation that the Gate rejects and that lies outside any finding the criteria accept, run the Entry Point of its tier with only that violation present, confirm it goes red _because of that Gate_, then revert the violation before the next proof. Keep the proof executable and repeatable, out of both Entry Points, so anyone can re-run it. Record the Gate Proof and its outcome in `GATE-PROOFS.md`, with the row phase 7 records; a raw run report is evidence of that run and is not committed in its place.
 
 A Gate is adopted only when it actually runs under the approved scope and cadence, enforces the adoption criteria, and has its repeatable Gate Proof. A Gate that does not run, cannot fail, selects no meaningful input, passes vacuously, or is not yet in scope stays pending, or blocked when something outside the stage prevents it. Neither a configured Gate nor a green run under another scope is adoption.
 
-End each stage with an honest Gate-state report: what the stage changed, which Gates it adopted, which remain pending or blocked and why, and where each proof is recorded. A stage may complete with pending or blocked Gates; its report says so instead of hiding them, and the next approved stage does not turn one of them into an adopted Gate.
+End each stage with an honest stage completion report: what the stage changed, which Gates it adopted, which remain pending or blocked and why, and where each proof is recorded. A stage may complete with pending or blocked Gates; its report says so instead of hiding them. A later approved stage may adopt a Gate an earlier stage left pending only by running it under its approved criteria and proving it; no stage inherits adoption from another.
 
-**Done when** every approved stage has been executed or explicitly reported as pending or blocked, every Gate the plan adopted has its repeatable Gate Proof recorded, and the full Entry Point is green on the final tree.
+**Done when** every approved stage has been executed or explicitly reported as pending or blocked, and every Gate the plan adopted has its repeatable Gate Proof recorded.
 
 ### A5. Complete and report establishment
 

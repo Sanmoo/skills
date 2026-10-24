@@ -56,8 +56,12 @@ _Avoid_: Gate status, gate maturity
 The repeatable, attributable violation that shows a Gate turns the appropriate Entry Point red, required before that Gate counts as adopted and outside any finding its adoption criteria accept (the greenfield path accepts none).
 _Avoid_: Smoke test
 
+**Gate Proof record**:
+The committed file, `GATE-PROOFS.md`, that records each Gate's proof and outcome so the proof can be repeated and its result inspected. It is history about the tree a proof ran against, not current certification.
+_Avoid_: Proof log, evidence file
+
 **Established Harness**:
-The state in which every Gate in the Gate Floor is adopted: it runs under the approved scope and cadence and its Gate Proof turns the appropriate Entry Point red because of it. Debt the adoption criteria accept does not prevent establishment.
+The state in which every Gate in the Gate Floor is adopted: each runs under the approved scope and cadence and its Gate Proof turns the appropriate Entry Point red because of it. Debt the adoption criteria accept does not prevent establishment.
 _Avoid_: Complete harness, certified harness
 
 **Entry Point**:
