@@ -1,6 +1,6 @@
 # Gate Contracts
 
-Each Gate Contract states a Gate's intent and acceptance criteria for any stack. The tool that realizes it is chosen in the stack interview. Where acceptance also depends on a judgment no tool can make, the acceptance criteria include a **Human review**; the Gate runs its executable criteria, and neither the run nor the review stands in for the other. Together these Gates form the **Gate Floor**: every project has all of them from day zero.
+Each Gate Contract states a Gate's intent and acceptance criteria for any stack. The tool that realizes it is chosen in the stack interview, and the scenario language in the domain interview. Where acceptance also depends on a judgment no tool can make, the acceptance criteria include a **Human review**; the Gate runs its executable criteria, and neither the run nor the review stands in for the other. Together these Gates form the **Gate Floor**: every project has all of them from day zero.
 
 ## Rules for every Gate
 
@@ -11,6 +11,7 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 - **Tiered.** Fast Gates run in both Entry Points. Full Gates run only in the full Entry Point, which CI calls.
 - **Core thresholds.** Where a contract sets a stricter threshold for core, the Gate config applies it to the modules of core contexts.
 - **Third-party code.** Exclude it from traversal, never from rule targets: an exclusion that hides a target also hides the violation. A rule that depends on matching the target path must still see the dependency it forbids.
+- **Own level.** A Contract's obligation stops at its own level; the Gherkin obligation on e2e adds none to unit or integration tests.
 
 ## Format
 
@@ -49,7 +50,7 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 
 ## E2E tests
 
-- **Intent**: prove the deliverable works as shipped, through scenarios a business reviewer can read and validate. The stack interview chooses and pins the executor, the domain interview confirms the scenario language, and unit and integration tests keep their roles and carry no Gherkin obligation. The Gate proves the deliverable behaves as the scenarios say; a failing scenario makes the Entry Point exit non-zero, while whether the scenarios say the right thing is a human judgment that no parser, linter, or passing run establishes.
+- **Intent**: prove the deliverable works as shipped, through scenarios a business reviewer can read and validate. The Gate proves the deliverable behaves as the scenarios say; a failing scenario makes the Entry Point exit non-zero, while whether the scenarios say the right thing is a human judgment that no parser, linter, or passing run establishes.
 - **Passes when**: every e2e scenario passes, and the level meets every criterion the Gate runs below:
   - **Executable Gherkin.** The e2e level is a suite of Gherkin feature files run by the pinned executor.
   - **Outermost edge.** Each scenario drives the deliverable, built as it ships, through its outermost edge. Together the scenarios reach every bounded context.
@@ -59,7 +60,8 @@ Each Gate Contract states a Gate's intent and acceptance criteria for any stack.
 - **Human review**: a business reviewer approves the scenario set before its step definitions are written, and reviews what no Gate can:
   - each scenario states a business goal, the conditions that precede it, and its observable outcome in the glossary's terms;
   - delivery mechanics — HTTP requests and status codes, selectors, queries, payload shapes, implementation steps — stay in the step definitions, and the chosen scenario language introduces no competing domain model;
-  - the portfolio is a small set of full business journeys, not a copy of the integration test matrix; a journey may traverse behavior already tested below when it adds evidence about the built artifact, the connections between components, and the public edge, and a protocol-specific check that adds no business review stays at the integration level; and a green Gate does not stand in for this review.
+  - the portfolio is a small set of full business journeys, not a copy of the integration test matrix; a journey may traverse behavior already tested below when it adds evidence about the built artifact, the connections between components, and the public edge, and a protocol-specific check that adds no business review stays at the integration level;
+  - a green Gate does not stand in for this review.
 - **Tier**: full.
 - **Gate Proof**: break the route or command that reaches one context.
 
