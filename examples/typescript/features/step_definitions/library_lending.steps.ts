@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
 import { Given, Then, When } from "@cucumber/cucumber";
 import type { HttpReply } from "../support/http.js";
 import type { LibraryWorld } from "../support/world.js";
@@ -60,9 +59,10 @@ Given(
 Given(
   "the book {string} is not in the catalog",
   async function (this: LibraryWorld, title: string) {
-    // A book id that was never registered; the HTTP edge only accepts an id.
-    this.bookId = randomUUID();
-    const reply = await this.send("GET", `/books/${this.bookId}`);
+    // The edge addresses a Book by id; the scenario's title stands in for the id
+    // of the Book that was never registered.
+    this.bookId = title;
+    const reply = await this.send("GET", `/books/${encodeURIComponent(this.bookId)}`);
     assert.equal(reply.status, 404, `${title} unexpectedly exists in the catalog`);
   },
 );
