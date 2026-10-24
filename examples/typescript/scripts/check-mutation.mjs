@@ -7,7 +7,16 @@
 // Thresholds per GATE-CONTRACTS.md: at least 80% overall and at least 90% in
 // the core context (Lending). They live here, in code, and are applied to
 // Stryker's JSON report.
-import { existsSync, readFileSync } from "node:fs";
+//
+// A Gate Proof cannot rely on the changed set: the branch it runs on may change
+// none of this Gate's inputs. So MUTATION_SCOPE lets the proof declare, in
+// `scripts/gate-proofs.mjs`, the smallest set of eligible files its violation
+// needs; for that execution the declaration replaces the changed set. It is
+// setup, not a second violation, and it changes nothing else: the Entry Point,
+// Stryker's configuration and the thresholds below stay the ordinary ones. An
+// explicitly empty, missing, or ineligible declaration fails here and non-zero
+// rather than widening, falling back, or passing with nothing analyzed.
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { relative } from "node:path";
 import { outputOf, report, run } from "./lib.mjs";
 
@@ -16,6 +25,12 @@ const CORE_THRESHOLD = 90;
 const CORE_PREFIX = "src/lending/";
 const MUTABLE = /^src\/(catalog|lending)\/domain\/.*\.ts$/;
 const REPORT = "reports/mutation/mutation.json";
+// Where a run records what it was asked to mutate and what it actually
+// mutated. The Gate Proof runner reads it, so this evidence does not depend on
+// the Gate's output surviving truncation, and an unavailable scope stays
+// distinguishable from an empty one.
+const SCOPE_RECORD = "reports/mutation/scope.json";
+const SCOPE_ENV = "MUTATION_SCOPE";
 
 const full = process.argv.includes("--full");
 const failures = [];
@@ -122,20 +137,76 @@ function mutationScope() {
   return { base: resolved.ref, ...mutableFilesSince(mergeBase) };
 }
 
+// Splits a declared scope and checks every part of it. Returns the files, or
+// the problems that make the declaration unusable. A declaration is never
+// repaired: filtering a bad entry out would mutate a set the proof did not ask
+// for, and an empty declaration would analyze nothing at all.
+function declaredScope(declaration) {
+  const files = declaration
+    .split(",")
+    .map((file) => file.trim())
+    .filter((file) => file !== "");
+  if (files.length === 0) {
+    return { problems: [`${SCOPE_ENV} names no files, so the proof would analyze nothing`] };
+  }
+  const problems = [];
+  for (const file of files) {
+    if (!MUTABLE.test(file) || file.endsWith(".test.ts")) {
+      problems.push(`${SCOPE_ENV} names "${file}", which is not an eligible mutation input`);
+    } else if (!existsSync(file)) {
+      problems.push(`${SCOPE_ENV} names "${file}", which does not exist`);
+    }
+  }
+  return problems.length > 0 ? { problems } : { files };
+}
+
+// What a run selected and what it actually analyzed. `analyzedFiles` is null
+// when the analysis produced no readable scope, and the reason says so, so a
+// reader cannot mistake that for a run that analyzed an empty set.
+function recordScope(selection, requestedFiles, analyzedFiles, unavailable) {
+  mkdirSync("reports/mutation", { recursive: true });
+  writeFileSync(
+    SCOPE_RECORD,
+    `${JSON.stringify({ selection, requestedFiles, analyzedFiles, unavailable }, null, 2)}\n`,
+  );
+}
+
 let args = ["run"];
 let scope = "the whole codebase";
+let selection = "whole-codebase";
+let requestedFiles = null;
 if (!full) {
-  const changed = mutationScope();
-  if (changed.files === undefined) {
-    // A note, not a finding: it never changes the exit code.
-    console.log(`  note (Mutation): ${changed.reason}; mutating the whole codebase`);
-  } else if (changed.files.length === 0) {
-    report("Mutation", []);
-    console.log(`  no mutable files changed relative to ${changed.base}`);
-    process.exit(0);
+  // --full is the scheduled whole-codebase run, never a proof execution, so it
+  // keeps its own scope and a declaration cannot narrow it.
+  const declaration = process.env[SCOPE_ENV];
+  const declared = declaration === undefined ? undefined : declaredScope(declaration);
+  if (declared?.problems !== undefined) {
+    // Nothing runs: a wrong declaration is a setup failure, and it must not be
+    // read later as evidence that the intended violation was detected.
+    report("Mutation", declared.problems);
+  }
+  if (declared !== undefined) {
+    requestedFiles = declared.files;
+    selection = "explicit";
+    args = ["run", "--mutate", declared.files.join(",")];
+    scope = `explicit: ${declared.files.join(", ")}`;
   } else {
-    args = ["run", "--mutate", changed.files.join(",")];
-    scope = `${changed.files.length} changed file(s) vs ${changed.base}`;
+    const changed = mutationScope();
+    if (changed.files === undefined) {
+      // A note, not a finding: it never changes the exit code.
+      console.log(`  note (Mutation): ${changed.reason}; mutating the whole codebase`);
+    } else if (changed.files.length === 0) {
+      // A legitimate empty set is not an error; the record keeps it distinct
+      // from a scope that could not be measured.
+      recordScope("changed-set", null, [], null);
+      report("Mutation", []);
+      console.log(`  no mutable files changed relative to ${changed.base}`);
+      process.exit(0);
+    } else {
+      selection = "changed-set";
+      args = ["run", "--mutate", changed.files.join(",")];
+      scope = `${changed.files.length} changed file(s) vs ${changed.base}`;
+    }
   }
 }
 
@@ -158,6 +229,8 @@ function score(mutants) {
   };
 }
 
+let analyzedFiles = null;
+let analyzedUnavailable = `the analysis wrote no readable report at ${REPORT}`;
 if (failures.length === 0) {
   if (!existsSync(REPORT)) {
     failures.push(`no mutation report at ${REPORT}`);
@@ -172,6 +245,10 @@ if (failures.length === 0) {
       const normalized = relative(process.cwd(), path).split("\\").join("/");
       return { path: normalized, mutants: file.mutants ?? [] };
     });
+    if (reportJson !== undefined) {
+      analyzedFiles = files.map((file) => file.path);
+      analyzedUnavailable = null;
+    }
 
     if (files.length === 0) {
       failures.push("Stryker mutated no code");
@@ -181,6 +258,9 @@ if (failures.length === 0) {
       const core = score(coreFiles.flatMap((file) => file.mutants));
 
       console.log(`Mutation scope: ${scope}`);
+      if (requestedFiles !== null) {
+        console.log(`  declared for this execution: ${requestedFiles.join(", ")}`);
+      }
       for (const file of files) {
         const result = score(file.mutants);
         const label = file.path.startsWith(CORE_PREFIX) ? "core" : "supporting";
@@ -207,4 +287,5 @@ if (failures.length === 0) {
   }
 }
 
+recordScope(selection, requestedFiles, analyzedFiles, analyzedUnavailable);
 report("Mutation", failures);

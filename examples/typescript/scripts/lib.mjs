@@ -1,10 +1,14 @@
 import { spawnSync } from "node:child_process";
 
-export function run(command, args, options = {}) {
+// Runs a command with the caller's environment plus the colour-free defaults a
+// Gate's output needs. A caller that passes `env` adds to that environment
+// rather than replacing the defaults, so a Gate Proof can hand one execution a
+// setting written here and the child still prints without colour codes.
+export function run(command, args, { env = {}, ...options } = {}) {
   return spawnSync(command, args, {
     encoding: "utf8",
-    env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" },
     ...options,
+    env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0", ...env },
   });
 }
 
