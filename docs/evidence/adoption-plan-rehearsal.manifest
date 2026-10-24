@@ -66,3 +66,4 @@ bf2bc2f5a26207cf0fc8ca0fc3c9d3e6ae37615b99b1d74002b8d680fcfcacec  ./test/support
 c8a65822a43732c3d60db7403f9c9aab0ac996ff70b35d26f7399fedcef9d4a7  ./tsconfig.json
 8c80fabad109ac88dfaeec26f776938dd2c25594028e4d7b4e53932ac857d21a  ./vitest.config.ts
 82967fede736d944b16aa78b4be8830f1b5d91857fcf4271a304093c23b786d0  ./vitest.mutation.config.ts
+link  ./CLAUDE.md -> AGENTS.md

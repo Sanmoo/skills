@@ -21,12 +21,16 @@ A repository that already contains application source, tests, delivered behavior
 _Avoid_: Brownfield, legacy application
 
 **Inventory**:
-The lightweight, factual survey of an existing application's deliverable and outermost edge, domain evidence and boundaries, existing tools and checks, tests, Entry Points, CI, and obvious gaps, made before any change. It records what the environment answers instead of asking, and leaves expensive analysis to later stages.
+The lightweight, factual survey of an existing application made before any change. It records what the environment answers instead of asking, and leaves expensive analysis to later stages; the skill's inventory step lists what it covers.
 _Avoid_: Functional audit, application assessment
 
 **Adoption plan**:
-The staged, prioritized proposal for establishing the Harness in an existing application: the scope, Gates, Guide work, proposed changes, validation budget, and cadence of each stage. The maintainer approves it before anything in the application, its tests, or its tooling changes.
+The staged, prioritized proposal for establishing the Harness in an existing application. The maintainer approves it before anything in the application, its tests, or its tooling changes.
 _Avoid_: Migration plan, rewrite plan
+
+**Adoption criteria**:
+The scope, cadence, and specific accepted findings the maintainer approves for a Gate during adoption. They specialize the Gate Contract and never replace it.
+_Avoid_: Adoption rules, gate policy
 
 **Guide**:
 An agent-oriented document in the Harness that steers a change before it is made, holding only what the code cannot express. The code, including the Gates, is always the source of truth; a Guide points to it rather than restating it.
@@ -41,11 +45,11 @@ The stack-agnostic statement of a Gate's intent and acceptance criteria, which a
 _Avoid_: Gate spec
 
 **Gate Floor**:
-The set of Gates every project must have, regardless of stack or subdomain. A greenfield project establishes every one from day zero; an existing application adopts them in approved stages.
+The set of Gates every project must have, regardless of stack or subdomain.
 _Avoid_: Minimum gates, baseline gates
 
 **Gate state**:
-The honest classification of every Gate: **adopted**, **pending**, or **blocked**. A Gate is adopted only when it actually runs under the approved scope and cadence, has a Gate Proof, and enforces the agreed adoption criteria; otherwise it is pending, or blocked when the environment or a missing decision prevents it from running. A blocked Gate is not adopted.
+The honest classification of every Gate: **adopted**, **pending**, or **blocked**. [GATE-CONTRACTS.md](skills/bootstrap-harness/GATE-CONTRACTS.md) holds the test for each; a pending or blocked Gate is not adopted.
 _Avoid_: Gate status, gate maturity
 
 **Gate Proof**:
