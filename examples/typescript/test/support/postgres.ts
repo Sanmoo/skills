@@ -7,8 +7,15 @@ export interface PostgresHarness {
   stop(): Promise<void>;
 }
 
-// Integration tests run against a real Postgres, never a fake. The image is
-// pinned in one place and bumped together with the deployment target.
+// The e2e lifecycle owns this ephemeral database. Reset is test infrastructure,
+// not a call into either context's public interface, so it lives with the
+// container harness rather than in a step or in application code.
+export async function resetLibraryData(pool: Pool): Promise<void> {
+  await pool.query("truncate table catalog.books, lending.loans");
+}
+
+// Integration and e2e tests run against a real Postgres, never a fake. The image
+// is pinned in one place and bumped together with the deployment target.
 export async function startPostgres(): Promise<PostgresHarness> {
   const container: StartedPostgreSqlContainer = await new PostgreSqlContainer(
     "postgres:17.2-alpine",

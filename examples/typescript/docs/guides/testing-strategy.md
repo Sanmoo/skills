@@ -14,7 +14,7 @@ Test a new rule at the unit level; test a new query or mapping at the integratio
 
 Put a behaviour in the e2e portfolio when the journey proves the built artifact, the connection between contexts, and the public edge. A journey may traverse behaviour already covered at a lower level when it adds that evidence; do not copy the integration matrix, and keep a protocol-only check at the integration level where it adds no business review.
 
-A business reviewer approves the scenario set for meaning before its step definitions are written. A green run proves that the approved scenarios execute, not that they say the right thing. Scenarios are independent: each one starts from empty schemas and reaches the service through HTTP, never through application services, domain objects, or repositories.
+A business reviewer approves the scenario set for meaning before its step definitions are written. A green run proves that the approved scenarios execute, not that they say the right thing. Scenarios are independent: each one starts from empty schemas and reaches the service through HTTP, never through application services, domain objects, or repositories. The reset that empties those schemas belongs to the Postgres harness; it is test infrastructure, not a context dependency.
 
 The Mutation Gate treats the unit level as the proof that rules are pinned down, so a new domain rule needs unit tests that fail when the rule is wrong. The mutation scope stops at domain models deliberately; see [ADR 0002](../adr/0002-mutate-domain-models-only.md).
 
