@@ -15,8 +15,8 @@
     "unit": "node scripts/run-gate.mjs \"Unit tests\" -- vitest run --project unit",
     "integration": "node scripts/run-gate.mjs \"Integration tests\" -- vitest run --project integration",
     "e2e": "node scripts/run-gate.mjs \"E2E tests\" -- node --import tsx scripts/run-e2e.mjs",
-    "mutation": "node scripts/check-mutation.mjs --check-selection",
-    "mutation-full": "node scripts/check-mutation.mjs --full --check-selection",
+    "mutation": "node scripts/check-mutation.mjs",
+    "mutation-full": "node scripts/check-mutation.mjs --full",
     "boundaries": "node scripts/check-boundaries.mjs",
     "dependency-rule": "node scripts/check-dependency-rule.mjs",
     "metrics": "node scripts/check-metrics.mjs",
@@ -25,7 +25,7 @@
     "guide-pointers": "node scripts/check-guide-pointers.mjs",
     "vulnerabilities": "node scripts/run-gate.mjs \"Dependency vulnerabilities\" -- npm audit --audit-level=high",
     "gate-proofs": "node scripts/gate-proofs.mjs",
-    "gate-proof-checks": "node --test \"test/proofs/**/*.test.mjs\""
+    "gate-proof-checks": "node --test \"test/harness/**/*.test.mjs\" \"test/proofs/**/*.test.mjs\""
   },
   "dependencies": {
     "pg": "8.23.1"

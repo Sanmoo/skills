@@ -30,6 +30,7 @@ const DECLARED = {
   requestedFiles: [LOAN],
   analyzedFiles: [LOAN],
   analyzedFilesUnavailable: null,
+  analysisCompleted: true,
 };
 
 // The stand-in Entry Point always fails on Mutation and writes whatever scope
@@ -132,6 +133,18 @@ describe("Gate Proof scope evidence", () => {
     );
   });
 
+  it("rejects a red Gate whose analysis never completed", (t) => {
+    // The files were selected, but the tool failed: a red result then says
+    // nothing about the tests noticing a wrong change.
+    const proofs = proofSandbox(t);
+    proofs.recordScope({ ...DECLARED, analysisCompleted: false });
+
+    const result = proofs.run();
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.output, /analysis did not complete, so its red result is not a score/);
+  });
+
   it("rejects a proof with no scope record at all", (t) => {
     const proofs = proofSandbox(t);
     proofs.forgetScope();
@@ -150,6 +163,7 @@ describe("Gate Proof scope evidence", () => {
       analyzedFiles: null,
       analyzedFilesUnavailable:
         'MUTATION_SCOPE names "src/lending/domain/loan.ts", which does not exist',
+      analysisCompleted: false,
     });
 
     const result = proofs.run();
@@ -190,6 +204,7 @@ describe("Gate Proof scope evidence", () => {
       requested: [LOAN],
       selection: "explicit",
       analyzed: [LOAN],
+      analysisCompleted: true,
       unavailable: null,
       problems: [],
     });
