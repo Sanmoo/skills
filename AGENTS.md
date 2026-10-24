@@ -17,6 +17,10 @@ Issues live as GitHub Issues on `Sanmoo/skills` (via `gh` CLI). See `docs/agents
 
 Default canonical vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
 
+### Out of scope
+
+Rejected enhancements are recorded in `.out-of-scope/`, one file per concept, so the same request is not re-litigated. Check it before triaging a new enhancement.
+
 ### Domain docs
 
 Single-context: root `GLOSSARY.md` + `docs/adr/`. See `docs/agents/domain.md`.
