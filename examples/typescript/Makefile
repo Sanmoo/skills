@@ -69,4 +69,4 @@ vulnerabilities:
 
 # TODO: the E2E Gate is deferred and its level will be rewritten in
 # Cucumber/Gherkin (Sanmoo/skills#7), so nothing here runs an e2e Gate; see
-# docs/adr/0003-defer-the-e2e-level.md.
+# docs/adr/0004-defer-the-e2e-level-under-the-universal-rule.md.
