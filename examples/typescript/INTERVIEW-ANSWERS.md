@@ -46,28 +46,28 @@ Written to [GLOSSARY.md](GLOSSARY.md) as they resolved. Sharpening applied durin
 
 **Q1 - Language and runtime**: TypeScript 5.9.3 on Node 22.23.2. **Confirmed.**
 
-**Q2 - Deliverable and outermost edge**: HTTP service; a caller reaches the built artifact over HTTP on the port it reports. The e2e level that would drive that artifact is deferred (see [Deferred: the E2E level](#deferred-the-e2e-level)). **Confirmed for the deliverable; the e2e level is reopened.**
+**Q2 - Deliverable and outermost edge**: HTTP service; a caller reaches the built artifact over HTTP on the port it reports. The e2e level that would drive that artifact is deferred (see [Deferred: the E2E level](#deferred-the-e2e-level)). **Confirmed for the deliverable; the e2e level and its executor are #7's to settle.**
 
 **Q3 - Infrastructure per context**: one Postgres 17.2 per context run in an ephemeral container by the integration tests; Lending owns the `lending` schema, Catalog owns the `catalog` schema. One instance is enough at this size; see [ADR 0001](docs/adr/0001-schema-per-context.md). **Confirmed.**
 
 **Q4 - One tool per Gate Contract**:
 
-| Gate Contract              | Tool                                                      | Version                  |
-| -------------------------- | --------------------------------------------------------- | ------------------------ |
-| Format                     | Prettier                                                  | 3.9.10                   |
-| Lint                       | ESLint with typescript-eslint                             | 10.13.0 / 8.72.0         |
-| Types                      | TypeScript (`tsc --noEmit`, strict)                       | 5.9.3                    |
-| Unit tests                 | Vitest                                                    | 4.1.12                   |
-| Integration tests          | Vitest with Testcontainers (`@testcontainers/postgresql`) | 4.1.12 / 12.2.1          |
-| E2E tests                  | not implemented; runner choice reopened                   | n/a                      |
-| Mutation                   | Stryker with its Vitest runner                            | 10.0.0                   |
-| Context boundaries         | dependency-cruiser                                        | 18.7.0                   |
-| Dependency rule            | dependency-cruiser                                        | 18.7.0                   |
-| Static metrics             | ESLint `complexity`, dependency-cruiser, jscpd            | 10.13.0 / 18.7.0 / 5.4.2 |
-| Dependency vulnerabilities | npm audit (npm bundled with Node 22.23.2)                 | 10.9.8                   |
-| Secrets                    | gitleaks                                                  | 8.30.1                   |
-| Avoided terms              | the repository's own script                               | n/a                      |
-| Guide pointers             | the repository's own script                               | n/a                      |
+| Gate Contract              | Tool                                                                               | Version                  |
+| -------------------------- | ---------------------------------------------------------------------------------- | ------------------------ |
+| Format                     | Prettier                                                                           | 3.9.10                   |
+| Lint                       | ESLint with typescript-eslint                                                      | 10.13.0 / 8.72.0         |
+| Types                      | TypeScript (`tsc --noEmit`, strict)                                                | 5.9.3                    |
+| Unit tests                 | Vitest                                                                             | 4.1.12                   |
+| Integration tests          | Vitest with Testcontainers (`@testcontainers/postgresql`)                          | 4.1.12 / 12.2.1          |
+| E2E tests                  | not implemented; the executor is chosen when #7 applies the universal Gherkin rule | n/a                      |
+| Mutation                   | Stryker with its Vitest runner                                                     | 10.0.0                   |
+| Context boundaries         | dependency-cruiser                                                                 | 18.7.0                   |
+| Dependency rule            | dependency-cruiser                                                                 | 18.7.0                   |
+| Static metrics             | ESLint `complexity`, dependency-cruiser, jscpd                                     | 10.13.0 / 18.7.0 / 5.4.2 |
+| Dependency vulnerabilities | npm audit (npm bundled with Node 22.23.2)                                          | 10.9.8                   |
+| Secrets                    | gitleaks                                                                           | 8.30.1                   |
+| Avoided terms              | the repository's own script                                                        | n/a                      |
+| Guide pointers             | the repository's own script                                                        | n/a                      |
 
 **Confirmed.** No tool needs a network service except npm audit's advisory database; that Gate is full-tier, so the fast Entry Point stays offline.
 
