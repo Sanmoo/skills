@@ -289,7 +289,7 @@ function attributionProblems(proofList) {
   return problems;
 }
 
-// The report this script writes is its own output, so an uncommitted copy of it
+// The report this script writes is its own output, so a leftover copy of it
 // must not stop the next run; anything else changed under the project would.
 const OWN_OUTPUT = "reports/gate-proofs.json";
 
@@ -391,9 +391,8 @@ for (const proof of selected) {
   if (!wentRed) console.log(output.split("\n").slice(-20).join("\n"));
 }
 
-// The committed report only ever holds a complete run: `--gate=` is for
-// iterating on one proof, and writing it over the evidence of the others would
-// lose them.
+// The report only ever holds a complete run: `--gate=` is for iterating on one
+// proof, and writing it over the evidence of the others would lose them.
 if (only === undefined) {
   mkdirSync("reports", { recursive: true });
   writeFileSync(
