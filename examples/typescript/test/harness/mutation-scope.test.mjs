@@ -203,12 +203,25 @@ describe("ordinary Mutation selection", () => {
       changed: { [LOAN]: "// loan, changed on this branch\n" },
     });
 
-    const result = gate.run(["--full"], { MUTATION_BASE: "main", MUTATION_SCOPE: LOAN });
+    const result = gate.run(["--full"], { MUTATION_BASE: "main" });
 
     assert.equal(result.status, 0, result.output);
     assert.deepEqual(gate.toolArguments(), ["run"]);
     assert.deepEqual(gate.scopeRecord().requestedFiles, null);
     assert.equal(gate.scopeRecord().selection, "whole-codebase");
+  });
+
+  it("refuses a declaration on the scheduled whole-codebase run", (t) => {
+    const gate = mutationSandbox(t, {
+      files: { [LOAN]: "// loan\n", [BOOK]: "// book\n" },
+      changed: { [LOAN]: "// loan, changed on this branch\n" },
+    });
+
+    const result = gate.run(["--full"], { MUTATION_BASE: "main", MUTATION_SCOPE: LOAN });
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.output, /cannot narrow the scheduled --full run/);
+    assert.equal(gate.calledTool(), false);
   });
 });
 
@@ -270,7 +283,14 @@ describe("explicit proof scope", () => {
     assert.notEqual(result.status, 0);
     assert.match(result.output, /MUTATION_SCOPE names no files/);
     assert.equal(gate.calledTool(), false, "a wrong declaration must not be repaired");
-    assert.equal(gate.scopeRecord(), undefined);
+    // The rejection is recorded, so a proof reader sees the setup failure
+    // instead of having to read it out of a truncated log.
+    assert.deepEqual(gate.scopeRecord(), {
+      selection: "rejected",
+      requestedFiles: [],
+      analyzedFiles: null,
+      unavailable: "MUTATION_SCOPE names no files, so the proof would analyze nothing",
+    });
   });
 
   it("rejects a requested file that does not exist", (t) => {
@@ -284,6 +304,8 @@ describe("explicit proof scope", () => {
     assert.notEqual(result.status, 0);
     assert.match(result.output, /does not exist/);
     assert.equal(gate.calledTool(), false);
+    assert.equal(gate.scopeRecord().selection, "rejected");
+    assert.match(gate.scopeRecord().unavailable, /does not exist/);
   });
 
   it("rejects a requested file the Gate cannot mutate", (t) => {
@@ -296,11 +318,13 @@ describe("explicit proof scope", () => {
     assert.notEqual(testFile.status, 0);
     assert.match(testFile.output, /not an eligible mutation input/);
     assert.equal(gate.calledTool(), false);
+    assert.deepEqual(gate.scopeRecord().requestedFiles, [LOAN_TEST]);
 
     const adapter = gate.run([], { MUTATION_BASE: "main", MUTATION_SCOPE: ADAPTER });
     assert.notEqual(adapter.status, 0);
     assert.match(adapter.output, /not an eligible mutation input/);
     assert.equal(gate.calledTool(), false);
+    assert.deepEqual(gate.scopeRecord().requestedFiles, [ADAPTER]);
   });
 });
 
@@ -337,7 +361,8 @@ function proofSandbox(t, { complete = false } = {}) {
 mkdir -p reports/mutation
 if [ -f "${scope}" ]; then cp "${scope}" reports/mutation/scope.json; fi
 echo "✘ Mutation"
-echo "  core mutation score 0.0% is below 90%"
+i=0
+while [ $i -lt 30 ]; do echo "  mutant $i survived"; i=$((i + 1)); done
 exit 1
 `,
   );
@@ -405,7 +430,23 @@ describe("Gate Proof scope evidence", () => {
     const result = proofs.run();
 
     assert.notEqual(result.status, 0);
-    assert.match(result.output, /wrote no scope record/);
+    assert.match(result.output, /no scope record at/);
+  });
+
+  it("rejects a red Gate that refused the declared scope", (t) => {
+    const proofs = proofSandbox(t);
+    proofs.recordScope({
+      selection: "rejected",
+      requestedFiles: [LOAN],
+      analyzedFiles: null,
+      unavailable: 'MUTATION_SCOPE names "src/lending/domain/loan.ts", which does not exist',
+    });
+
+    const result = proofs.run();
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.output, /selected by "rejected" instead of the declared scope/);
+    assert.match(result.output, /which does not exist/);
   });
 
   it("leaves the complete run's report in place for a single-Gate iteration", (t) => {
@@ -444,6 +485,20 @@ describe("Gate Proof scope evidence", () => {
     });
     assert.equal(mutation.wentRed, true);
     assert.equal(mutation.command, "make check");
+    // The violation is the weakened unit test and nothing else: no source
+    // marker stands in for the scope declaration.
+    assert.deepEqual(mutation.treeChanges, [` M ${LOAN_TEST}`]);
+    // The persisted output is the shortened tail, so the scope above has to be
+    // evidence of its own rather than something read out of the log.
+    assert.equal(mutation.output.split("\n").length, 20);
+    // A later proof must not inherit the declared scope.
+    const later = report.slice(report.indexOf(mutation) + 1);
+    assert.ok(later.length > 0, "proofs after Mutation ran");
+    for (const record of later) {
+      assert.equal(record.scope.requested, null, `${record.gate} inherited a scope`);
+      assert.equal(record.scope.unavailable, "no scope was declared");
+    }
+    assert.equal(proofs.git("status", "--porcelain"), "", "the tree must be restored");
     assert.match(result.output, /Gate proofs/);
   });
 });

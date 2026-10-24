@@ -31,17 +31,21 @@
 // Gate an Entry Point runs must have exactly one proof with one label, the tree
 // must be clean before each proof and again after it, and each injection must
 // have left a change behind. Any of those failing is a setup error, not evidence.
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { outputOf, report, run } from "./lib.mjs";
+import {
+  MUTATION_SCOPE_ENV,
+  MUTATION_SCOPE_RECORD,
+  SELECTION,
+  readScopeRecord,
+} from "./mutation-scope.mjs";
 
 const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
 const MAKE = process.platform === "win32" ? "make.exe" : "make";
-// The Mutation Gate's own record of what a run was asked to mutate and what it
-// actually mutated, and the transport that carries a declared scope into that
-// run. Both are this stack's choice; a contract only asks that the proof
-// reaches its inputs and that the evidence names them.
-const MUTATION_SCOPE_RECORD = "reports/mutation/scope.json";
-const MUTATION_SCOPE_ENV = "MUTATION_SCOPE";
+// The Mutation Gate's scope record and the transport that carries a declared
+// scope into one run are this stack's choice; a contract only asks that the
+// proof reaches its inputs and that the evidence names them. Both live in
+// scripts/mutation-scope.mjs, shared with the wrapper that writes them.
 
 function tempFile(path, content) {
   writeFileSync(path, content);
@@ -263,37 +267,20 @@ function recordOf(proof, tree) {
   };
 }
 
-// What the Mutation Gate recorded about the scope it ran against. A Gate that
-// wrote no record leaves the scope unknown, which is not the same as an empty
-// one, so the record keeps the reason instead of a null that reads as zero
-// files analyzed. It is read fresh after every run: the caller deletes any
-// earlier record first, so evidence from an earlier run cannot stand in for
-// this one.
-function recordedMutationScope() {
-  if (!existsSync(MUTATION_SCOPE_RECORD)) {
-    return { reason: `the Mutation Gate wrote no scope record at ${MUTATION_SCOPE_RECORD}` };
-  }
-  try {
-    return { record: JSON.parse(readFileSync(MUTATION_SCOPE_RECORD, "utf8")) };
-  } catch {
-    return { reason: `${MUTATION_SCOPE_RECORD} is not valid JSON` };
-  }
-}
-
 // A proof that declared a scope has shown something only if the Gate reports
 // that selection and analyzed the files it named. A red Gate over other inputs,
-// or over none, does not say the intended violation was measured, so it cannot
-// count as a Gate Proof.
+// over none, or over a rejected declaration does not say the intended violation
+// was measured, so it cannot count as a Gate Proof.
 function scopeProblems(requested, recorded) {
-  if (recorded.record === undefined) return [recorded.reason];
+  if (recorded.record === null) return [recorded.reason];
   const problems = [];
-  if (recorded.record.selection !== "explicit") {
+  if (recorded.record.selection !== SELECTION.explicit) {
     problems.push(
       `the Mutation Gate selected by "${recorded.record.selection}" instead of the declared scope`,
     );
   }
   const analyzed = recorded.record.analyzedFiles;
-  if (analyzed === null || analyzed === undefined) {
+  if (analyzed === null) {
     problems.push(recorded.record.unavailable ?? "the Mutation Gate recorded no analyzed files");
     return problems;
   }
@@ -309,7 +296,7 @@ function scopeProblems(requested, recorded) {
 // Gate said it selected, and what it analyzed. Requested and effective scope
 // live here rather than in the output, so a shortened log cannot erase them.
 function scopeOf(proof, recorded, problems = []) {
-  const record = recorded?.record;
+  const record = recorded?.record ?? null;
   return {
     requested: proof.scope ?? null,
     selection: record?.selection ?? null,
@@ -318,7 +305,7 @@ function scopeOf(proof, recorded, problems = []) {
     // produced nothing to mark unavailable. Only a missing record falls through
     // to why there is no scope to show.
     unavailable:
-      record !== undefined
+      record !== null
         ? (record.unavailable ?? null)
         : (recorded?.reason ??
           (proof.scope === undefined ? "no scope was declared" : "the Entry Point did not run")),
@@ -428,7 +415,7 @@ for (const proof of selected) {
   // The scope record is only read for a proof that declared one: an unscoped
   // proof says nothing about selection, and the Mutation Gate's own record from
   // the same run would read as if it had.
-  const recordedScope = proof.scope === undefined ? undefined : recordedMutationScope();
+  const recordedScope = proof.scope === undefined ? undefined : readScopeRecord();
   // A violation that is still in the tree would ride along into the next proof
   // and be attributed to it, so the run stops here instead of recording a proof
   // that could not say what its red Gate reacted to.
