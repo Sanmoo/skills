@@ -8,12 +8,14 @@ The rehearsal used the [TypeScript Stack Example](../../examples/typescript/AGEN
 
 - Source: `examples/typescript` at the branch's starting commit `fc129fe1534f72ef7b5937396dec1861097199e6`.
 - Copy: `git archive HEAD:examples/typescript | tar -x -C /tmp/adoption-rehearsal.XXcKyp`. The copy has 68 regular files (69 tree entries: `CLAUDE.md` is a symlink) and no `.git` or `node_modules`.
-- Content manifest: [adoption-plan-rehearsal.manifest](adoption-plan-rehearsal.manifest), the output of `(cd <copy> && find . -type f -print0 | sort -z | xargs -0 sha256sum)`. Its aggregate hash is the Before/After value below.
-- Before: `5ef02abba37a7f5f5d543b858518ab5e8de76b4ffb454b58386e44a6e0cc463c`.
-- After: `5ef02abba37a7f5f5d543b858518ab5e8de76b4ffb454b58386e44a6e0cc463c`.
-- Reproduction: the copy is ephemeral; a fresh `git archive fc129fe:examples/typescript` on 2026-10-24 produced the same manifest, and `sha256sum -c` inside the extracted copy verifies its 68 regular files.
+- Content manifest: [adoption-plan-rehearsal.manifest](adoption-plan-rehearsal.manifest) — 68 regular-file hashes plus the `CLAUDE.md` symlink target (69 entries), produced with `find . -type f` and `find . -type l`. Its aggregate hash is the Before/After value below.
+- Before: `f1260175882e1b7fc5c27d88590665a121ceeb0971e18e56cbd5bc73fef44188`.
+- After: `f1260175882e1b7fc5c27d88590665a121ceeb0971e18e56cbd5bc73fef44188`.
+- Reproduction: the copy is ephemeral; a fresh `git archive fc129fe:examples/typescript` on 2026-10-24 produced the same manifest. `sha256sum -c` verifies the regular files, and the `link` line records the symlink target. The manifest does not claim modes or empty directories.
 
-Both hashes are identical and no write command ran inside the copy. The inventory, the confirmed answers, and the proposed plan were recorded in this file, outside the copy, following the skill's rule that those records stay outside the application until the plan is approved. The run ends at approval, so no record was written into the copy; a real run writes them into the repository after approval, formatted with the project's formatter, leaving any pre-existing fast Entry Point green or recording its pre-existing absence or failure as a planned gap. The copy's code, tests, and tooling are byte-identical before and after the rehearsal.
+The first draft of this record used a regular-file-only manifest, whose aggregate was `5ef02abba37a7f5f5d543b858518ab5e8de76b4ffb454b58386e44a6e0cc463c`; the committed manifest adds the symlink target, so its aggregate is `f1260175…4188`. The Before and After manifest hashes are identical, and no write command ran inside the copy. The inventory, the confirmed answers, and the proposed plan were recorded in this file, outside the copy, following the skill's rule that those records stay outside the application until the plan is approved. The run ends at approval, so no record was written into the copy; the execution stage records the approved plan and answers before its first change. The copy's code, tests, and tooling are byte-identical before and after the rehearsal.
+
+This file is point-in-time evidence about the fixed commit, not a Guide or a competing source of current truth; the source tree and its config remain the authority.
 
 ## Inventory (facts discovered by the agent)
 

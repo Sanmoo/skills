@@ -107,9 +107,9 @@ Draft `ADOPTION-PLAN.md` in a scratch location outside the application. Make it 
 
 Present the plan to the maintainer and obtain approval before anything in the application, its tests, or its tooling changes. Drafting and approving touch none of them.
 
-After approval, write `ADOPTION-PLAN.md` and merge the confirmed answers into `INTERVIEW-ANSWERS.md` under _Adoption_ in the repository, formatted with the project's formatter. If the project already has a fast Entry Point, leave it green; if it has none, or it was already red, record that as a gap in the plan rather than changing tooling in this step. The run ends at approval: execution of the approved plan is the next stage, and no Gate is adopted by the existence of the plan.
+After approval, hand the plan and the confirmed answers to the execution stage; it records them as `ADOPTION-PLAN.md` and in `INTERVIEW-ANSWERS.md` under _Adoption_ before its first change. The run ends at approval: execution of the approved plan is the next stage, and no Gate is adopted by the existence of the plan.
 
-**Done when** the maintainer has approved the plan, the approved plan and answers are recorded, and any fast Entry Point the project already has is still green, or its pre-existing absence or failure is recorded as a planned gap.
+**Done when** the maintainer has approved the plan, the approved plan and answers are handed to the execution stage, and nothing in the application, its tests, or its tooling has changed.
 
 ## Gate states and blockers
 
@@ -124,7 +124,7 @@ On the adoption path, record a Gate the environment cannot run as blocked in the
 On the greenfield path, report to the user:
 
 - the subdomains and bounded contexts;
-- a table of Gate, tool and version, tier, and Gate Proof result;
+- a table of Gate, tool and version, tier, Gate Proof result, and Gate state: adopted when the Gate actually ran under the Entry Points' scope and cadence and its proof turned red because of it, otherwise pending or blocked;
 - the ADRs written;
 - any blocker that remains.
 
