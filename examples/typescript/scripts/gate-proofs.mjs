@@ -7,7 +7,9 @@
 //
 // The Entry Point is the same command in every proof of the same tier, and that
 // is deliberate: what differs between two runs is the tree, which carries
-// exactly one violation each time. Attribution comes from the Entry Point's own
+// exactly one violation each time. The Mutation proof also marks a domain file
+// as changed, because that Gate's scope is the changed set; the marker adds no
+// behavior and the record shows both paths. Attribution comes from the Entry Point's own
 // output, where every Gate names itself, because it stops at the first Gate that
 // fails - so a correct proof leaves exactly one Gate marked red, and it is the
 // Gate under proof (see `wentRed` below). Several violations in one tree would
@@ -98,8 +100,16 @@ const proofs = [
     gate: "Mutation",
     target: "mutation",
     description: "deleted the assertions of the core loan unit test",
-    violation: () =>
-      patch(
+    violation: () => {
+      // The Gate mutates the code changed relative to the base branch. A branch
+      // that changes no domain code would leave that set empty, so this comment
+      // marks the domain file as changed; it adds no behavior and lets the
+      // deleted assertions be measured.
+      const restoreSource = patch(
+        "src/lending/domain/loan.ts",
+        (source) => `// mutation proof scope marker\n${source}`,
+      );
+      const restoreTest = patch(
         "src/lending/domain/loan.test.ts",
         () =>
           'import { describe, expect, it } from "vitest";\n\n' +
@@ -108,7 +118,12 @@ const proofs = [
           "    expect(true).toBe(true);\n" +
           "  });\n" +
           "});\n",
-      ),
+      );
+      return () => {
+        restoreTest();
+        restoreSource();
+      };
+    },
   },
   {
     gate: "Context boundaries",

@@ -6,6 +6,8 @@ The Entry Point is the same command in every proof of a tier, and the tree is no
 
 The cost is one Entry Point run per Gate - the full tier's container, mutation run and advisory lookup included - and it is paid deliberately, which is why the script sits in neither Entry Point and why a single proof can be re-run alone. Each proof also records the changes its violation left in the tree, so the claim that only that violation was present is checkable rather than asserted; the machine-readable run behind this page, with one entry per Gate, is committed at [reports/gate-proofs.json](reports/gate-proofs.json).
 
+Mutation's changed-set scope adds one visible exception to the one-change rule: the proof also marks `src/lending/domain/loan.ts` as changed with a comment, because a branch that changes no domain code leaves the Gate nothing to mutate. The marker adds no behavior, and the Mutation entry records both paths.
+
 | Gate                       | Tier | Tool (version)                                       | Violation introduced                              | Result |
 | -------------------------- | ---- | ---------------------------------------------------- | ------------------------------------------------- | ------ |
 | Format                     | fast | Prettier 3.9.10                                      | misindented a source file                         | red    |
