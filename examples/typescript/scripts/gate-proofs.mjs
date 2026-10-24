@@ -286,6 +286,11 @@ function scopeProblems(requested, recorded) {
     );
     return problems;
   }
+  if (record.analysisCompleted !== true) {
+    problems.push(
+      "the Mutation Gate's analysis did not complete, so its red result is not a score",
+    );
+  }
   // The analysis must be exactly the declared scope. A wider one would let
   // healthy unrelated code dilute the intended failure, so it cannot count.
   for (const file of requested) {
@@ -310,6 +315,7 @@ function scopeOf(proof, recorded, problems = []) {
     requested: proof.scope ?? null,
     selection: record?.selection ?? null,
     analyzed: record?.analyzedFiles ?? null,
+    analysisCompleted: record?.analysisCompleted ?? null,
     // A record that holds `null` here has answered the question: the analysis
     // produced nothing to mark unavailable. Only a missing record falls through
     // to why there is no scope to show.
@@ -469,9 +475,11 @@ for (const proof of selected) {
   console.log(`${wentRed ? "✔" : "✘"} Gate Proof: ${proof.gate}`);
   if (proof.scope !== undefined) {
     console.log(`  scope requested: ${proof.scope.join(", ")}`);
-    console.log(
-      `  scope analyzed: ${(scope.analyzed ?? []).join(", ") || `unavailable (${scope.unavailable})`}`,
-    );
+    if (scope.analyzed === null) {
+      console.log(`  scope unavailable: ${scope.unavailable ?? "no reason recorded"}`);
+    } else {
+      console.log(`  scope analyzed: ${scope.analyzed.join(", ") || "nothing"}`);
+    }
   }
   if (!wentRed) {
     console.log(foundScopeProblems.map((problem) => `  ${problem}`).join("\n"));

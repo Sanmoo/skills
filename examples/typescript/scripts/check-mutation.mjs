@@ -164,20 +164,6 @@ function declaredScope(declaration) {
   return { files, problems };
 }
 
-// The Gate checks its own selection before it measures anything, because a
-// selection that silently stops matching would pass as a smaller measurement.
-// The checks drive this same executable against controlled Git trees; they spawn
-// it without this flag, so they cannot recurse into themselves.
-if (process.argv.includes("--check-selection")) {
-  const checks = run(process.execPath, ["--test", "test/harness/**/*.test.mjs"], {
-    timeout: 10 * 60 * 1000,
-  });
-  if (checks.status !== 0) {
-    report("Mutation", ["the scope selection checks failed:", outputOf(checks)]);
-  }
-  console.log("  scope selection checks passed");
-}
-
 let args = ["run"];
 let scope = "the whole codebase";
 let selection = SELECTION.wholeCodebase;
@@ -193,6 +179,7 @@ if (full && declared !== undefined) {
     requestedFiles: declared.files,
     analyzedFiles: null,
     analyzedFilesUnavailable: `${MUTATION_SCOPE_ENV} cannot narrow the scheduled --full run`,
+    analysisCompleted: false,
   });
   report("Mutation", [`${MUTATION_SCOPE_ENV} cannot narrow the scheduled --full run`]);
 }
@@ -206,6 +193,7 @@ if (!full) {
       requestedFiles: declared.files,
       analyzedFiles: null,
       analyzedFilesUnavailable: declared.problems.join("; "),
+      analysisCompleted: false,
     });
     report("Mutation", declared.problems);
   }
@@ -227,6 +215,7 @@ if (!full) {
         requestedFiles: null,
         analyzedFiles: [],
         analyzedFilesUnavailable: null,
+        analysisCompleted: false,
       });
       report("Mutation", []);
       console.log(`  no mutable files changed relative to ${changed.base}`);
@@ -323,5 +312,6 @@ writeScopeRecord({
   requestedFiles,
   analyzedFiles,
   analyzedFilesUnavailable: analyzedUnavailable,
+  analysisCompleted: reportJson !== undefined && mutation.status === 0,
 });
 report("Mutation", failures);

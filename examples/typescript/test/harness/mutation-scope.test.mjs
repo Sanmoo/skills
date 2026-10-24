@@ -27,7 +27,7 @@ const SCOPE_RECORD = "reports/mutation/scope.json";
 // Stands in for the pinned mutation tool: it records the scope it was asked to
 // mutate and writes the report the wrapper reads, so the wrapper's own selection
 // and thresholds run unchanged.
-function stubMutationTool(stubs, defaultFiles) {
+function stubMutationTool(stubs, defaultFiles, { exitCode = 0 } = {}) {
   const tool = join(stubs, "stryker-tool.mjs");
   const recorded = join(stubs, "stryker-args.json");
   writeFileSync(
@@ -43,6 +43,7 @@ const mutation = {
 };
 mkdirSync("reports/mutation", { recursive: true });
 writeFileSync("reports/mutation/mutation.json", JSON.stringify(mutation));
+process.exit(${exitCode});
 `,
   );
   const command = join(stubs, "bin", "stryker");
@@ -54,9 +55,9 @@ writeFileSync("reports/mutation/mutation.json", JSON.stringify(mutation));
 
 // A controlled tree that has already committed a base and checked out the branch
 // a proof would run on.
-function mutationSandbox(t, { files, changed = {} }) {
+function mutationSandbox(t, { files, changed = {}, toolFails = false }) {
   const { root, stubs, git } = newSandbox(t);
-  const tool = stubMutationTool(stubs, [LOAN, BOOK]);
+  const tool = stubMutationTool(stubs, [LOAN, BOOK], { exitCode: toolFails ? 1 : 0 });
   writeTree(root, { ".gitignore": "reports/\n", [LOAN_TEST]: "// unit test\n", ...files });
   git("add", "-A");
   git("commit", "-m", "base");
@@ -111,6 +112,7 @@ describe("ordinary Mutation selection", () => {
       requestedFiles: null,
       analyzedFiles: [LOAN],
       analyzedFilesUnavailable: null,
+      analysisCompleted: true,
     });
   });
 
@@ -132,6 +134,7 @@ describe("ordinary Mutation selection", () => {
       requestedFiles: null,
       analyzedFiles: [],
       analyzedFilesUnavailable: null,
+      analysisCompleted: false,
     });
   });
 
@@ -179,6 +182,7 @@ describe("ordinary Mutation selection", () => {
       requestedFiles: [LOAN],
       analyzedFiles: null,
       analyzedFilesUnavailable: "MUTATION_SCOPE cannot narrow the scheduled --full run",
+      analysisCompleted: false,
     });
   });
 });
@@ -212,6 +216,7 @@ describe("explicit proof scope", () => {
       requestedFiles: [LOAN],
       analyzedFiles: [LOAN],
       analyzedFilesUnavailable: null,
+      analysisCompleted: true,
     });
   });
 
@@ -248,7 +253,23 @@ describe("explicit proof scope", () => {
       requestedFiles: [],
       analyzedFiles: null,
       analyzedFilesUnavailable: "MUTATION_SCOPE names no files, so the proof would analyze nothing",
+      analysisCompleted: false,
     });
+  });
+
+  it("records an incomplete analysis when the mutation tool fails", (t) => {
+    const gate = mutationSandbox(t, {
+      files: { [LOAN]: "// loan\n", [BOOK]: "// book\n" },
+      changed: {},
+      toolFails: true,
+    });
+
+    const result = gate.run([], { MUTATION_BASE: "main", MUTATION_SCOPE: LOAN });
+
+    assert.notEqual(result.status, 0);
+    assert.equal(gate.scopeRecord().selection, "explicit");
+    assert.deepEqual(gate.scopeRecord().analyzedFiles, [LOAN]);
+    assert.equal(gate.scopeRecord().analysisCompleted, false);
   });
 
   it("rejects a requested file that does not exist", (t) => {
