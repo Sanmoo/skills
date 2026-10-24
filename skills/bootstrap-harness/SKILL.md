@@ -10,13 +10,13 @@ Establish a **Harness** in a repository: **Guides** that steer every change befo
 
 One principle governs every phase: **the code is the source of truth**, Gate configuration included. A Guide holds only what code cannot express (intent and rationale, judgment rules no Gate can verify, and pointers into the code). Thresholds, context lists, and commands live in code, and Guides point at them. The glossary is the one document with authority over the code, and only over naming.
 
-Both paths use the same [Gate Contracts](GATE-CONTRACTS.md). Adoption changes when, where, and how often a Gate runs; it never changes what the Contract requires and never defines a second set.
+Both paths use the same [Gate Contracts](GATE-CONTRACTS.md); adoption changes when, where, and how often a Gate runs.
 
 Work the phases in order. Start a phase only when the previous one meets its completion criterion.
 
 ## 1. Select the starting path
 
-Inspect the repository. It is **greenfield** when it holds no application source code, no tests of application behavior, and no delivered behavior; it may hold a README, license, ignore files, and editor or tooling config, including a task runner or CI config for the project to come. It is an **existing application** when it already holds application source, tests of application behavior, delivered behavior, or tooling that belongs to the application. When both descriptions seem to fit, application source, tests, or delivered behavior wins: route to the adoption path.
+Inspect the repository. It is **greenfield** when it holds no application source code, no tests of application behavior, and no delivered behavior. It may hold a README, license, ignore files, and editor or tooling config, including a task runner or CI config for the project to come; a task runner, formatter, or CI config alone does not make it an existing application. It is an **existing application** when it already holds application source, tests of application behavior, delivered behavior, or application-specific tooling — tooling whose configuration names the application's code, such as a boundary rule, a migration script, or a test suite. When both descriptions seem to fit, application source, tests, or delivered behavior wins: route to the adoption path.
 
 State the selected path and the evidence for it to the user, then follow that path's phases. The greenfield path keeps its day-zero expectations. The adoption path starts with an inventory and reaches an approved plan before anything in the application, its tests, or its tooling changes.
 
@@ -107,9 +107,9 @@ Draft `ADOPTION-PLAN.md` in a scratch location outside the application. Make it 
 
 Present the plan to the maintainer and obtain approval before anything in the application, its tests, or its tooling changes. Drafting and approving touch none of them.
 
-After approval, write `ADOPTION-PLAN.md` and merge the confirmed answers into `INTERVIEW-ANSWERS.md` under _Adoption_ in the repository, formatted with the project's formatter so the fast Entry Point stays green. The run ends at approval: execution of the approved plan is the next stage, and no Gate is adopted by the existence of the plan.
+After approval, write `ADOPTION-PLAN.md` and merge the confirmed answers into `INTERVIEW-ANSWERS.md` under _Adoption_ in the repository, formatted with the project's formatter. If the project already has a fast Entry Point, leave it green; if it has none, or it was already red, record that as a gap in the plan rather than changing tooling in this step. The run ends at approval: execution of the approved plan is the next stage, and no Gate is adopted by the existence of the plan.
 
-**Done when** the maintainer has approved the plan, the approved plan and answers are recorded, and the fast Entry Point is green after that write.
+**Done when** the maintainer has approved the plan, the approved plan and answers are recorded, and any fast Entry Point the project already has is still green, or its pre-existing absence or failure is recorded as a planned gap.
 
 ## Gate states and blockers
 

@@ -26,11 +26,11 @@ An existing application reconciles the documents it already has with the same in
 
 An adopted Harness ends with the same inventory as a greenfield one. The difference is the route: existing documents are the starting material, and changing one is a planned, approved change like any other.
 
-`ADOPTION-PLAN.md` is a stage record, not a Guide. It is written after the maintainer approves it, and holds the approved stages and decisions; once a stage is executed, the code and its config are the current truth, so the plan must not become a second source of thresholds, tool versions, or commands.
+`ADOPTION-PLAN.md` is a stage record, not a Guide, and is not part of this inventory. It is written after the maintainer approves it, and holds the approved stages and decisions; once a stage is executed, the code and its config are the current truth, so the plan must not become a second source of thresholds, tool versions, or commands.
 
 ## Inventory
 
-Create exactly these files in the target repository.
+Create exactly these Guides in the target repository.
 
 ### `AGENTS.md`
 

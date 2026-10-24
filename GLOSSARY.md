@@ -17,7 +17,7 @@ A repository with no application source code yet: at most a README, license, ign
 _Avoid_: New project, empty project
 
 **Existing application**:
-A repository that already contains application source, tests, delivered behavior, or tooling that belongs to the application. The adoption path reconciles a Harness with it instead of generating a replacement.
+A repository that already contains application source, tests, delivered behavior, or application-specific tooling. The adoption path reconciles a Harness with it instead of generating a replacement. A task runner, formatter, or CI config alone does not make a source-less repository an existing application.
 _Avoid_: Brownfield, legacy application
 
 **Inventory**:

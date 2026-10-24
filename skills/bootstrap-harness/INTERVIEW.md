@@ -14,7 +14,7 @@ Recommended: <answer and the reason for it>
 
 Decisions belong to the user. Facts belong to you: look up anything the environment or current documentation can answer instead of asking. When the user supplies a briefing or product document, use it to sharpen your recommendations; the user still confirms every decision.
 
-Record every confirmed answer in `INTERVIEW-ANSWERS.md` beside `GLOSSARY.md`, numbered as the questions below are. The answer file is what makes the run repeatable, and it is where the reason for a surprising choice stays readable after the conversation is gone. The approved initial scenarios belong there too: they are the behavioral contract the e2e level implements.
+Record every confirmed answer in `INTERVIEW-ANSWERS.md` beside `GLOSSARY.md` on the greenfield path, numbered as the questions below are. On the adoption path, keep the answers in the adoption record outside the application until the plan is approved; the _Adoption_ section says when to merge them. The answer file is what makes the run repeatable, and it is where the reason for a surprising choice stays readable after the conversation is gone. The approved initial scenarios belong there too: they are the behavioral contract the e2e level implements.
 
 An interview ends when its frontier is empty and the user confirms the summary you present.
 

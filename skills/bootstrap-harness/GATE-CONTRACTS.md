@@ -15,7 +15,6 @@ Both starting paths use these same Contracts. Adoption records an approved scope
 - **Third-party code.** Exclude it from traversal, never from rule targets: an exclusion that hides a target also hides the violation. A rule that depends on matching the target path must still see the dependency it forbids.
 - **Own level.** A Contract's obligation stops at its own level; the Gherkin obligation on e2e adds none to unit or integration tests.
 - **Honest state.** Every claim about a Gate uses the state vocabulary below. A configured, scheduled, or differently scoped run is not adoption.
-- **Shared Contract.** Adoption narrows where and how often a Gate runs through approved policy; it never replaces or forks the Contract.
 
 ## Gate states
 
