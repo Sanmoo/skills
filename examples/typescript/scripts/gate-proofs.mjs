@@ -281,7 +281,9 @@ function scopeProblems(requested, recorded) {
     );
   }
   if (record.analyzedFiles === null) {
-    problems.push(record.unavailable ?? "the Mutation Gate recorded no analyzed files");
+    problems.push(
+      record.analyzedFilesUnavailable ?? "the Mutation Gate recorded no analyzed files",
+    );
     return problems;
   }
   // The analysis must be exactly the declared scope. A wider one would let
@@ -313,7 +315,7 @@ function scopeOf(proof, recorded, problems = []) {
     // to why there is no scope to show.
     unavailable:
       record !== null
-        ? (record.unavailable ?? null)
+        ? (record.analyzedFilesUnavailable ?? null)
         : (recorded?.reason ??
           (proof.scope === undefined ? "no scope was declared" : "the Entry Point did not run")),
     problems,
@@ -467,7 +469,9 @@ for (const proof of selected) {
   console.log(`${wentRed ? "✔" : "✘"} Gate Proof: ${proof.gate}`);
   if (proof.scope !== undefined) {
     console.log(`  scope requested: ${proof.scope.join(", ")}`);
-    console.log(`  scope analyzed: ${(scope.analyzed ?? []).join(", ") || "not recorded"}`);
+    console.log(
+      `  scope analyzed: ${(scope.analyzed ?? []).join(", ") || `unavailable (${scope.unavailable})`}`,
+    );
   }
   if (!wentRed) {
     console.log(foundScopeProblems.map((problem) => `  ${problem}`).join("\n"));

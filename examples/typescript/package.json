@@ -24,7 +24,8 @@
     "avoided-terms": "node scripts/check-avoided-terms.mjs",
     "guide-pointers": "node scripts/check-guide-pointers.mjs",
     "vulnerabilities": "node scripts/run-gate.mjs \"Dependency vulnerabilities\" -- npm audit --audit-level=high",
-    "gate-proofs": "node scripts/gate-proofs.mjs"
+    "gate-proofs": "node scripts/gate-proofs.mjs",
+    "gate-proof-checks": "node --test \"test/proofs/**/*.test.mjs\""
   },
   "dependencies": {
     "pg": "8.23.1"
