@@ -33,7 +33,7 @@ Settle these decisions, in dependency order:
 
    Recommended: the language this interview was conducted in, because the people who already validate the glossary can validate the scenarios without a translation. Choosing a language does not authorize a competing domain model.
 
-8. **Initial business scenarios.** Draft the first business scenarios from the requirements the user has confirmed and `GLOSSARY.md`, and present them for the user's approval of their meaning. Which business journeys must the portfolio cover, and does the user approve the scenarios as written?
+8. **Initial business scenarios.** Draft the first business scenarios from the requirements the user has confirmed — in the briefing, product document, or this conversation — and from `GLOSSARY.md`, and present them for the user's approval of their meaning. Which business journeys must the portfolio cover, and does the user approve the scenarios as written?
 
    Recommended: start from one full journey per bounded context, combined into the fewest journeys that still reach every context. The agent drafts the scenarios and the user owns their meaning; no step definition is written before that approval, and delivery mechanics stay out of the scenarios.
 

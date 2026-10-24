@@ -4,7 +4,7 @@
 
 - **Unit test**: a domain module through its public functions, with no I/O and no test doubles. It runs offline in milliseconds.
 - **Integration test**: a context driven against a real Postgres started in an ephemeral container, with the real adapter and the real SQL. The only substitutes are third-party systems at the boundary, and there are none here.
-- **E2E test**: not defined in this tree. The level is deferred to a Cucumber/Gherkin rewrite, so this Guide describes the two levels that exist; [ADR 0003](../adr/0003-defer-the-e2e-level.md) records the decision, and [GATE-PROOFS.md](../../GATE-PROOFS.md) which Contract has no proof.
+- **E2E test**: not defined in this tree. The level is deferred to a Cucumber/Gherkin rewrite, so this Guide describes the two levels that exist; [ADR 0004](../adr/0004-defer-the-e2e-level-under-the-universal-rule.md) records the decision, and [GATE-PROOFS.md](../../GATE-PROOFS.md) which Contract has no proof.
 
 The levels exist to localise failure: a red unit test points at a rule, a red integration test at a query.
 
