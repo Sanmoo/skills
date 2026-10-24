@@ -86,7 +86,7 @@ writeFileSync("reports/mutation/mutation.json", JSON.stringify(mutation));
   const command = join(stubs, "bin", "stryker");
   writeFileSync(command, `#!/bin/sh\nexec node ${JSON.stringify(tool)} "$@"\n`);
   chmodSync(command, 0o755);
-  return { recorded, command };
+  return { recorded };
 }
 
 // The environment a check passes to a child. A check must not inherit the
@@ -222,6 +222,12 @@ describe("ordinary Mutation selection", () => {
     assert.notEqual(result.status, 0);
     assert.match(result.output, /cannot narrow the scheduled --full run/);
     assert.equal(gate.calledTool(), false);
+    assert.deepEqual(gate.scopeRecord(), {
+      selection: "rejected",
+      requestedFiles: [LOAN],
+      analyzedFiles: null,
+      unavailable: "MUTATION_SCOPE cannot narrow the scheduled --full run",
+    });
   });
 });
 
@@ -420,6 +426,21 @@ describe("Gate Proof scope evidence", () => {
     assert.match(
       result.output,
       /the declared input "src\/lending\/domain\/loan\.ts" was not analyzed/,
+    );
+  });
+
+  it("rejects a red Gate that also analyzed files the proof did not declare", (t) => {
+    // A wider analysis would let healthy unrelated code dilute the intended
+    // failure, so the proof's scope has to be exactly what it declared.
+    const proofs = proofSandbox(t);
+    proofs.recordScope({ ...DECLARED, analyzedFiles: [LOAN, BOOK] });
+
+    const result = proofs.run();
+
+    assert.notEqual(result.status, 0);
+    assert.match(
+      result.output,
+      /"src\/catalog\/domain\/book\.ts" was analyzed although the proof declared no such input/,
     );
   });
 

@@ -18,7 +18,7 @@ A business reviewer approves the scenario set for meaning before its step defini
 
 The Mutation Gate treats the unit level as the proof that rules are pinned down, so a new domain rule needs unit tests that fail when the rule is wrong. The mutation scope stops at domain models deliberately; see [ADR 0002](../adr/0002-mutate-domain-models-only.md).
 
-The Mutation Gate's own selection is part of what has to keep working, so it is checked at its executable boundary in `test/harness/`: controlled Git trees show that an eligible changed file is selected, that a branch changing only documentation or tests stays a legitimate no-op, that an unresolvable base still widens to the whole codebase, and that a Gate Proof's declared scope replaces the changed set, is recorded, and fails loudly when it is wrong. Those checks drive the same executable the Entry Point drives, and they are not a level of the application: they run with the Mutation Gate because they constrain that Gate's scope, not because the application gained a test level.
+The Mutation Gate's own selection is part of what has to keep working, so it is checked at its executable boundary in `test/harness/` before the Gate measures anything. Those checks are not a level of the application: they are the Gate's own guard against a selection that silently stops matching, and [the selection code](../../scripts/check-mutation.mjs) owns what they must establish.
 
 ## Pointers
 

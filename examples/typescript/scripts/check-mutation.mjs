@@ -87,6 +87,13 @@ function normaliseToWorkingDirectory(paths) {
   );
 }
 
+// A file this Gate may mutate: a domain module, never a test. Both the changed
+// set and a declared proof scope use this one rule, so the two cannot disagree
+// about what an eligible input is.
+function isEligible(path) {
+  return MUTABLE.test(path) && !path.endsWith(".test.ts");
+}
+
 // Returns the changed files, or why they cannot be read.
 function mutableFilesSince(from) {
   const changed = gitLines(["diff", "--name-only", from, "--", "src"]);
@@ -99,7 +106,7 @@ function mutableFilesSince(from) {
     return { reason: "the project root is not resolvable here" };
   }
   return {
-    files: paths.filter((path) => MUTABLE.test(path) && !path.endsWith(".test.ts")),
+    files: paths.filter(isEligible),
   };
 }
 
@@ -146,7 +153,7 @@ function declaredScope(declaration) {
     problems.push(`${MUTATION_SCOPE_ENV} names no files, so the proof would analyze nothing`);
   }
   for (const file of files) {
-    if (!MUTABLE.test(file) || file.endsWith(".test.ts")) {
+    if (!isEligible(file)) {
       problems.push(
         `${MUTATION_SCOPE_ENV} names "${file}", which is not an eligible mutation input`,
       );
@@ -157,19 +164,39 @@ function declaredScope(declaration) {
   return { files, problems };
 }
 
+// The Gate checks its own selection before it measures anything, because a
+// selection that silently stops matching would pass as a smaller measurement.
+// The checks drive this same executable against controlled Git trees; they spawn
+// it without this flag, so they cannot recurse into themselves.
+if (process.argv.includes("--check-selection")) {
+  const checks = run(process.execPath, ["--test", "test/harness/**/*.test.mjs"], {
+    timeout: 10 * 60 * 1000,
+  });
+  if (checks.status !== 0) {
+    report("Mutation", ["the scope selection checks failed:", outputOf(checks)]);
+  }
+  console.log("  scope selection checks passed");
+}
+
 let args = ["run"];
 let scope = "the whole codebase";
 let selection = SELECTION.wholeCodebase;
 let requestedFiles = null;
-// --full is the scheduled whole-codebase run, never a proof execution, so a
-// declaration cannot narrow it. Rejecting the combination keeps a mis-scoped
-// invocation from reporting a whole-codebase result as if it were a proof.
 const declaration = process.env[MUTATION_SCOPE_ENV];
-if (full && declaration !== undefined) {
+const declared = declaration === undefined ? undefined : declaredScope(declaration);
+// A declaration is a proof execution, so it cannot narrow the scheduled
+// whole-codebase run. Rejecting the combination keeps a mis-scoped invocation
+// from reporting a whole-codebase result as if it were a proof.
+if (full && declared !== undefined) {
+  writeScopeRecord({
+    selection: SELECTION.rejected,
+    requestedFiles: declared.files,
+    analyzedFiles: null,
+    unavailable: `${MUTATION_SCOPE_ENV} cannot narrow the scheduled --full run`,
+  });
   report("Mutation", [`${MUTATION_SCOPE_ENV} cannot narrow the scheduled --full run`]);
 }
 if (!full) {
-  const declared = declaration === undefined ? undefined : declaredScope(declaration);
   if (declared !== undefined && declared.problems.length > 0) {
     // Nothing runs: a wrong declaration is a setup failure, never evidence that
     // the intended violation was detected, and the record keeps it apart from a
