@@ -33,6 +33,22 @@ Before the E2E row was recorded, the level was also exercised by hand with five 
 
 The table records the complete run that established the Harness; the versions are the ones that run executed against. The full Entry Point was green on the final tree after every proof was reverted; CI's `example` job runs it on every pull request and does not run the proofs.
 
+The table above was re-run on 2026-10-26 against the tree that introduced the full Entry Point's two modes (commit `37c69f8`). All fourteen proofs went red for their own Gate and the tree was restored after each; the full tier's Entry Point was validation by change, and the proof's committed change widened its selection, so every check ran and only the Gate under proof was red. The E2E proof rebuilds the artifact during its cleanup, as before.
+
+## Validation modes
+
+`make check` is validation by change and `make check MODE=integral` is integral validation; the check list, impacts, scopes, costs, budget and periodic cadence live in [harness/policy.json](harness/policy.json), and [ADR 0006](docs/adr/0006-validation-modes.md) records why. A green validation-by-change result states the checks it ran, their scopes, the checks that did not apply and the periodic checks it left to integral validation; it does not claim integral verification. The whole-codebase mutation is the periodic check: validation by change reports it, integral validation runs it, and a failure in its scope keeps a change in that scope from reporting green while a demonstrably independent change proceeds.
+
+The modes are rehearsed on a disposable copy with a controlled budget fixture by [scripts/rehearse-validation.mjs](scripts/rehearse-validation.mjs), run with `npm run rehearse-validation` and not part of either Entry Point. The rehearsal copies the project to a temporary directory, replaces the policy with a small fixture whose checks record the scope they were asked to verify, and drives `make check` and `make check MODE=integral` there. It demonstrates, and asserts, that:
+
+- a violation in an affected dependent is caught, with the dependent in the scope the check was asked to verify, and not merely listed;
+- a shared dependency change widens the selection, and required validation beyond the fixture's approved budget exits non-zero with an inconclusive result while starting no check;
+- a green validation-by-change result reports the periodic check it omitted and does not claim integral verification;
+- integral validation actually runs that periodic check and records its result;
+- a periodic integral failure stays visible, a change in its scope is not reported green and requires treatment, and an independent change proceeds with the failure reported.
+
+The rehearsal's transcript is run output: the script prints it and writes it under `reports/`, which Git ignores. Its fixture is deliberately tiny, so it demonstrates the policy's behaviour and says nothing about durations on a production-sized application; each adoption measures its own budget against its own tree. The run recorded here (commit `37c69f8`) printed `Rehearsal: every expectation held.`
+
 The table is history, not current evidence: a row says what a Gate did to the tree of that run, and no row speaks for a later change. The explicit-scope Mutation proof was re-run on its own after the change that introduced it, on a branch that changed no eligible Mutation input. That run printed:
 
 ```text

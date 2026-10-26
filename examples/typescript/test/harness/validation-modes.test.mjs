@@ -312,6 +312,23 @@ describe("validation by change", () => {
     );
   });
 
+  it("is inconclusive, not a silent skip, when uncertain impact widens past the budget", (t) => {
+    const fixture = sandbox(t, { policy: { ...POLICY, budgetSeconds: 60 } });
+
+    const result = fixture.run("change", {
+      env: { HARNESS_BASE: "trunk" },
+      changes: { "src/upstream.ts": "// edited\n" },
+    });
+
+    assert.equal(result.status, 3, "an unverifiable change is not a green one");
+    assert.match(result.output, /INCONCLUSIVE/);
+    assert.match(result.output, /Widened: .*trunk/);
+    assert.match(result.output, /no check was started/i);
+    for (const target of ["types", "unit", "e2e", "mutation", "pointers"]) {
+      assert.equal(fixture.ran(target), undefined, `${target} started without approval`);
+    }
+  });
+
   it("reports a check with no affected input as not applicable instead of running it", (t) => {
     const fixture = sandbox(t);
 
