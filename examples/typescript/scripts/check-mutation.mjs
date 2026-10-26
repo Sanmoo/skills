@@ -19,6 +19,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { outputOf, report, run } from "./lib.mjs";
+import { changedPathsSince, resolveComparison } from "./git-changes.mjs";
 import {
   MUTATION_REPORT,
   MUTATION_SCOPE_ENV,
@@ -36,63 +37,6 @@ const MUTABLE = /^src\/(catalog|lending)\/domain\/.*\.ts$/;
 const full = process.argv.includes("--full");
 const failures = [];
 
-// Returns the command's trimmed stdout, or undefined when it failed. A
-// successful command that printed nothing yields the empty string.
-function git(args) {
-  const result = run("git", args);
-  return result.status === 0 ? result.stdout.trim() : undefined;
-}
-
-// A command's non-empty output lines, or undefined when the command failed;
-// callers must not read a failure as "nothing here".
-function gitLines(args) {
-  const output = git(args);
-  if (output === undefined) return undefined;
-  return output
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line !== "");
-}
-
-function baseRefs(base) {
-  // CI checks out a commit without a local branch, so the base usually exists
-  // only as a remote-tracking ref. `origin` comes first and the other remotes
-  // follow in sorted order, so a clone with extra remotes resolves the same
-  // base as CI. The bare branch name comes last, for a base that exists only
-  // locally.
-  const remotes = gitLines(["remote"]);
-  if (remotes === undefined) return undefined;
-  const rest = remotes.filter((remote) => remote !== "origin").sort();
-  const ordered = remotes.includes("origin") ? ["origin", ...rest] : rest;
-  return [...new Set([...ordered.map((remote) => `${remote}/${base}`), base])];
-}
-
-function resolveBase(base) {
-  const refs = baseRefs(base);
-  if (refs === undefined) {
-    return { reason: `the remotes cannot be listed to resolve "${base}"` };
-  }
-  for (const ref of refs) {
-    const tip = git(["rev-parse", "--verify", "--quiet", `${ref}^{commit}`]);
-    if (tip !== undefined) return { ref, tip };
-  }
-  return { reason: `base "${base}" is not resolvable here` };
-}
-
-// git diff reports paths from the repository root while git ls-files reports
-// them from the current directory; normalise both to the current directory.
-// Returns undefined when the root cannot be read, so the caller widens instead
-// of filtering un-normalised paths away.
-function normaliseToWorkingDirectory(paths) {
-  const root = git(["rev-parse", "--show-toplevel"]);
-  if (root === undefined) return undefined;
-  const prefix = relative(root, process.cwd()).split("\\").join("/");
-  if (prefix === "" || prefix === ".") return paths;
-  return paths.map((path) =>
-    path.startsWith(`${prefix}/`) ? path.slice(prefix.length + 1) : path,
-  );
-}
-
 // A file this Gate may mutate: a domain module, never a test. Both the changed
 // set and a declared proof scope use this one rule, so the two cannot disagree
 // about what an eligible input is.
@@ -101,48 +45,23 @@ function isEligible(path) {
 }
 
 // Returns the changed files, or why they cannot be read.
-function mutableFilesSince(from) {
-  const changed = gitLines(["diff", "--name-only", from, "--", "src"]);
-  const untracked = gitLines(["ls-files", "--others", "--exclude-standard", "--", "src"]);
-  if (changed === undefined || untracked === undefined) {
-    return { reason: "the changed files cannot be listed" };
+function mutableFilesSince(commit) {
+  const changed = changedPathsSince(commit);
+  if (changed.paths === undefined) {
+    return { reason: changed.reason };
   }
-  const paths = normaliseToWorkingDirectory([...changed, ...untracked]);
-  if (paths === undefined) {
-    return { reason: "the project root is not resolvable here" };
-  }
-  return {
-    files: paths.filter(isEligible),
-  };
+  return { files: changed.paths.filter(isEligible) };
 }
 
 // Returns the scope to mutate: the changed files, or why they cannot be
 // established. Widening is a scope change, not a failure.
 function mutationScope() {
   const base = process.env.MUTATION_BASE ?? "main";
-  const resolved = resolveBase(base);
-  if (resolved.tip === undefined) {
+  const resolved = resolveComparison(base);
+  if (resolved.commit === undefined) {
     return { base, reason: resolved.reason };
   }
-  const head = git(["rev-parse", "HEAD"]);
-  if (head === undefined) {
-    return { base: resolved.ref, reason: "HEAD is not resolvable here" };
-  }
-  if (resolved.tip === head) {
-    // HEAD is the base branch's own tip, so the change to measure is what
-    // landed with it: the tip commit against its first parent. Without this the
-    // Gate mutates nothing on a push to the base branch.
-    const parent = git(["rev-parse", "--verify", "--quiet", `${resolved.tip}^`]);
-    if (parent === undefined) {
-      return { base: resolved.ref, reason: `${resolved.ref} has no earlier commit here` };
-    }
-    return { base: resolved.ref, ...mutableFilesSince(parent) };
-  }
-  const mergeBase = git(["merge-base", resolved.tip, head]);
-  if (mergeBase === undefined) {
-    return { base: resolved.ref, reason: `"${resolved.ref}" has no common ancestor with HEAD` };
-  }
-  return { base: resolved.ref, ...mutableFilesSince(mergeBase) };
+  return { base: resolved.base, ...mutableFilesSince(resolved.commit) };
 }
 
 // Splits a declared scope and checks every part of it. A declaration is never

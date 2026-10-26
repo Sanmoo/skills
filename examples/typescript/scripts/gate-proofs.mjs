@@ -33,6 +33,7 @@
 // have left a change behind. Any of those failing is a setup error, not evidence.
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { outputOf, report, run } from "./lib.mjs";
+import { loadPolicy } from "./selection.mjs";
 import {
   MUTATION_REPORT,
   MUTATION_SCOPE_ENV,
@@ -43,7 +44,11 @@ import {
 
 // The runner passes a declared scope explicitly and never inherits one: a scope
 // exported in the operator's shell must not reach a proof that declares none.
+// The same holds for the Entry Point's mode, base and selection scope.
 delete process.env[MUTATION_SCOPE_ENV];
+delete process.env.HARNESS_SCOPE;
+delete process.env.HARNESS_MODE;
+delete process.env.HARNESS_BASE;
 
 const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
 const MAKE = process.platform === "win32" ? "make.exe" : "make";
@@ -228,33 +233,34 @@ const proofs = [
   },
 ];
 
-// The Makefile is the authority on which Gates each Entry Point runs, so the
-// script reads it rather than keeping a copy that could drift from it. A Gate
-// added to an Entry Point and left unproven is then a setup error, and a proof
-// cannot claim a tier the Makefile does not give it.
-function entryPointTargets() {
-  const makefile = readFileSync("Makefile", "utf8");
-  function prerequisites(name) {
-    const match = new RegExp(`^${name}\\s*:([^\\n]*)`, "m").exec(makefile);
-    if (match === null) {
-      throw new Error(`the Makefile has no "${name}" Entry Point`);
-    }
-    return match[1].replace(/#.*$/, "").split(/\s+/).filter(Boolean);
-  }
-  const fast = prerequisites("check-fast");
-  const full = prerequisites("check").filter(
-    (target) => target !== "check-fast" && !fast.includes(target),
-  );
-  return { fast, full };
+// The versioned selection policy is the authority on which Gates exist, which
+// tier each one runs in, and which targets realize it, so the script reads it
+// rather than keeping a copy that could drift from it. A Gate in the policy and
+// left unproven is then a setup error, and a proof cannot claim a tier the
+// policy does not give its Gate.
+const loadedPolicy = loadPolicy();
+if (loadedPolicy.policy === undefined) {
+  report("Gate proofs", loadedPolicy.problems);
+}
+const POLICY = loadedPolicy.policy;
+
+// One entry per Gate in the Gate Floor as this stack realizes it, with every
+// target the policy maps to it: a Gate may have a reduced-scope check and a
+// periodic whole-input one, and either proves the Gate.
+const GATES = new Map();
+for (const check of POLICY.checks) {
+  const gate = GATES.get(check.gate) ?? { tier: check.tier, targets: new Set() };
+  gate.targets.add(check.target);
+  GATES.set(check.gate, gate);
 }
 
-const ENTRY_POINTS = entryPointTargets();
-
-// The Entry Point whose prerequisites include this Gate target, or undefined
-// when neither Entry Point runs it. Its name is also the tier's name.
+// The Entry Point whose tier runs this Gate target, or undefined when no Gate
+// in the policy has it. Its name is also the tier's name.
 function entryPointOf(target) {
-  if (ENTRY_POINTS.fast.includes(target)) return "check-fast";
-  if (ENTRY_POINTS.full.includes(target)) return "check";
+  for (const gate of GATES.values()) {
+    if (!gate.targets.has(target)) continue;
+    return gate.tier === "fast" ? "check-fast" : "check";
+  }
   return undefined;
 }
 
@@ -359,9 +365,12 @@ function attributionProblems(proofList) {
       problems.push(`"${proof.gate}" declares an empty scope, so its proof would exercise nothing`);
     }
   }
-  for (const target of [...ENTRY_POINTS.fast, ...ENTRY_POINTS.full]) {
-    if (!targets.has(target)) {
-      problems.push(`Gate target "${target}" runs in an Entry Point but has no proof`);
+  for (const [gate, details] of GATES) {
+    if (!labels.has(gate)) {
+      problems.push(`Gate "${gate}" is in the policy but has no proof`);
+    }
+    if (![...details.targets].some((target) => targets.has(target))) {
+      problems.push(`Gate "${gate}" has no proof running one of its targets`);
     }
   }
   return problems;

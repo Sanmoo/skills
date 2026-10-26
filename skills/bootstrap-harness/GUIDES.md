@@ -6,14 +6,15 @@ A Guide steers a change before it is made. Because the code is the source of tru
 2. **Judgment**: rules a reviewer applies that no Gate can verify, such as "prefer one deep module over several shallow ones".
 3. **Pointers**: relative links to the code or config that holds the facts.
 
-Everything else lives in code, and the Guide links to it:
+Everything else lives in code, and the Guide links to it. A Guide never lists the individual checks or their commands: the selection policy holds which checks exist, what makes each one apply, the scope it verifies, its cadence and its cost, and the Guide points at it.
 
 | Content | Where it lives |
 |---|---|
 | Thresholds and limits | the config file of the Gate that enforces them |
 | The list of bounded contexts and their allowed dependencies | the module structure and the context boundaries Gate config |
 | Formatting and lint rules | the formatter and linter config |
-| Commands | the Entry Point definitions; Guides name only the two Entry Points |
+| Commands | the Entry Point definitions; Guides name only the two Entry Points and the full Entry Point's modes, never the individual checks |
+| Which checks run, over which scope, at which cadence, under which budget | the versioned selection policy |
 | Tool versions | the lockfile and the version manager file |
 
 Write each line as the behavior you want ("name types after glossary terms"), and keep only lines that change what an agent would do by default.
@@ -43,7 +44,7 @@ Create exactly these Guides in the target repository.
 The index every agent reads first, with `CLAUDE.md` as a symlink to it. Keep it short:
 
 - one sentence on what the system is;
-- the full and fast Entry Points, and the rule that a change is done only when the full Entry Point is green;
+- the full and fast Entry Points, the full Entry Point's two modes and what a green result in each does and does not cover, and the rule that a change is done only when the full Entry Point is green in its change mode;
 - the rule that the code is the source of truth: when a Guide and the code disagree, the code wins and the Guide gets fixed, except for naming, where `GLOSSARY.md` wins and the code gets fixed;
 - a link to `GLOSSARY.md`, to each Guide, and to `docs/adr/`, each with one line on when to read it.
 

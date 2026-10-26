@@ -38,6 +38,12 @@ export function baseEnvironment(pathEntries) {
   const environment = { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" };
   delete environment.MUTATION_SCOPE;
   delete environment.MUTATION_BASE;
+  // A check drives one mode with one scope; a setting exported by the shell or
+  // left behind by the previous run must not narrow or widen it.
+  delete environment.HARNESS_SCOPE;
+  delete environment.HARNESS_MODE;
+  delete environment.HARNESS_BASE;
+  delete environment.HARNESS_POLICY_VERSION;
   environment.PATH = `${pathEntries.join(delimiter)}${delimiter}${process.env.PATH ?? ""}`;
   return environment;
 }
