@@ -86,11 +86,13 @@ The executable wording is in [features/library_lending.feature](features/library
 
 **Q5 - Version pinning**: npm dependencies are exact in `package.json` and locked in `package-lock.json`; gitleaks and Node are pinned in `mise.toml`. **Confirmed.**
 
-**Q6 - Entry Point mechanism**: `make`, with `make check-fast` and `make check` as the two Entry Points. **Confirmed.**
+**Q6 - Entry Point mechanism**: `make`, with `make check-fast` and `make check` as the two Entry Points. The full Entry Point has the two modes: validation by change, which `make check` runs by default, and integral validation, which `make check MODE=integral` runs. The check list, each check's impact, scope and cost, the validation budget and the periodic cadence live in `harness/policy.json`; no Guide lists the checks or their commands. **Confirmed.**
 
-**Q7 - CI provider**: GitHub Actions. Its check workflow calls the full Entry Point for the repository and for this example; a scheduled workflow calls the full mutation run. The checkout must give each Gate what it measures: the history the Secrets Gate scans, and a base branch the Mutation Gate's changed-set comparison can resolve, so the example job in the check workflow fetches full history. **Confirmed.**
+**Q7 - CI provider**: GitHub Actions. Its check workflow calls the full Entry Point for the repository and for this example; the scheduled integral workflow calls integral validation, whose periodic checks include the whole-codebase mutation run. The checkout must give each Gate what it measures: the history the Secrets Gate scans, and a base branch the Mutation Gate's changed-set comparison can resolve, so the example job in the check workflow fetches full history. **Confirmed.**
 
 **Q8 - Threshold departures**: none. Mutation 80% overall and 90% in core, complexity 10, zero cycles, duplication 3%, vulnerabilities high and critical only - all at the defaults. **Confirmed.**
+
+**Q9 - Validation budget and periodic execution**: 2400 seconds for validating one change, recorded in `harness/policy.json`; there is no universal CI target. The whole-codebase mutation is the periodic check, because no reliable reduced scope exists for the code a change did not touch; it runs under integral validation on the scheduled weekly job and on demand. Validation by change reports it instead of running it. Between executions its protection is the reduced-scope mutation validation by change does run, and the residual risk is the unmutated code outside the change's affected scope; the scheduled run limits how long that gap stays open. Adopting the modes elsewhere measures the budget against that project's own cost. **Confirmed.**
 
 ## Restored: the E2E level
 

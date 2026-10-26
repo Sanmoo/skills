@@ -1,7 +1,9 @@
 // Gate: Guide pointers.
 //
 // Every relative link and file path in a Guide resolves, and every command a
-// Guide names is one of the two Entry Points.
+// Guide names is one of the two Entry Points or the full Entry Point's integral
+// mode. The per-check commands stay in the versioned selection policy and the
+// package scripts, never in a Guide.
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { report, run } from "./lib.mjs";
@@ -31,7 +33,7 @@ function guideFiles() {
   return files;
 }
 
-const ENTRY_POINTS = new Set(["make check", "make check-fast"]);
+const ENTRY_POINTS = new Set(["make check", "make check-fast", "make check MODE=integral"]);
 const COMMAND =
   /^(make|npm|npx|node|docker|mise|git|tsc|vitest|eslint|prettier|stryker|depcruise|jscpd|gitleaks)(\s+|$)/;
 

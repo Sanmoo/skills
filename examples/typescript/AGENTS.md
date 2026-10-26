@@ -2,7 +2,7 @@
 
 An HTTP service that catalogues the books a library holds and lends them to borrowers, on Postgres.
 
-`make check` is the full Entry Point and the one CI calls for a change; a change is done only when it is green. `make check-fast` is the offline subset for local hooks. A Gate Proof run is evidence requested by hand, not part of a change's CI.
+`make check` is the full Entry Point and the one CI calls for a change; a change is done only when it is green. It runs validation by change: it selects the Gates and scopes the change affects, dependents included, and a green result states that scope instead of claiming the whole application was verified. `make check MODE=integral` runs integral validation over every Gate's whole input, including the checks assigned to periodic execution, under the approved cadence. `make check-fast` is the offline subset for local hooks. The check list, impacts, scopes, validation budget and periodic cadence live in `harness/policy.json`; a Guide never lists them. A Gate Proof run and the modes' rehearsal are evidence requested by hand, not part of a change's CI.
 
 The code is the source of truth: when a Guide and the code disagree, the code wins and the Guide gets fixed. The one exception is naming, where [GLOSSARY.md](GLOSSARY.md) wins and the code gets fixed.
 

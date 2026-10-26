@@ -40,7 +40,13 @@ const DECLARED = {
 function proofSandbox(t, { complete = false } = {}) {
   const { root, stubs, git } = newSandbox(t);
   writeFileSync(join(root, "Makefile"), readFileSync(join(PROJECT, "Makefile")));
-  const files = { ".gitignore": "reports/\n", [LOAN_TEST]: "// unit test\n" };
+  const files = {
+    ".gitignore": "reports/\n",
+    [LOAN_TEST]: "// unit test\n",
+    // The runner reads the versioned selection policy as the authority on the
+    // Gate Floor and each Gate's tier.
+    "harness/policy.json": readFileSync(join(PROJECT, "harness", "policy.json")),
+  };
   if (complete) {
     Object.assign(files, {
       [LOAN]:

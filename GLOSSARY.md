@@ -69,8 +69,32 @@ The state in which every Gate in the Gate Floor is adopted: each runs under its 
 _Avoid_: Complete harness, certified harness
 
 **Entry Point**:
-A single command that runs Gates, in two tiers: the full Entry Point runs every Gate and is what CI calls for a change; the fast Entry Point runs the quick subset for local hooks. These are the only commands a Guide may name.
+A single command that runs Gates, in two tiers: the full Entry Point is what CI calls for a change, and the fast Entry Point runs the quick subset for local hooks. The full Entry Point has two modes, validation by change and integral validation, and the mode is part of its definition rather than another command. These are the only commands a Guide may name.
 _Avoid_: Check script
+
+**Validation by change**:
+The full Entry Point's mode for a change: it selects deterministically, through versioned policy, the Gates and scopes the change affects, including the files that depend on it, and widens when a shared configuration or dependency change or an impact it cannot establish makes a reduced scope unreliable. Its green result states what it verified and is never a claim of integral verification.
+_Avoid_: Incremental validation, affected-only validation
+
+**Integral validation**:
+The full Entry Point's mode that runs every Gate over its whole input, including the checks versioned policy assigns to periodic execution. It runs under the approved cadence, and its failures stay visible to the changes they cover.
+_Avoid_: Full scan, complete verification
+
+**Selection policy**:
+The versioned, executable configuration that decides which checks validation by change runs, which changes make each one apply, which scope it verifies, at which cadence it runs, what each one costs, and what the validation budget is. Equivalent changes under the same policy select the same checks over the same scopes.
+_Avoid_: Impact matrix, gate selection rules
+
+**Validation budget**:
+The time the maintainer approves for validating one change, recorded in the selection policy. Required validation wider than the budget makes the result inconclusive: non-zero, with no expensive check started and the decision needed to proceed named.
+_Avoid_: Time limit, CI timeout
+
+**Periodic check**:
+A check that versioned policy assigns to integral validation rather than to every change, because no reliable reduced scope exists for it. Validation by change omits it and reports it, and the policy states the protection it gives between its executions and the residual risk in between.
+_Avoid_: Nightly job, slow check
+
+**Inconclusive result**:
+A non-zero validation result stating that the validation a change requires was not run, because it exceeds the approved budget or a periodic failure's relationship to the change could not be established. It is neither a pass nor a Gate failure.
+_Avoid_: Skipped check, unknown result
 
 **Walking Skeleton**:
 The smallest end-to-end slice of real code that exists only so every Gate has something to run against from day zero. The greenfield path builds one; the adoption path never does, because the existing application is what its Gates run against.

@@ -35,6 +35,11 @@ jobs:
       - name: Check the Harness's proof tooling
         id: proof-tooling
         run: npm run gate-proof-checks
+      - name: Rehearse the two validation modes on a disposable copy
+        id: rehearsal
+        # The rehearsal drives the full Entry Point's modes with a controlled
+        # budget fixture; its transcript is run output, not committed evidence.
+        run: npm run rehearse-validation
       - name: Run the Gate Proofs
         id: proofs
         run: npm run gate-proofs

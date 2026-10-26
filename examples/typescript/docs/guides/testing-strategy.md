@@ -20,6 +20,8 @@ The Mutation Gate treats the unit level as the proof that rules are pinned down,
 
 The Mutation Gate's own selection is part of what has to keep working, so it is checked at its executable boundary in `test/harness/`, and the proof runner's evidence bookkeeping in `test/proofs/`; both run with the proof job and never inside an Entry Point. Those checks are not a level of the application: they are the Harness's guard against a selection that silently stops matching, and [the selection code](../../scripts/check-mutation.mjs) owns what they must establish.
 
+The full Entry Point's two modes decide which levels a change pays for. Validation by change selects the test files whose source is affected, dependents included, and reports the levels that did not apply; a green result covers that scope only, not the whole application. Integral validation runs every level over its whole input, including the checks assigned to periodic execution. Which check runs, over which scope, at which cadence and under which budget is versioned policy, not a rule in this Guide.
+
 ## Pointers
 
 - Unit tests: `src/**/domain/*.test.ts`
@@ -35,3 +37,7 @@ The Mutation Gate's own selection is part of what has to keep working, so it is 
 - Gate Proof declarations and their declared scope: `scripts/gate-proofs.mjs`
 - Mutation selection checks: `test/harness/`
 - Gate Proof evidence checks: `test/proofs/`
+- Selection policy: check list, impacts, scopes, costs, budget and periodic cadence: `harness/policy.json`
+- The full Entry Point's two modes: `scripts/run-mode.mjs`
+- Changed set and affected dependents: `scripts/selection.mjs`
+- Modes' rehearsal on a disposable copy: `scripts/rehearse-validation.mjs`

@@ -1,0 +1,42 @@
+name: integral
+
+# Integral validation runs every Gate over its whole input, including the
+# checks versioned policy assigns to periodic execution: here the
+# whole-codebase mutation, which validation by change only reports. It runs
+# under the approved cadence, and its record keeps a failure visible to the
+# changes in its scope.
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integral:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/typescript
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Nothing here pushes; do not leave the token in .git/config.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2
+        with:
+          working_directory: examples/typescript
+      - run: npm ci
+      - run: make check MODE=integral
+      - name: Publish the integral result
+        # The record is what validation by change reads for the periodic checks'
+        # last result; publish it even when a check failed, so the failure stays
+        # visible after the run.
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: integral-status-${{ github.sha }}-run-${{ github.run_id }}-attempt-${{ github.run_attempt }}
+          path: examples/typescript/reports/integral-status.json
+          if-no-files-found: warn

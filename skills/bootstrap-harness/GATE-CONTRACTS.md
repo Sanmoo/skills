@@ -10,11 +10,26 @@ Both starting paths use these same Contracts. Adoption records adoption criteria
 - **Configured in code.** Thresholds, scopes, and rules live in versioned config files. Guides point at those files.
 - **Red means non-zero.** A violation makes the Entry Point exit non-zero and names the Gate and the offending location.
 - **Warnings are errors.** A finding either fails the Gate or is excluded in config with a comment stating why.
-- **Tiered.** Fast Gates run in both Entry Points. Full Gates run only in the full Entry Point, which CI calls.
+- **Tiered.** Fast Gates run in both Entry Points. Full Gates run only in the full Entry Point, which CI calls for a change and which the approved cadence calls integrally.
 - **Core thresholds.** Where a contract sets a stricter threshold for core, the Gate config applies it to the modules of core contexts.
 - **Third-party code.** Exclude it from traversal, never from rule targets: an exclusion that hides a target also hides the violation. A rule that depends on matching the target path must still see the dependency it forbids.
 - **Own level.** A Contract's obligation stops at its own level; the Gherkin obligation on e2e adds none to unit or integration tests.
 - **Honest state.** Every claim about a Gate uses the state vocabulary below.
+
+## Execution modes
+
+The full Entry Point has two modes. **Validation by change** is the mode CI calls for a change. **Integral validation** is the mode the approved cadence calls. Both run the same Gates with the same pinned tools, thresholds and Gate Proofs; they differ in which checks run, over which scope, and in what the result may claim.
+
+- **Deterministic, versioned selection.** Versioned policy in the repository names every check, its tier, which changes make it apply, the scope it verifies, its cadence, and its estimated cost, together with the project's validation budget. Equivalent changed trees under the same policy select the same checks over the same scopes, and a result records the policy version it used.
+- **Dependents are affected.** The affected scope is the changed files plus the files that depend on them, established from the project's dependency information. The selection includes verification of those dependents instead of stopping at the edited directories.
+- **Shared configuration and dependencies widen it.** A change to shared configuration, a manifest or lockfile, a Gate's configuration, or the selection policy itself widens the selection to every applicable check over its whole input. A small-looking diff is not evidence of small impact.
+- **Missing impact information widens it too.** An unresolvable comparison base, a dependency the graph cannot place, or any other impact the policy cannot establish widens the selection. Missing information is not read as independence.
+- **The budget belongs to the project.** The maintainer approves a validation budget during adoption and it lives in the versioned policy; there is no universal CI target. Required validation wider than the budget is inconclusive: the Entry Point exits non-zero, reports the scope it could not verify, starts none of the expensive checks, and names the decision needed to proceed. It never silently skips a check and never launches an unapproved expensive run.
+- **Periodic execution is explicit.** A check with no reliable reduced scope may run only under integral validation, at the cadence the policy records. Validation by change omits it and reports that fact with the last integral result, and the approved plan states the protection it gives between executions and the residual risk in between. Integral validation runs it.
+- **Periodic failures are consequential.** The last integral result is recorded where validation by change can read it. A change that verifies files in a failed check's scope is not reported green: the failure is reported and its scope requires treatment. A demonstrably independent change may proceed with the failure still reported. When the relationship cannot be established it is treated as uncertain impact and widens the selection.
+- **Results say what they covered.** A result reports the checks that ran and the scope each verified, the checks that did not apply, the checks left to periodic execution, failures, and an inconclusive outcome, each distinctly. A green validation-by-change result names its scope and never claims or implies that the whole application was verified. A green integral result says every Gate ran over its whole input; it is a result of that run, not permanent certification.
+
+The modes are the full Entry Point's two ways of running, not a catalogue of per-check commands: a Guide names the Entry Points, and the check list, impacts, costs, cadence and budget stay in executable policy the Guide points at.
 
 ## Gate states
 
@@ -103,7 +118,7 @@ A Harness is established when every Gate in the Gate Floor is adopted. Establish
 ## Mutation
 
 - **Intent**: prove the tests would notice a wrong change, which coverage alone cannot.
-- **Passes when**: the mutation score is at least **80%** overall and at least **90%** in core contexts. The full Entry Point mutates only code changed relative to the base branch (`main`, or `MUTATION_BASE` when the environment sets it), which on day zero is all of it; the changed set includes the working tree and untracked files, not only commits. A scheduled CI job mutates the whole codebase periodically. When the mutation tool has no per-context threshold, a wrapper reads its machine-readable report and applies the overall and core limits itself. When the changed set cannot be established - for example, no resolvable base branch, no earlier commit to compare against, no shared history with it, or files that cannot be listed or resolved - the Gate states that in its own output and mutates the whole codebase. That is a widening of scope, not a finding, so it does not fail the Gate, and the thresholds still apply to everything mutated. When HEAD is the base branch's own tip, the change to measure is what landed with the tip commit: the tip against its first parent. A push that lands several commits therefore measures only the tip; the scheduled whole-codebase run covers the rest.
+- **Passes when**: the mutation score is at least **80%** overall and at least **90%** in core contexts. Validation by change mutates only code changed relative to the base branch (`main`, or `MUTATION_BASE` when the environment sets it), which on day zero is all of it; the changed set includes the working tree and untracked files, not only commits. The whole-codebase mutation is a [periodic check](#execution-modes): validation by change reports it instead of running it, and integral validation runs it under the approved cadence. When the mutation tool has no per-context threshold, a wrapper reads its machine-readable report and applies the overall and core limits itself. When the changed set cannot be established - for example, no resolvable base branch, no earlier commit to compare against, no shared history with it, or files that cannot be listed or resolved - the Gate states that in its own output and mutates the whole codebase. That is a widening of scope, not a finding, so it does not fail the Gate, and the thresholds still apply to everything mutated. When HEAD is the base branch's own tip, the change to measure is what landed with the tip commit: the tip against its first parent. A push that lands several commits therefore measures only the tip; the scheduled whole-codebase run covers the rest.
 - **Tier**: full.
 - **Gate Proof**: delete the assertions of a core unit test, declaring the core domain file that test covers as the proof's scope, which replaces the changed set for that one execution through the stack's own transport.
 
@@ -155,6 +170,6 @@ A Harness is established when every Gate in the Gate Floor is adopted. Establish
 ## Guide pointers
 
 - **Intent**: keep every Guide pointing at code that exists.
-- **Passes when**: every relative link and file path in `AGENTS.md`, `GLOSSARY.md`, `docs/guides/`, and `docs/adr/` resolves, and every command a Guide names is one of the two Entry Points. A command is a tool name followed by an argument; a bare file path that starts with a tool name is not a command.
+- **Passes when**: every relative link and file path in `AGENTS.md`, `GLOSSARY.md`, `docs/guides/`, and `docs/adr/` resolves, and every command a Guide names is one of the two Entry Points or a mode of the full Entry Point. A command is a tool name followed by an argument; a bare file path that starts with a tool name is not a command.
 - **Tier**: fast.
 - **Gate Proof**: point a Guide link at a file that does not exist.

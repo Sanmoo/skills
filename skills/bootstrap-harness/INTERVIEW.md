@@ -83,9 +83,12 @@ Settle these decisions:
 3. **Infrastructure per context** (database, broker, cache). Integration tests run each one for real, typically in an ephemeral container.
 4. **One tool per Gate Contract.** Research the currently maintained tools for the stack and recommend one per Gate, with its exact version. Verify that each tool can enforce the contract's criteria as stated, including the per-context thresholds for core contexts. The E2E row names the executor for the Gherkin scenarios: Cucumber is one option, not a requirement, and the executor must actually run Gherkin feature files in the language the domain interview confirmed. If it cannot run that language, raise it with the user instead of silently changing the language; verify that it can satisfy every E2E criterion, including failing on a wrong assertion and on each vacuous pass the Contract names. Check that the version you pick for the mutation tool supports the pinned unit and integration test runner; a vulnerability fix to the test runner can otherwise strand the Gate.
 5. **Version pinning.** Language dependencies pinned by the ecosystem's lockfile. Standalone binaries (secret scanners, vulnerability scanners) pinned by a declarative version manager such as mise or asdf. Generate or verify the lockfile with the package manager version CI will use; a lockfile resolver can fail on peer dependencies that the installed package manager handles.
-6. **Entry Point mechanism.** The task runner native to the ecosystem, or `make` when there is none. The full and fast Entry Points are two named commands of that mechanism.
+6. **Entry Point mechanism.** The task runner native to the ecosystem, or `make` when there is none. The full and fast Entry Points are two named commands of that mechanism, and the full one has the two [modes](GATE-CONTRACTS.md#execution-modes): validation by change, and integral validation. Name the versioned file that holds the selection policy; do not turn either mode into a catalogue of per-check commands in the Guides.
 7. **CI provider.** Any provider works, since its only job is to call the full Entry Point (plus the periodic full mutation run) on a checkout able to run every Gate as written; [SKILL.md](SKILL.md) phase 5 states what that checkout must provide.
 8. **Threshold departures.** Present the defaults from GATE-CONTRACTS.md. When the user changes one, record why in an ADR only if the change is surprising and hard to reverse; otherwise the config value alone suffices.
+9. **Validation budget and periodic execution.** What time budget does the project approve for validating one change, aside from any universal CI target, and which checks have no reliable reduced scope? Those checks run only under integral validation at a cadence the policy records; state the protection each gives between executions and the residual risk in between.
+
+   Recommended: estimate the cost from the checks the stack chose, agree a budget the project's changes can afford, and assign to periodic execution only the checks whose reduced scope would be unreliable. Record the budget, cadence and the checks in the selection policy, and the reasoning in `INTERVIEW-ANSWERS.md`; a budget is a decision, not a universal constant.
 
 ## Adoption
 
@@ -113,17 +116,17 @@ Settle these decisions, in dependency order:
 
    Recommended: retain every tool and check that meets its Gate Contract under the adoption criteria; propose a replacement with its reason, compatibility cost, and migration work, and make it only after approval. A check that cannot fail or exercises no meaningful input does not satisfy its Contract, so its Gate stays pending; the check itself may remain as project tooling.
 
-6. **Entry Points and CI.** Do the existing Entry Points and CI arrangement provide the fast and full tiers and call the full Entry Point?
+6. **Entry Points and CI.** Do the existing Entry Points and CI arrangement provide the fast and full tiers, call the full Entry Point for a change, and give its two [modes](GATE-CONTRACTS.md#execution-modes) a place to run?
 
-   Recommended: retain working Entry Point names and adapt only what does not meet the Contract. CI calls the full Entry Point and nothing else, on a checkout that gives each Gate what it measures.
+   Recommended: retain working Entry Point names and adapt only what does not meet the Contract. CI calls the full Entry Point in its change mode and nothing else, on a checkout that gives each Gate what it measures; the approved cadence calls integral validation. Which checks each mode runs, over which scope, at which cadence and under which budget lives in versioned selection policy, not in the Guides.
 
 7. **Gaps and blocked work.** Which discovered gaps are staged now, which stay pending, and which are blocked?
 
    Recommended: order gaps by the protection they buy. A missing, unexecuted, unproven, or vacuously passing check is pending. A check the environment cannot run is blocked, with what the maintainer must provide recorded beside it.
 
-8. **Stages, scope, budget, cadence, and adoption criteria.** What are the stages, their priorities, the scope of each, and the project's validation budget and cadence? For every Gate the plan adopts, what are its adoption criteria: the scope and cadence it runs under, and any specific existing findings the maintainer accepts?
+8. **Stages, scope, budget, cadence, and adoption criteria.** What are the stages, their priorities, the scope of each, and the project's validation budget and cadence? For every Gate the plan adopts, what are its adoption criteria: the scope and cadence it runs under, and any specific existing findings the maintainer accepts? Which checks does validation by change run, which have no reliable reduced scope, and which therefore run only under integral validation?
 
-   Recommended: protect the highest-value workflows first, take the cheap high-signal Gates early, and stage expensive checks rather than requiring every analysis before adoption begins. Name each Gate's scope and cadence, and the specific findings the maintainer accepts if any; a Gate without agreed criteria, or whose check would pass vacuously, stays pending. Agree a budget and cadence for this project; do not import a universal CI target.
+   Recommended: protect the highest-value workflows first, take the cheap high-signal Gates early, and stage expensive checks rather than requiring every analysis before adoption begins. Name each Gate's scope and cadence, and the specific findings the maintainer accepts if any; a Gate without agreed criteria, or whose check would pass vacuously, stays pending. Agree a budget and cadence for this project; do not import a universal CI target. Record the check list, impacts, scopes, costs, budget and periodic cadence in the versioned selection policy, and state the protection and residual risk of every periodic check.
 
 9. **Plan approval.** Does the plan record every confirmed decision, every Gate's current state, and, for every Gate it expects to adopt, its adoption criteria and the Gate Proof it will carry, and do you approve it?
 
