@@ -20,9 +20,21 @@ _Avoid_: New project, empty project
 A repository that already contains application source, tests, delivered behavior, or application-specific tooling; the adoption path reconciles a Harness with it instead of generating a replacement. A repository with only tooling config and no application source, tests, or delivered behavior is greenfield.
 _Avoid_: Brownfield, legacy application
 
+**Legacy debt**:
+The existing violations of the Gate Contracts an application already carries when adoption begins. Adoption records each one it accepts as a tolerated finding instead of requiring it to be fixed before establishment.
+_Avoid_: Technical debt, Debt backlog
+
 **Inventory**:
 The lightweight, factual survey of an existing application made before any change. It records what the environment answers instead of asking, and leaves expensive analysis to later stages; the skill's inventory step lists what it covers.
 _Avoid_: Functional audit, application assessment
+
+**Observed behavior**:
+The behavior an existing application exhibits today. It is the adoption path's regression contract: regression tests pin it down, and characterizing it is not an audit of its business correctness.
+_Avoid_: Actual behavior, Runtime behavior
+
+**Regression test**:
+A test that records behavior the existing application already exhibits, including behavior that looks surprising but is stable, so a change that alters it fails instead of passing unnoticed. It characterizes what the application does today and is not an audit of whether that behavior is right.
+_Avoid_: Characterization test, Golden test
 
 **Interview answers**:
 The file `INTERVIEW-ANSWERS.md` that records the confirmed answers to the domain, stack, or adoption interview so the run can be repeated and reviewed. It is a decision record, not a Guide or current policy.
@@ -33,8 +45,24 @@ The staged, prioritized proposal for establishing the Harness in an existing app
 _Avoid_: Migration plan, rewrite plan
 
 **Adoption criteria**:
-The scope, cadence, and specific accepted findings the maintainer approves for a Gate during adoption. They specialize the Gate Contract for this application and never replace or weaken it; a Gate that does not run under them, or that passes vacuously, is not adopted.
+The scope, cadence, and specific tolerated findings the maintainer approves for a Gate during adoption. They specialize the Gate Contract for this application and never replace or weaken it; a Gate that does not run under them, or that passes vacuously, is not adopted.
 _Avoid_: Adoption rules, gate policy
+
+**Tolerated finding**:
+A specific violation the adoption criteria accept, recorded in its Gate's tolerance policy with its finding identity and matched one to one with a reported finding.
+_Avoid_: Waiver, Allowlist entry
+
+**Finding identity**:
+The Gate, rule, location, and measured value or severity that identify one reported finding, so a Gate can match it to exactly one tolerance entry.
+_Avoid_: Tolerance key, Suppression key
+
+**Tolerance policy**:
+The versioned Gate config that records tolerated findings, each entry recording one tolerated finding. It changes only by a reviewed change, no run regenerates it, and an entry the Gate no longer matches exactly fails until that change updates it.
+_Avoid_: Baseline snapshot, Suppression list
+
+**Localized decision**:
+The decision, limited to one observed behavior, that exceptionally strong evidence of an obvious error opens for the maintainer during adoption: fix it as its own reviewed change, or record the behavior as intended. It never corrects automatically, never stops unrelated adoption, and adds no owner or expiry.
+_Avoid_: Risk acceptance, Bug triage
 
 **Guide**:
 An agent-oriented document in the Harness that steers a change before it is made, holding only what the code cannot express. The code, including the Gates, is always the source of truth; a Guide points to it rather than restating it.
@@ -57,7 +85,7 @@ The honest classification of every Gate: **adopted**, **pending**, or **blocked*
 _Avoid_: Gate status, gate maturity
 
 **Gate Proof**:
-The repeatable, attributable violation that shows a Gate turns the appropriate Entry Point red. It is required before that Gate counts as adopted, and its violation lies outside any finding the Gate's adoption criteria accept (the greenfield path accepts none).
+The repeatable, attributable violation that shows a Gate turns the appropriate Entry Point red. It is required before that Gate counts as adopted, and its violation lies outside any tolerated finding the Gate's adoption criteria accept (the greenfield path accepts none).
 _Avoid_: Smoke test
 
 **Gate Proof record**:
@@ -65,7 +93,7 @@ The committed file, `GATE-PROOFS.md`, that records each Gate's proof and outcome
 _Avoid_: Proof log, evidence file
 
 **Established Harness**:
-The state in which every Gate in the Gate Floor is adopted: each runs under its approved scope and cadence (the day-zero defaults on the greenfield path, the adoption criteria on the adoption path), enforces its Contract under those criteria, and its Gate Proof turns the appropriate Entry Point red because of it. Debt the adoption criteria accept does not prevent establishment.
+The state in which every Gate in the Gate Floor is adopted: each runs under its approved scope and cadence (the day-zero defaults on the greenfield path, the adoption criteria on the adoption path), enforces its Contract under those criteria, and its Gate Proof turns the appropriate Entry Point red because of it. Tolerated findings the adoption criteria accept do not prevent establishment.
 _Avoid_: Complete harness, certified harness
 
 **Entry Point**:

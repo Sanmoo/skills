@@ -2,14 +2,17 @@
 
 Each Gate Contract states a Gate's intent and acceptance criteria for any stack. The tool that realizes it is chosen in the stack interview; where a Contract's scenarios need a language, the domain interview settles it. Where acceptance also depends on a judgment no tool can make, the acceptance criteria include a **Human review**; the Gate runs its executable criteria, and neither the run nor the review stands in for the other. Together these Gates form the **Gate Floor**: every project has all of them. A greenfield project establishes every one from day zero; an existing application adopts them in approved stages. Either path counts as established only when every Gate in the Gate Floor is adopted.
 
-Both starting paths use these same Contracts. Adoption records adoption criteria for each Gate - its approved scope, cadence, and any specific accepted findings in versioned policy - but it never redefines a Contract, weakens its intent, or creates a second set. The Contract remains the obligation.
+Both starting paths use these same Contracts. Adoption records adoption criteria for each Gate - its approved scope, cadence, and any specific tolerated findings in a tolerance policy - but it never redefines a Contract, weakens its intent, or creates a second set. The Contract remains the obligation.
+
+An existing application carries legacy debt, so adoption also records which existing violations its criteria accept. That record never turns a count, a path, or a regenerated snapshot into permission to add new violations; the rules below keep every accepted violation specific and visible.
 
 ## Rules for every Gate
 
 - **Deterministic.** The same tree gives the same result everywhere. Every tool is pinned to an exact version: language dependencies through the lockfile, standalone binaries through a declarative version manager.
 - **Configured in code.** Thresholds, scopes, and rules live in versioned config files. Guides point at those files.
 - **Red means non-zero.** A violation makes the Entry Point exit non-zero and names the Gate and the offending location.
-- **Warnings are errors.** A finding either fails the Gate or is excluded in config with a comment stating why.
+- **Warnings are errors.** A reported finding either fails the Gate or is tolerated as a specific entry in its Gate's tolerance policy.
+- **Scope is declared.** A rule or traversal target is excluded in versioned config; the change that adds the exclusion states why in its commit message or a comment where the format allows one. A traversal exclusion may cover third-party code, generated or derived output, or a non-production target such as tests, fixtures, or tooling; it never covers a first-party production source target the Gate's Contract measures. A rule-level exclusion states its reason and does not narrow the target set. An exclusion is declared before the Gate reports a finding there; a target the Gate has reported a finding in is not later excluded: that finding is tolerated or fixed.
 - **Tiered.** Fast Gates run in both Entry Points. Full Gates run only in the full Entry Point, which CI calls for a change and which the approved cadence calls integrally. Validation by change reports any Gate with no affected input as not applicable.
 - **Core thresholds.** Where a contract sets a stricter threshold for core, the Gate config applies it to the modules of core contexts.
 - **Third-party code.** Exclude it from traversal, never from rule targets: an exclusion that hides a target also hides the violation. A rule that depends on matching the target path must still see the dependency it forbids.
@@ -33,7 +36,7 @@ The modes are the full Entry Point's two ways of running, not a catalogue of per
 
 ## Gate states
 
-- **Adopted**: the Gate actually runs under the approved scope and cadence (the day-zero defaults on the greenfield path, the adoption criteria on the adoption path), enforces its Contract under those criteria, and has a repeatable Gate Proof whose violation - outside any accepted finding - turns the appropriate Entry Point red because of that Gate. A green run that does not meet all three is not adoption.
+- **Adopted**: the Gate actually runs under the approved scope and cadence (the day-zero defaults on the greenfield path, the adoption criteria on the adoption path), enforces its Contract under those criteria, and has a repeatable Gate Proof whose violation - outside any tolerated finding - turns the appropriate Entry Point red because of that Gate. A green run that does not meet all three is not adoption.
 - **Pending**: the Gate is not adopted and nothing outside the work prevents it from being adopted. Missing, unexecuted, unproven, not-yet-in-scope, and vacuously passing Gates are pending. A check passes vacuously when it reports success without exercising its Contract: no meaningful input, an empty selection, a skipped suite, or a result that cannot fail. A pending Gate is not protection; its absence is reported, not hidden.
 - **Blocked**: the Gate cannot run because the environment, a missing tool, a missing decision, or another external dependency prevents it. Record what the maintainer must provide. A blocked Gate is not adopted, and scheduling it later does not make it adopted.
 
@@ -41,19 +44,42 @@ A run can be green while its Gate remains pending: green is a result, not a stat
 
 ## Adoption criteria
 
-Adoption criteria are the approved scope, cadence, and specific existing findings the maintainer accepts for a Gate. They specialize how its Contract applies to this application - which code or contexts a Gate covers, when it runs, and which present findings are accepted - and never relax the Contract's intent or replace its acceptance criteria. A Gate that does not run under the approved criteria, or that passes vacuously, remains pending.
+Adoption criteria are the approved scope, cadence, and specific tolerated findings the maintainer accepts for a Gate. They specialize how its Contract applies to this application - which code or contexts a Gate covers, without excluding a first-party production source target the Contract measures, when it runs, and which present findings are accepted - and never relax the Contract's intent or replace its acceptance criteria. A Gate that does not run under the approved criteria, or that passes vacuously, remains pending.
 
 An existing tool or check that satisfies its Contract under those criteria is retained. A replacement is proposed with its reason, compatibility cost, and migration work, and made only after the maintainer approves it.
 
-An adopted Gate is proved against the criteria, not around them: its Gate Proof introduces a violation the Gate must reject, outside any accepted finding. A proof whose violation falls inside the accepted tolerance shows that the Gate tolerates what it was told to tolerate, not that it rejects what it must reject.
+An adopted Gate is proved against the criteria, not around them: its Gate Proof introduces a violation the Gate must reject, outside any tolerated finding. A proof whose violation is itself a tolerated finding shows that the Gate tolerates what it was told to tolerate, not that it rejects what it must reject.
+
+### Tolerated findings
+
+Adoption criteria may accept existing violations. Each violation the criteria accept is a **tolerated finding**, recorded in the Gate's tolerance policy as part of a reviewed change, under these rules:
+
+- **Specific.** A tolerated finding names its finding identity: the Gate, the rule or check that reported it, the location it occupies (the file plus the symbol, declaration, or the tool's own stable fingerprint), and the measured value or severity when the Gate measures one. A path, a directory, a rule, a severity, or a number of findings is not a tolerated finding.
+- **One entry, one finding.** The Gate matches each reported finding to one entry and each entry to one reported finding. A finding with no entry fails, even when another tolerated finding disappeared in the same change; once a tolerated finding disappears its entry is void, so a later return fails even if the entry was not yet removed; two reported findings under one entry fail; and a tolerated finding that grows - a higher measured value, a higher severity, or another occurrence at the same place - fails, except a security finding the Security rule tolerates by explicit decision.
+- **Tightening is reviewed.** Every change to an entry is a change to the adoption criteria, reviewed like code and approved as the plan was; the tolerance policy records the approved set. A reviewed change never adds one for a violation that appeared after adoption began and never raises one, except the security decision the Security rule allows, so a later or worse violation the Security rule does not tolerate is fixed rather than tolerated. A run never adds, removes, or rewrites an entry, so neither a failing nor a passing run can regenerate the tolerance policy. When a change removes or lowers a tolerated finding, the same reviewed change removes or lowers its entry; until it does, the Gate fails that entry.
+- **A finding, not a place.** A tolerated finding accepts the named finding at its recorded value, not the place it lives. New code is held to the Contract's normal limits, other rules apply at that location, and changing code that carries a tolerated finding is allowed as long as no tolerated finding worsens and no new finding appears, except a security finding the Security rule tolerates by explicit decision; an improvement that lowers a tolerated finding still tightens its entry in the same reviewed change.
+- **Security.** A security finding - a secret, or a vulnerability in a locked dependency - is either removed, or tolerated by an explicit human decision recorded beside its entry in the same tolerance policy. A revoked secret that history still contains, or an advisory with no fixed version, remains a finding and is tolerated only that way. A security finding is the one finding a reviewed change may add or revalue after adoption began, and only by that decision, recorded beside each entry it adds or revalues. A severity threshold, a scanner default, or an absent finding is not that decision.
+
+A tool's own exclusion format, such as an ignore file, is a tolerance policy only when each entry identifies one finding as these rules require and the file changes only by review; a count per file, rule, or run, or a file the tool rewrites on its own, does not qualify. Tolerated findings are Gate configuration, so they live in the Gate's tolerance policy: a versioned config file, one per Gate or one shared file keyed to its Gate, beside its thresholds and scopes; the approved plan names what a Gate accepts when the plan is approved, the policy holds the current set, and a Guide points at it instead of listing it.
+
+No owner, expiry, or separate risk register is added: the reviewed change to the policy is the record. Legacy debt is every violation present when adoption begins, as the inventory records it. The approved plan names the legacy debt it accepts; legacy debt the plan does not name is not accepted, and is fixed or added to the plan by an approved amendment. A violation that appears after adoption began is fixed rather than tolerated, except a security finding the Security rule tolerates by explicit decision.
+
+## Observed behavior
+
+The application's observed behavior is the adoption path's regression contract. The test Gates pin it down; they do not audit its business correctness.
+
+- **Characterize, do not correct.** A regression test records what the application does today, including behavior that looks surprising but is stable, so a change that alters it fails instead of passing unnoticed. A passing regression test says the behavior is unchanged, not that it is right.
+- **Bounded investigation.** A failing suite is investigated within the stage's approved budget and ends in one of three ways: a fix that preserves the behavior the test asserts, an expectation update the maintainer approves before it records current behavior, or a pending or blocked Gate. A count of failing assertions is never an accepted reference, and no suite becomes adopted by the number of failures it still has.
+- **Localized decision.** Exceptionally strong evidence of an obvious error - for example, the application visibly breaks a contract it states itself - opens one localized decision for the maintainer: fix it as its own reviewed change, or record the observed behavior as intended. It never triggers an automatic correction and never stops adoption work that does not depend on it. The decision is recorded beside the test or behavior it concerns, and adds no owner and no expiry.
+- **Missing evidence is not adoption.** A missing test or an unavailable tool leaves its Gate pending - blocked when the environment is what prevents it - and never adopted; a suite that cannot execute is pending or blocked as the Gate states say. Tolerating the absence is not adoption.
 
 ## Establishment
 
-A Harness is established when every Gate in the Gate Floor is adopted. Establishment does not require eliminating debt or meeting every greenfield default threshold: findings the adoption criteria accept do not prevent it. A pending or blocked Gate does prevent it, and the final report names that Gate and why. Establishment is a claim about what runs and what was proved, not about how clean the application is.
+A Harness is established when every Gate in the Gate Floor is adopted. Establishment does not require eliminating legacy debt or meeting every greenfield default threshold: tolerated findings the adoption criteria accept do not prevent it. A pending or blocked Gate does prevent it, and the final report names that Gate and why. Establishment is a claim about what runs and what was proved, not about how clean the application is.
 
 ## Rules for every Gate Proof
 
-- **One violation.** The proof's tree carries exactly one deliberate violation - the smallest its Gate exists to catch, and outside any finding the approved criteria accept (the greenfield path accepts none) - and the Entry Point of the Gate's tier exits non-zero naming that Gate. Several violations in one tree, or a red Gate that is not the Gate under proof, prove nothing.
+- **One violation.** The proof's tree carries exactly one deliberate violation - the smallest its Gate exists to catch, and outside any tolerated finding the approved criteria accept (the greenfield path accepts none) - and the Entry Point of the Gate's tier exits non-zero naming that Gate. Several violations in one tree, or a red Gate that is not the Gate under proof, prove nothing.
 - **Repeatable.** The violation lives in an executable proof file kept out of both Entry Points, so any later run can repeat the proof. A manual edit that leaves no reproducible definition is not a Gate Proof.
 - **Reachable input.** A Gate that analyzes only the files changed relative to a base can have no eligible input on the branch that carries its proof. Such a proof declares, beside the violation, the smallest set of eligible files the violation needs, and for that execution only the declaration replaces the Gate's changed-set selection. The declaration is setup, not a second violation: no source marker and no artificial comparison base stands in for it. How it reaches the Gate is the stack's choice.
 - **Ordinary Gate, ordinary Entry Point.** The proof still runs the Entry Point of the Gate's tier, and the Gate's analysis, pinned tools, and thresholds are the ones validation uses. An isolated Gate target or a whole-scope command is not a Gate Proof.
@@ -149,14 +175,14 @@ A Harness is established when every Gate in the Gate Floor is adopted. Establish
 ## Dependency vulnerabilities
 
 - **Intent**: ship no dependency with a known serious vulnerability.
-- **Passes when**: zero known vulnerabilities of high or critical severity exist across all locked dependencies.
+- **Passes when**: zero known vulnerabilities of high or critical severity exist across all locked dependencies. A specific advisory with no fixed version remains a finding and is tolerated only by the explicit decision the Tolerated findings rules require.
 - **Tier**: full.
 - **Gate Proof**: lock a dependency version with a published critical advisory.
 
 ## Secrets
 
 - **Intent**: keep credentials out of the repository.
-- **Passes when**: the scanner finds zero secrets in the working tree and in history.
+- **Passes when**: the scanner finds zero secrets in the working tree and in history. A secret that cannot be removed from history is revoked; the remaining historical finding is tolerated only by the explicit decision the Tolerated findings rules require.
 - **Tier**: fast.
 - **Gate Proof**: add a file containing a well-formed fake cloud access key.
 
