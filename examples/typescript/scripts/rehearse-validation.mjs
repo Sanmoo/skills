@@ -156,7 +156,7 @@ const failed =
 mkdirSync("reports/rehearsal-runs", { recursive: true });
 writeFileSync(
   "reports/rehearsal-runs/${entry.target}.json",
-  JSON.stringify({ scope, mode: process.env.HARNESS_MODE, failed }),
+  JSON.stringify({ scope, failed }),
 );
 console.log(\`\${failed ? "✘" : "✔"} ${entry.target}\`);
 process.exit(failed ? 1 : 0);
@@ -204,7 +204,6 @@ function entryPoint(root, mode = "change") {
     PROBE_STATE: JSON.stringify(fixtureState),
   };
   delete environment.HARNESS_SCOPE;
-  delete environment.HARNESS_MODE;
   delete environment.HARNESS_BASE;
   delete environment.MUTATION_SCOPE;
   delete environment.MUTATION_BASE;
@@ -290,7 +289,7 @@ try {
   const integral = entryPoint(root, "integral");
   check(
     "integral validation runs the whole-input periodic check",
-    integral.status === 0 && ran(root, "probe-mutation-full")?.mode === "integral",
+    integral.status === 0 && ran(root, "probe-mutation-full") !== undefined,
     `exit ${integral.status}`,
   );
   check(

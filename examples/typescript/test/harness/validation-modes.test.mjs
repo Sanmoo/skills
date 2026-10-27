@@ -106,14 +106,15 @@ const BASE_FILES = {
 // mode that invoked it was the change or the integral one. Its behaviour is
 // fixture data, so a red exit says what the selection asked it to look at.
 function checkScript(target, behaviour) {
-  return `import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+  return `import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const scope =
   process.env.HARNESS_SCOPE === undefined ? null : JSON.parse(process.env.HARNESS_SCOPE);
+const upstream = existsSync("src/upstream.ts") ? readFileSync("src/upstream.ts", "utf8") : "";
 mkdirSync("reports/ran", { recursive: true });
 writeFileSync(
   "reports/ran/${target}.json",
-  JSON.stringify({ scope, mode: process.env.HARNESS_MODE, policy: process.env.HARNESS_POLICY_VERSION }),
+  JSON.stringify({ scope }),
 );
 
 const behaviour = ${JSON.stringify(behaviour)};
@@ -121,7 +122,6 @@ let fails = behaviour === "fail";
 if (behaviour === "fail-when-dependent-is-verified") {
   // The upstream change breaks the dependent: the defect lives in the
   // dependent, so it is visible only when the dependent is verified.
-  const upstream = readFileSync("src/upstream.ts", "utf8");
   fails = upstream.includes("BREAK_DEPENDENT") && Array.isArray(scope) && scope.includes("src/dependent.ts");
 }
 console.log(\`\${fails ? "✘" : "✔"} ${target}\`);
@@ -342,6 +342,21 @@ describe("validation by change", () => {
     assert.ok(selection.executed.length > 0, "an unknown reach widens instead of skipping");
   });
 
+  it("does not hand a deleted file to a file-scoped check", (t) => {
+    const fixture = sandbox(t);
+
+    const result = fixture.run("change", { changes: { "src/upstream.ts": null } });
+
+    assert.equal(result.status, 0, result.output);
+    const types = fixture.ran("types");
+    assert.ok(types.scope.length > 0, "the dependents that still exist are still verified");
+    assert.equal(
+      types.scope.includes("src/upstream.ts"),
+      false,
+      "a deleted file has nothing to verify",
+    );
+  });
+
   it("reports a check with no affected input as not applicable instead of running it", (t) => {
     const fixture = sandbox(t);
 
@@ -399,6 +414,37 @@ describe("periodic execution and integral validation", () => {
     assert.equal(selection.outcome, "red");
     assert.equal(selection.periodicFailures.length, 1);
     assert.equal(selection.periodicFailures[0].independent, false);
+  });
+
+  it("widens instead of assuming independence when a failure's relationship is uncertain", (t) => {
+    const uncertain = {
+      ...POLICY,
+      checks: [
+        ...POLICY.checks,
+        {
+          gate: "Manual review",
+          target: "manual",
+          tier: "full",
+          cadence: "periodic",
+          costSeconds: 10,
+          impact: [],
+        },
+      ],
+    };
+    const fixture = sandbox(t, {
+      policy: uncertain,
+      behaviour: { ...BEHAVIOUR, manual: "fail" },
+    });
+    fixture.run("integral");
+
+    const result = fixture.run("change", { changes: { "src/upstream.ts": "// edited\n" } });
+
+    assert.equal(result.status, 0, result.output);
+    assert.equal(result.status === 0 && /Widened: .*uncertain/.test(result.output), true);
+    assert.match(result.output, /relationship to this change is uncertain/);
+    const selection = fixture.record("change-selection.json");
+    assert.equal(selection.periodicFailures[0].relation, "uncertain");
+    assert.equal(selection.widened.includes("uncertain"), true);
   });
 
   it("lets a demonstrably independent change proceed despite a periodic failure", (t) => {

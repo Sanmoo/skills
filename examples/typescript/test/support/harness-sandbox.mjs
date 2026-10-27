@@ -7,9 +7,14 @@ import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { delimiter, dirname, join } from "node:path";
 
-// Git only tracks files, so a controlled tree is files plus commits.
+// Git only tracks files, so a controlled tree is files plus commits. A null
+// content deletes the path, which is how a check sees a file a change removed.
 export function writeTree(root, files) {
   for (const [path, content] of Object.entries(files)) {
+    if (content === null) {
+      rmSync(join(root, path), { force: true });
+      continue;
+    }
     mkdirSync(dirname(join(root, path)), { recursive: true });
     writeFileSync(join(root, path), content);
   }
@@ -41,9 +46,6 @@ export function baseEnvironment(pathEntries) {
   // A check drives one mode with one scope; a setting exported by the shell or
   // left behind by the previous run must not narrow or widen it.
   delete environment.HARNESS_SCOPE;
-  delete environment.HARNESS_MODE;
-  delete environment.HARNESS_BASE;
-  delete environment.HARNESS_POLICY_VERSION;
   environment.PATH = `${pathEntries.join(delimiter)}${delimiter}${process.env.PATH ?? ""}`;
   return environment;
 }

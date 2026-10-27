@@ -16,9 +16,10 @@ check-fast: format lint types unit boundaries dependency-rule metrics secrets av
 check:
 	node scripts/run-mode.mjs $(MODE)
 
-# Gate targets, kept separate so one Gate can be wired and run on its own. No
-# Gate Proof uses them: a proof runs the Entry Point of the Gate's tier, which is
-# what the proof exists to show.
+# Gate targets, kept separate so a human can run one Gate by hand. The Entry
+# Points' modes call the package scripts the policy names, not these targets, and
+# no Gate Proof uses them: a proof runs the Entry Point of the Gate's tier, which
+# is what the proof exists to show.
 .PHONY: install build format lint types unit integration e2e mutation mutation-full
 .PHONY: boundaries dependency-rule metrics secrets avoided-terms guide-pointers vulnerabilities
 

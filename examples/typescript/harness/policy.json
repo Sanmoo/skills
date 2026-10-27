@@ -44,7 +44,6 @@
         "*.mjs",
         "*.json",
         "*.md",
-        "*.toml",
         "*.yml",
         "docs/**/*.md",
         ".github/**/*.yml"
@@ -184,7 +183,7 @@
       "cadence": "periodic",
       "costSeconds": 900,
       "scopeRecord": "mutation",
-      "schedule": "0 3 * * 1 (Monday 03:00 UTC), or on demand",
+      "schedule": "0 3 * * 1",
       "protection": "The reduced-scope Mutation check still mutates the changed domain files on every change.",
       "residualRisk": "Domain code outside the changed set is not mutated between integral runs, so a surviving mutant there stays undetected until the next run.",
       "impact": ["src/**/domain/**/*.ts"]

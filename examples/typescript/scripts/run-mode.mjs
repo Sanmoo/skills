@@ -57,7 +57,6 @@ function runCheck(entry) {
     rmSync(MUTATION_SCOPE_RECORD, { force: true });
   }
   const environment = {
-    HARNESS_MODE: mode,
     // A scope exported by the caller must not narrow a check the plan runs
     // whole; an unset value is omitted from the child's environment.
     HARNESS_SCOPE: Array.isArray(entry.scope) ? JSON.stringify(entry.scope) : undefined,
@@ -156,7 +155,11 @@ function printPeriodic(periodic, failures) {
     const relation =
       failure === undefined
         ? ""
-        : `; ${failure.independent ? "independent of this change" : "in this change's scope"}`;
+        : failure.relation === "independent"
+          ? "; independent of this change"
+          : failure.relation === "affected"
+            ? "; in this change's scope"
+            : "; its relationship to this change is uncertain, so the selection was widened";
     console.log(`  ${name} — ${last}${relation}`);
     if (entry.check.cadence !== undefined && entry.check.schedule !== undefined) {
       console.log(`    cadence: ${entry.check.schedule}`);
@@ -274,55 +277,62 @@ function changeValidation() {
         `periodic check "${failure.check}" failed at ${failure.commit} and this change verifies files in its scope`,
       );
     }
-    record.outcome = "red";
-    writeRecord(CHANGE_RECORD, record);
-    console.log("Failures:");
-    for (const failure of record.failures) console.log(`  ${failure}`);
-    console.log(
+    return finish(record, "red", 1, [
+      "Failures:",
+      ...record.failures.map((failure) => `  ${failure}`),
       "Result: red — a periodic integral failure in this change's scope requires treatment before the change can report green. No check was started.",
-    );
-    return 1;
+    ]);
   }
 
   if (plan.estimatedSeconds > policy.budgetSeconds) {
     record.inconclusive = {
       reason: `required validation (${plan.executed.length} check(s), ${plan.estimatedSeconds}s) exceeds the approved budget of ${policy.budgetSeconds}s`,
     };
-    record.outcome = "inconclusive";
-    writeRecord(CHANGE_RECORD, record);
-    console.log("Inconclusive:");
-    console.log(`  ${record.inconclusive.reason}; no check was started.`);
-    console.log(
+    // The scope the result could not verify stays in the record: a reader must
+    // be able to see which checks and scopes were required, not only the total.
+    record.required = plan.executed.map((entry) => ({
+      gate: entry.check.gate,
+      check: checkName(entry.check),
+      scope: entry.scope,
+    }));
+    return finish(record, "inconclusive", 3, [
+      "Inconclusive:",
+      `  ${record.inconclusive.reason}; no check was started.`,
+      `  not verified: ${record.required.map((entry) => entry.check).join(", ")}`,
       "Result: INCONCLUSIVE — the wider validation this change requires was not run; no Gate may be reported green for it.",
-    );
-    return 3;
+    ]);
   }
 
   runSelected(plan, record);
 
   if (record.failures.length > 0) {
-    record.outcome = "red";
-    writeRecord(CHANGE_RECORD, record);
-    console.log("Failures:");
-    for (const failure of record.failures) console.log(`  ${failure}`);
-    console.log("Result: red — validation by change stopped at the first failing check.");
-    return 1;
+    return finish(record, "red", 1, [
+      "Failures:",
+      ...record.failures.map((failure) => `  ${failure}`),
+      "Result: red — validation by change stopped at the first failing check.",
+    ]);
   }
 
-  record.outcome = "green";
-  writeRecord(CHANGE_RECORD, record);
   if (record.executed.length === 0) {
     // No changed file means no check applied. Saying so is the difference
     // between a scoped result and a silent skip.
-    console.log(
+    return finish(record, "green", 0, [
       `Result: green — no file changed relative to ${base}, so no check applied and this result verifies nothing. Integral verification was not performed.`,
-    );
-    return 0;
+    ]);
   }
-  console.log(
+  return finish(record, "green", 0, [
     `Result: green — validation by change verified ${record.executed.length} check(s) over ${plan.affected.length} affected file(s) against ${base}. Integral verification was not performed; the periodic checks above keep the scope this result does not cover.`,
-  );
-  return 0;
+  ]);
+}
+
+// One way out of validation by change: the outcome is recorded before it is
+// reported, so a reader of the record and a reader of the log see the same
+// result even when the output is truncated.
+function finish(record, outcome, code, lines) {
+  record.outcome = outcome;
+  writeRecord(CHANGE_RECORD, record);
+  for (const line of lines) console.log(line);
+  return code;
 }
 
 // Integral validation: every Gate over its whole input, including the checks
