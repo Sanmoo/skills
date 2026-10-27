@@ -11,11 +11,14 @@
 // result. A required validation wider than the approved budget is inconclusive
 // and non-zero, and no check is started for it.
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { spawnSync } from "node:child_process";
+import { run } from "./lib.mjs";
 import { changedPathsSince, headCommit, resolveComparison } from "./git-changes.mjs";
 import { MUTATION_SCOPE_RECORD, readScopeRecord } from "./mutation-scope.mjs";
 import {
+  CHANGE_RECORD,
+  INTEGRAL_RECORD,
   MODE,
+  checkName,
   loadPolicy,
   planChange,
   planIntegral,
@@ -24,8 +27,6 @@ import {
 } from "./selection.mjs";
 
 const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
-const CHANGE_RECORD = "reports/change-selection.json";
-const INTEGRAL_RECORD = "reports/integral-status.json";
 
 const mode = process.argv[2] ?? MODE.change;
 if (mode !== MODE.change && mode !== MODE.integral) {
@@ -41,26 +42,28 @@ if (loaded.policy === undefined) {
 }
 const policy = loaded.policy;
 
+function writeRecord(path, record) {
+  mkdirSync("reports", { recursive: true });
+  writeFileSync(path, `${JSON.stringify(record, null, 2)}\n`);
+}
+
 // Runs one check with the scope the plan gave it. A check that narrows reads
 // HARNESS_SCOPE; leaving it unset is what tells the check to verify its whole
 // input. Output is inherited so the Gate names itself in the Entry Point, which
 // is what a Gate Proof attributes a red result to.
 function runCheck(entry) {
-  if (entry.check.target.startsWith("mutation")) {
+  if (entry.check.scopeRecord !== undefined) {
     // An earlier run's scope record must not be read as this run's evidence.
     rmSync(MUTATION_SCOPE_RECORD, { force: true });
   }
   const environment = {
-    ...process.env,
-    NO_COLOR: "1",
-    FORCE_COLOR: "0",
     HARNESS_MODE: mode,
-    HARNESS_POLICY_VERSION: String(policy.version),
+    // A scope exported by the caller must not narrow a check the plan runs
+    // whole; an unset value is omitted from the child's environment.
+    HARNESS_SCOPE: Array.isArray(entry.scope) ? JSON.stringify(entry.scope) : undefined,
   };
-  if (Array.isArray(entry.scope)) environment.HARNESS_SCOPE = JSON.stringify(entry.scope);
-  else delete environment.HARNESS_SCOPE;
   const started = Date.now();
-  const result = spawnSync(NPM, ["run", "--silent", entry.check.target], {
+  const result = run(NPM, ["run", "--silent", entry.check.target], {
     stdio: "inherit",
     env: environment,
   });
@@ -70,27 +73,8 @@ function runCheck(entry) {
   };
 }
 
-function writeRecord(path, record) {
-  mkdirSync("reports", { recursive: true });
-  writeFileSync(path, `${JSON.stringify(record, null, 2)}\n`);
-}
-
-// The check a widened entry actually runs. A Gate Proof declares its eligible
-// input for one execution, and that declaration replaces the changed-set
-// selection, so it also wins over a policy widening of the same Gate: the proof
-// must reach the Gate's ordinary analysis, not a whole-codebase run the
-// declaration cannot narrow.
-function executable(entry) {
-  if (entry.narrow !== undefined && process.env.MUTATION_SCOPE !== undefined) {
-    return { check: entry.narrow, scope: "changed" };
-  }
-  return { check: entry.check, scope: entry.scope };
-}
-
 function describeScope(scope) {
-  if (Array.isArray(scope)) {
-    return `${scope.length} affected file(s)`;
-  }
+  if (Array.isArray(scope)) return `${scope.length} affected file(s)`;
   return scope === "changed" ? "the check's own changed set" : "whole input";
 }
 
@@ -102,30 +86,22 @@ function readIntegralStatus() {
   }
 }
 
+// What an integral run recorded about a failed check's analysed files, when the
+// check keeps that record. A check without one relies on its impact pattern.
 function failedFilesOf(check) {
-  if (!check.gate.startsWith("Mutation")) return null;
+  if (check.scopeRecord === undefined) return null;
   const { record } = readScopeRecord();
   return record?.analyzedFiles ?? null;
 }
 
-// Validation by change.
-function changeValidation() {
-  const base = process.env.HARNESS_BASE ?? policy.baseBranch;
-  const comparison = resolveComparison(base);
-  const changed =
-    comparison.commit === undefined
-      ? { reason: comparison.reason }
-      : changedPathsSince(comparison.commit);
-  let plan = planChange(policy, changed);
-
+// The periodic checks, their last integral result, and whether that result
+// reaches this change. The relationship is established, never assumed.
+function periodicStatus(plan, comparison) {
   const status = readIntegralStatus();
   const periodic = plan.periodic.map((entry) => {
-    const result = status.record?.results?.find(
-      (candidate) => candidate.check === entry.check.name,
-    );
-    const failure = status.record?.failed?.find(
-      (candidate) => candidate.check === entry.check.name,
-    );
+    const name = checkName(entry.check);
+    const result = status.record?.results?.find((candidate) => candidate.check === name);
+    const failure = status.record?.failed?.find((candidate) => candidate.check === name);
     const last =
       status.record === null || result === undefined
         ? { state: "not-recorded" }
@@ -135,7 +111,7 @@ function changeValidation() {
     return { ...entry, last, failure };
   });
 
-  let relationOf = () => "independent";
+  let relationOf;
   if (comparison.commit === undefined) {
     // The change itself could not be established, so no relationship to a
     // failure can be established either.
@@ -147,18 +123,101 @@ function changeValidation() {
   } else {
     relationOf = (failure) => periodicIndependence(policy, failure, plan.affected);
   }
-  const periodicFailures = periodic
+  const failures = periodic
     .filter((entry) => entry.last.state === "failed")
-    .map((entry) => ({
-      gate: entry.check.gate,
-      check: entry.check.name,
-      commit: entry.last.commit,
-      relation: relationOf(entry.failure),
-    }));
-  for (const failure of periodicFailures) failure.independent = failure.relation === "independent";
+    .map((entry) => {
+      const relation = relationOf(entry.failure);
+      return {
+        gate: entry.check.gate,
+        check: checkName(entry.check),
+        commit: entry.last.commit,
+        relation,
+        independent: relation === "independent",
+      };
+    });
+  return { periodic, failures };
+}
 
-  const relations = new Set(periodicFailures.map((failure) => failure.relation));
-  if (relations.has("uncertain") && plan.widened === null) {
+function printPeriodic(periodic, failures) {
+  console.log("Periodic (not run in change validation):");
+  if (periodic.length === 0) {
+    console.log("  none");
+    return;
+  }
+  for (const entry of periodic) {
+    const name = checkName(entry.check);
+    const last =
+      entry.last.state === "not-recorded"
+        ? "last integral result: not recorded"
+        : entry.last.state === "passed"
+          ? "last integral result: passed"
+          : `last integral result: failed (${entry.last.commit.slice(0, 12)})`;
+    const failure = failures.find((candidate) => candidate.check === name);
+    const relation =
+      failure === undefined
+        ? ""
+        : `; ${failure.independent ? "independent of this change" : "in this change's scope"}`;
+    console.log(`  ${name} — ${last}${relation}`);
+    if (entry.check.cadence !== undefined && entry.check.schedule !== undefined) {
+      console.log(`    cadence: ${entry.check.schedule}`);
+    }
+  }
+}
+
+function printNotApplicable(entries) {
+  console.log("Not applicable:");
+  if (entries.length === 0) {
+    console.log("  none");
+    return;
+  }
+  for (const entry of entries) console.log(`  ${entry.check} — ${entry.reason}`);
+}
+
+// Runs the selected checks in policy order and stops at the first failure: the
+// Entry Point's exit status names the first thing that needs attention, and the
+// report keeps that apart from the checks that were not reached.
+function runSelected(plan, record) {
+  if (plan.executed.length === 0) {
+    console.log("Executed: none");
+    return;
+  }
+  console.log("Executed:");
+  for (const entry of plan.executed) {
+    const name = checkName(entry.check);
+    console.log(`  ${name} — scope: ${describeScope(entry.scope)}`);
+    const result = runCheck(entry);
+    record.executed.push({
+      gate: entry.check.gate,
+      check: name,
+      scope: entry.scope,
+      exitCode: result.exitCode,
+      seconds: result.seconds,
+      outcome: result.exitCode === 0 ? "passed" : "failed",
+    });
+    if (result.exitCode !== 0) {
+      record.failures.push(`${name} exited with ${result.exitCode}`);
+      return;
+    }
+  }
+}
+
+// Validation by change.
+function changeValidation() {
+  const base = process.env.MUTATION_BASE ?? policy.baseBranch;
+  const comparison = resolveComparison(base);
+  const changed =
+    comparison.commit === undefined
+      ? { reason: comparison.reason }
+      : changedPathsSince(comparison.commit);
+  let plan = planChange(policy, changed);
+  const { periodic, failures: periodicFailures } = periodicStatus(plan, comparison);
+
+  // A periodic failure whose relationship is uncertain widens the selection
+  // instead of being read as independent.
+  if (
+    periodicFailures.some((failure) => failure.relation === "uncertain") &&
+    plan.widened === null
+  ) {
     plan = {
       ...plan,
       ...widenSelection(policy),
@@ -180,9 +239,12 @@ function changeValidation() {
     notApplicable: plan.notApplicable,
     periodic: periodic.map((entry) => ({
       gate: entry.check.gate,
-      check: entry.check.name,
+      check: checkName(entry.check),
       lastResult: entry.last.state,
       commit: entry.last.commit ?? null,
+      schedule: entry.check.schedule ?? null,
+      protection: entry.check.protection ?? null,
+      residualRisk: entry.check.residualRisk ?? null,
     })),
     periodicFailures,
     failures: [],
@@ -202,31 +264,12 @@ function changeValidation() {
   }
   console.log(`Widened: ${plan.widened ?? "no"}`);
   console.log(`Budget: ${policy.budgetSeconds}s approved, ${plan.estimatedSeconds}s required`);
+  printPeriodic(periodic, periodicFailures);
+  printNotApplicable(plan.notApplicable);
 
-  console.log("Periodic (not run in change validation):");
-  if (periodic.length === 0) console.log("  none");
-  for (const entry of periodic) {
-    const where =
-      entry.last.state === "not-recorded"
-        ? "last integral result: not recorded"
-        : entry.last.state === "passed"
-          ? "last integral result: passed"
-          : `last integral result: failed (${entry.last.commit.slice(0, 12)})`;
-    const relation =
-      entry.last.state === "failed"
-        ? `; ${periodicFailures.find((failure) => failure.check === entry.check.name).relation === "independent" ? "independent of this change" : "in this change's scope"}`
-        : "";
-    console.log(`  ${entry.check.name} — ${where}${relation}`);
-  }
-
-  console.log("Not applicable:");
-  if (plan.notApplicable.length === 0) console.log("  none");
-  for (const entry of plan.notApplicable) {
-    console.log(`  ${entry.check} — ${entry.reason}`);
-  }
-
-  if (periodicFailures.some((failure) => failure.relation === "affected")) {
-    for (const failure of periodicFailures.filter((entry) => entry.relation === "affected")) {
+  const inScope = periodicFailures.filter((failure) => failure.relation === "affected");
+  if (inScope.length > 0) {
+    for (const failure of inScope) {
       record.failures.push(
         `periodic check "${failure.check}" failed at ${failure.commit} and this change verifies files in its scope`,
       );
@@ -255,28 +298,7 @@ function changeValidation() {
     return 3;
   }
 
-  if (plan.executed.length === 0) {
-    console.log("Executed: none");
-  } else {
-    console.log("Executed:");
-    for (const entry of plan.executed) {
-      const chosen = executable(entry);
-      console.log(`  ${chosen.check.name} — scope: ${describeScope(chosen.scope)}`);
-      const result = runCheck({ check: chosen.check, scope: chosen.scope });
-      record.executed.push({
-        gate: chosen.check.gate,
-        check: chosen.check.name,
-        scope: chosen.scope,
-        exitCode: result.exitCode,
-        seconds: result.seconds,
-        outcome: result.exitCode === 0 ? "passed" : "failed",
-      });
-      if (result.exitCode !== 0) {
-        record.failures.push(`${chosen.check.name} exited with ${result.exitCode}`);
-        break;
-      }
-    }
-  }
+  runSelected(plan, record);
 
   if (record.failures.length > 0) {
     record.outcome = "red";
@@ -289,6 +311,14 @@ function changeValidation() {
 
   record.outcome = "green";
   writeRecord(CHANGE_RECORD, record);
+  if (record.executed.length === 0) {
+    // No changed file means no check applied. Saying so is the difference
+    // between a scoped result and a silent skip.
+    console.log(
+      `Result: green — no file changed relative to ${base}, so no check applied and this result verifies nothing. Integral verification was not performed.`,
+    );
+    return 0;
+  }
   console.log(
     `Result: green — validation by change verified ${record.executed.length} check(s) over ${plan.affected.length} affected file(s) against ${base}. Integral verification was not performed; the periodic checks above keep the scope this result does not cover.`,
   );
@@ -296,7 +326,8 @@ function changeValidation() {
 }
 
 // Integral validation: every Gate over its whole input, including the checks
-// the policy assigns to periodic execution.
+// the policy assigns to periodic execution. It does not stop at the first
+// failure: the point of the integral record is every Gate's outcome.
 function integralValidation() {
   const plan = planIntegral(policy);
   const record = {
@@ -319,14 +350,14 @@ function integralValidation() {
   );
   console.log("Executed:");
   for (const entry of plan.executed) {
-    console.log(`  ${entry.check.name} — scope: whole input`);
-    const result = runCheck(entry);
+    const name = checkName(entry.check);
+    console.log(`  ${name} — scope: whole input`);
+    const result = runCheck({ check: entry.check, scope: "whole" });
     const outcome = result.exitCode === 0 ? "passed" : "failed";
-    const failedFiles =
-      outcome === "failed" && entry.check.gate === "Mutation" ? failedFilesOf(entry.check) : null;
+    const failedFiles = outcome === "failed" ? failedFilesOf(entry.check) : null;
     record.results.push({
       gate: entry.check.gate,
-      check: entry.check.name,
+      check: name,
       cadence: entry.check.cadence,
       scope: "whole",
       outcome,
@@ -335,11 +366,7 @@ function integralValidation() {
       failedFiles,
     });
     if (outcome === "failed") {
-      record.failed.push({
-        gate: entry.check.gate,
-        check: entry.check.name,
-        failedFiles,
-      });
+      record.failed.push({ gate: entry.check.gate, check: name, failedFiles });
     }
   }
 

@@ -9,28 +9,33 @@
     "harness/**",
     "Makefile",
     "mise.toml",
-    "tsconfig.json",
-    "tsconfig.build.json",
-    "eslint.config.mjs",
-    "eslint.metrics.config.mjs",
+    "tsconfig*.json",
+    "eslint*.mjs",
     "stryker.config.mjs",
     "cucumber.mjs",
-    "vitest.config.ts",
-    "vitest.mutation.config.ts",
+    "vitest*.ts",
     ".gitleaks.toml",
     ".jscpd.json",
-    ".dependency-cruiser.cjs",
-    ".dependency-cruiser.cycles.cjs",
+    ".dependency-cruiser*",
+    ".prettierrc*",
+    ".prettierignore",
+    ".gitignore",
+    ".editorconfig",
+    "*.config.mjs",
+    "*.config.ts",
+    "*.config.js",
+    "*.config.cjs",
     ".github/**"
   ],
   "checks": [
     {
       "gate": "Format",
-      "name": "Format",
       "target": "format",
       "tier": "fast",
       "cadence": "change",
       "costSeconds": 5,
+      "scope": "affected-files",
+      "scopeDescription": "formattable files",
       "impact": [
         "src/**/*.ts",
         "features/**/*.ts",
@@ -43,150 +48,122 @@
         "*.yml",
         "docs/**/*.md",
         ".github/**/*.yml"
-      ],
-      "scope": "affected-files",
-      "scopeMatch": [
-        "src/**/*.ts",
-        "features/**/*.ts",
-        "test/**/*.ts",
-        "scripts/**/*.mjs",
-        "*.mjs",
-        "*.json",
-        "*.md",
-        "*.toml",
-        "*.yml",
-        "docs/**/*.md",
-        ".github/**/*.yml"
-      ],
-      "scopeDescription": "formattable files"
+      ]
     },
     {
       "gate": "Lint",
-      "name": "Lint",
       "target": "lint",
       "tier": "fast",
       "cadence": "change",
       "costSeconds": 15,
-      "impact": ["**/*.ts", "**/*.mjs", "**/*.cjs"],
       "scope": "affected-files",
-      "scopeMatch": ["**/*.ts", "**/*.mjs", "**/*.cjs"],
+      "scopeDescription": "lintable files",
       "scopeExclude": ["dist/**", "reports/**", "coverage/**", ".stryker-tmp/**"],
-      "scopeDescription": "lintable files"
+      "impact": ["**/*.ts", "**/*.mjs", "**/*.cjs"]
     },
     {
       "gate": "Types",
-      "name": "Types",
       "target": "types",
       "tier": "fast",
       "cadence": "change",
       "costSeconds": 20,
-      "impact": ["**/*.ts", "**/*.mjs", "tsconfig.json", "tsconfig.build.json", "package.json"],
-      "scope": "whole"
+      "scope": "whole",
+      "impact": ["**/*.ts", "**/*.mjs", "tsconfig*.json", "package.json"]
     },
     {
       "gate": "Unit tests",
-      "name": "Unit tests",
       "target": "unit",
       "tier": "fast",
       "cadence": "change",
       "costSeconds": 10,
-      "impact": ["src/**/*.ts"],
       "scope": "affected-files",
+      "scopeDescription": "unit test files",
       "scopeMatch": ["src/**/*.test.ts"],
       "scopeExclude": ["src/**/*.integration.test.ts"],
-      "scopeDescription": "unit test files"
+      "impact": ["src/**/*.ts"]
     },
     {
       "gate": "Integration tests",
-      "name": "Integration tests",
       "target": "integration",
       "tier": "full",
       "cadence": "change",
       "costSeconds": 180,
-      "impact": ["src/**/*.ts", "test/**/*.ts"],
       "scope": "affected-files",
+      "scopeDescription": "integration test files",
       "scopeMatch": ["src/**/*.integration.test.ts"],
-      "scopeDescription": "integration test files"
+      "impact": ["src/**/*.ts", "test/**/*.ts"]
     },
     {
       "gate": "E2E tests",
-      "name": "E2E tests",
       "target": "e2e",
       "tier": "full",
       "cadence": "change",
       "costSeconds": 60,
-      "impact": ["src/**/*.ts", "features/**", "test/**/*.ts"],
-      "scope": "whole"
+      "scope": "whole",
+      "impact": ["src/**/*.ts", "features/**", "test/**/*.ts"]
     },
     {
       "gate": "Context boundaries",
-      "name": "Context boundaries",
       "target": "boundaries",
       "tier": "fast",
       "cadence": "change",
       "costSeconds": 15,
-      "impact": ["src/**/*.ts", "scripts/check-boundaries.mjs"],
-      "scope": "whole"
+      "scope": "whole",
+      "impact": ["src/**/*.ts", "scripts/check-boundaries.mjs"]
     },
     {
       "gate": "Dependency rule",
-      "name": "Dependency rule",
       "target": "dependency-rule",
       "tier": "fast",
       "cadence": "change",
       "costSeconds": 10,
-      "impact": ["src/**/*.ts", "scripts/check-dependency-rule.mjs"],
-      "scope": "whole"
+      "scope": "whole",
+      "impact": ["src/**/*.ts", "scripts/check-dependency-rule.mjs"]
     },
     {
       "gate": "Static metrics",
-      "name": "Static metrics",
       "target": "metrics",
       "tier": "fast",
       "cadence": "change",
       "costSeconds": 20,
-      "impact": ["src/**", "features/**", "test/**", "scripts/**"],
-      "scope": "whole"
+      "scope": "whole",
+      "impact": ["src/**", "features/**", "test/**", "scripts/**"]
     },
     {
       "gate": "Dependency vulnerabilities",
-      "name": "Dependency vulnerabilities",
       "target": "vulnerabilities",
       "tier": "full",
       "cadence": "change",
       "costSeconds": 30,
-      "impact": ["package.json", "package-lock.json"],
-      "scope": "whole"
+      "scope": "whole",
+      "impact": ["package.json", "package-lock.json"]
     },
     {
       "gate": "Secrets",
-      "name": "Secrets",
       "target": "secrets",
       "tier": "fast",
       "cadence": "change",
       "costSeconds": 10,
-      "impact": ["**/*"],
-      "scope": "whole"
+      "scope": "whole",
+      "impact": ["**/*"]
     },
     {
       "gate": "Avoided terms",
-      "name": "Avoided terms",
       "target": "avoided-terms",
       "tier": "fast",
       "cadence": "change",
       "costSeconds": 5,
-      "impact": ["**/*.ts", "**/*.md", "scripts/**/*.mjs"],
-      "scope": "whole"
+      "scope": "whole",
+      "impact": ["**/*.ts", "**/*.md", "scripts/**/*.mjs"]
     },
     {
       "gate": "Guide pointers",
-      "name": "Guide pointers",
       "target": "guide-pointers",
       "tier": "fast",
       "cadence": "change",
       "costSeconds": 5,
-      "impact": ["**/*.md", "src/**", "scripts/**", "test/**", "features/**"],
-      "scope": "whole"
+      "scope": "whole",
+      "impact": ["**/*.md", "src/**", "scripts/**", "test/**", "features/**"]
     },
     {
       "gate": "Mutation",
@@ -195,9 +172,9 @@
       "tier": "full",
       "cadence": "change",
       "costSeconds": 120,
-      "impact": ["src/**/domain/**/*.ts"],
       "scope": "changed",
-      "widenTarget": "mutation-full"
+      "scopeRecord": "mutation",
+      "impact": ["src/**/domain/**/*.ts"]
     },
     {
       "gate": "Mutation",
@@ -206,6 +183,10 @@
       "tier": "full",
       "cadence": "periodic",
       "costSeconds": 900,
+      "scopeRecord": "mutation",
+      "schedule": "0 3 * * 1 (Monday 03:00 UTC), or on demand",
+      "protection": "The reduced-scope Mutation check still mutates the changed domain files on every change.",
+      "residualRisk": "Domain code outside the changed set is not mutated between integral runs, so a surviving mutant there stays undetected until the next run.",
       "impact": ["src/**/domain/**/*.ts"]
     }
   ]

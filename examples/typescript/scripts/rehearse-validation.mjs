@@ -75,7 +75,6 @@ const POLICY = {
       costSeconds: 50,
       impact: ["src/**/*.ts"],
       scope: "changed",
-      widenTarget: "probe-mutation-full",
     },
     {
       gate: "Mutation",
@@ -145,7 +144,7 @@ function writeFixture(root) {
 
 const scope =
   process.env.HARNESS_SCOPE === undefined ? null : JSON.parse(process.env.HARNESS_SCOPE);
-const state = JSON.parse(readFileSync("probes/state.json", "utf8"));
+const state = JSON.parse(process.env.PROBE_STATE ?? "{}");
 const upstream = readFileSync(${JSON.stringify(UPSTREAM)}, "utf8");
 const failed =
   (${JSON.stringify(entry.target)} === "probe-types" &&
@@ -164,11 +163,15 @@ process.exit(failed ? 1 : 0);
 `,
     );
   }
-  writeState(root, STATE);
 }
 
-function writeState(root, state) {
-  writeFileSync(join(root, "probes", "state.json"), `${JSON.stringify(state, null, 2)}\n`);
+// The fixture's control values reach the probes through the Entry Point's
+// environment: they steer the rehearsal, and must not look like a change under
+// validation.
+let fixtureState = { ...STATE };
+
+function setState(state) {
+  fixtureState = { ...state };
 }
 
 function git(root, args) {
@@ -194,7 +197,12 @@ function edit(root, path, content) {
 }
 
 function entryPoint(root, mode = "change") {
-  const environment = { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" };
+  const environment = {
+    ...process.env,
+    NO_COLOR: "1",
+    FORCE_COLOR: "0",
+    PROBE_STATE: JSON.stringify(fixtureState),
+  };
   delete environment.HARNESS_SCOPE;
   delete environment.HARNESS_MODE;
   delete environment.HARNESS_BASE;
@@ -239,8 +247,7 @@ try {
 
   record("Scenario 1 — a violation in an affected dependent is caught");
   branch(root, "dependent-catch");
-  writeState(root, { ...STATE, failTypes: true });
-  commit(root, "turn on the dependent's violation");
+  setState({ ...STATE, failTypes: true });
   edit(root, UPSTREAM, `${BREAK}${readFileSync(join(root, UPSTREAM), "utf8")}`);
   resetRuns(root);
   const dependentCatch = entryPoint(root);
@@ -316,8 +323,7 @@ try {
 
   record("Scenario 5 — a periodic integral failure stays visible and is scoped");
   branch(root, "periodic-failure");
-  writeState(root, { ...STATE, failMutationFull: true });
-  commit(root, "make the periodic check fail");
+  setState({ ...STATE, failMutationFull: true });
   resetRuns(root);
   const integralFailure = entryPoint(root, "integral");
   check(
@@ -327,8 +333,7 @@ try {
     `exit ${integralFailure.status}`,
   );
   branch(root, "periodic-failure-change");
-  writeState(root, { ...STATE, failMutationFull: true });
-  commit(root, "keep the periodic check failing");
+  setState({ ...STATE, failMutationFull: true });
   edit(root, UPSTREAM, `${readFileSync(join(root, UPSTREAM), "utf8")}\n// rehearsal change\n`);
   resetRuns(root);
   const inScope = entryPoint(root);
@@ -338,8 +343,7 @@ try {
     `exit ${inScope.status}`,
   );
   branch(root, "periodic-failure-independent");
-  writeState(root, { ...STATE, failMutationFull: true });
-  commit(root, "keep the periodic check failing");
+  setState({ ...STATE, failMutationFull: true });
   edit(
     root,
     "README.md",

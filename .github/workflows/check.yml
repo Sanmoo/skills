@@ -35,4 +35,16 @@ jobs:
         with:
           working_directory: examples/typescript
       - run: npm ci
+      - name: Restore the last integral result
+        # A periodic check's failure must reach validation by change, so the
+        # change job restores the record the integral workflow publishes. The
+        # key is unique per run and the restore key takes the most recent one
+        # from the base branch; with no record validation by change reports
+        # "not recorded" instead of assuming a pass.
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: examples/typescript/reports/integral-status.json
+          key: integral-status-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            integral-status-${{ runner.os }}-
       - run: make check
