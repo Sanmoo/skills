@@ -440,7 +440,7 @@ describe("periodic execution and integral validation", () => {
     const result = fixture.run("change", { changes: { "src/upstream.ts": "// edited\n" } });
 
     assert.equal(result.status, 0, result.output);
-    assert.equal(result.status === 0 && /Widened: .*uncertain/.test(result.output), true);
+    assert.match(result.output, /Widened: .*uncertain/);
     assert.match(result.output, /relationship to this change is uncertain/);
     const selection = fixture.record("change-selection.json");
     assert.equal(selection.periodicFailures[0].relation, "uncertain");

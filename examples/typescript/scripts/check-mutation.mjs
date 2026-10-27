@@ -19,7 +19,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { outputOf, report, run } from "./lib.mjs";
-import { changedPathsSince, resolveComparison } from "./git-changes.mjs";
+import { changedPathsSince, policyBase, resolveComparison } from "./git-changes.mjs";
 import {
   MUTATION_REPORT,
   MUTATION_SCOPE_ENV,
@@ -51,17 +51,6 @@ function mutableFilesSince(commit) {
     return { reason: changed.reason };
   }
   return { files: changed.paths.filter(isEligible) };
-}
-
-// The comparison base the selection policy names, so the Gate and the Entry
-// Point's modes cannot measure different changes. A tree without a policy (the
-// Gate's own controlled checks) keeps the Contract's default.
-function policyBase() {
-  try {
-    return JSON.parse(readFileSync("harness/policy.json", "utf8")).baseBranch ?? "main";
-  } catch {
-    return "main";
-  }
 }
 
 // Returns the scope to mutate: the changed files, or why they cannot be

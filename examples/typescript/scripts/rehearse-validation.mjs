@@ -204,7 +204,6 @@ function entryPoint(root, mode = "change") {
     PROBE_STATE: JSON.stringify(fixtureState),
   };
   delete environment.HARNESS_SCOPE;
-  delete environment.HARNESS_BASE;
   delete environment.MUTATION_SCOPE;
   delete environment.MUTATION_BASE;
   const args = mode === "integral" ? ["check", "MODE=integral"] : ["check"];

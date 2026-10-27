@@ -4,8 +4,20 @@
 // place: the Mutation Gate's changed-set scope and the Entry Point's impact
 // selection must agree about the base, the merge base and the working tree, or
 // one mode would verify a different change than the other.
+import { readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { run } from "./lib.mjs";
+
+// The comparison base the selection policy names. The Mutation Gate and the
+// Entry Point's modes read it here so they cannot measure different changes; a
+// controlled tree without a policy keeps the Contract's default.
+export function policyBase(path = "harness/policy.json") {
+  try {
+    return JSON.parse(readFileSync(path, "utf8")).baseBranch ?? "main";
+  } catch {
+    return "main";
+  }
+}
 
 // Returns the command's trimmed stdout, or undefined when it failed. A
 // successful command that printed nothing yields the empty string.
