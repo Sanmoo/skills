@@ -70,7 +70,6 @@ const POLICY = {
       costSeconds: 50,
       impact: ["src/**/*.ts"],
       scope: "changed",
-      widenTarget: "mutation-full",
     },
     {
       gate: "Mutation",
@@ -269,12 +268,14 @@ describe("validation by change", () => {
     assert.ok(selection.widened, "the reason for widening is recorded");
     assert.deepEqual(
       selection.executed.map((entry) => entry.check),
-      ["Types", "Unit tests", "E2E tests", "Mutation (whole codebase)", "Guide pointers"],
+      ["Types", "Unit tests", "E2E tests", "Mutation (changed code)", "Guide pointers"],
     );
     // Nothing is narrowed from an unreliable dependency graph: every scoped
-    // check was asked to verify its whole input.
+    // check was asked to verify its whole input. The Mutation Gate keeps its own
+    // changed-set selection, which the wider selection does not replace.
     for (const entry of selection.executed) {
-      assert.equal(entry.scope, "whole", `${entry.check} kept a narrowed scope`);
+      const expected = entry.check === "Mutation (changed code)" ? "changed" : "whole";
+      assert.equal(entry.scope, expected, `${entry.check} kept a narrowed scope`);
     }
   });
 
@@ -298,7 +299,7 @@ describe("validation by change", () => {
     const fixture = sandbox(t);
 
     const result = fixture.run("change", {
-      env: { HARNESS_BASE: "trunk" },
+      env: { MUTATION_BASE: "trunk" },
       changes: { "src/upstream.ts": "// edited\n" },
     });
 
@@ -316,7 +317,7 @@ describe("validation by change", () => {
     const fixture = sandbox(t, { policy: { ...POLICY, budgetSeconds: 60 } });
 
     const result = fixture.run("change", {
-      env: { HARNESS_BASE: "trunk" },
+      env: { MUTATION_BASE: "trunk" },
       changes: { "src/upstream.ts": "// edited\n" },
     });
 
@@ -327,6 +328,18 @@ describe("validation by change", () => {
     for (const target of ["types", "unit", "e2e", "mutation", "pointers"]) {
       assert.equal(fixture.ran(target), undefined, `${target} started without approval`);
     }
+  });
+
+  it("widens when a changed file has no established impact", (t) => {
+    const fixture = sandbox(t);
+
+    const result = fixture.run("change", { changes: { ".prettierignore": "dist/\n" } });
+
+    assert.equal(result.status, 0, result.output);
+    assert.match(result.output, /Widened: .*match no check's impact/);
+    const selection = fixture.record("change-selection.json");
+    assert.ok(selection.widened);
+    assert.ok(selection.executed.length > 0, "an unknown reach widens instead of skipping");
   });
 
   it("reports a check with no affected input as not applicable instead of running it", (t) => {

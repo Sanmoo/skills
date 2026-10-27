@@ -17,10 +17,19 @@ import { run } from "./lib.mjs";
 
 export const MODE = Object.freeze({ change: "change", integral: "integral" });
 export const POLICY_PATH = "harness/policy.json";
+export const CHANGE_RECORD = "reports/change-selection.json";
+export const INTEGRAL_RECORD = "reports/integral-status.json";
 
 const CADENCES = new Set(["change", "periodic"]);
 const SCOPES = new Set(["affected-files", "whole", "changed"]);
 const CODE_EXTENSIONS = new Set([".ts", ".tsx", ".mts", ".cts", ".js", ".mjs", ".cjs"]);
+
+// A check's label for a report. Most checks are named after their Gate; the
+// Mutation Gate has a reduced-scope and a periodic check, so those two name
+// themselves.
+export function checkName(check) {
+  return check.name ?? check.gate;
+}
 
 // Turns a policy glob into the pattern the code matches paths with. `**` spans
 // directories, `*` and `?` stop at a separator, and a `**/` prefix also matches
@@ -81,7 +90,7 @@ export function loadPolicy(path = POLICY_PATH) {
   const targets = new Set();
   for (const [index, check] of (policy.checks ?? []).entries()) {
     const where = `${path}: checks[${index}]`;
-    for (const field of ["gate", "name", "target", "tier"]) {
+    for (const field of ["gate", "target", "tier"]) {
       if (typeof check[field] !== "string" || check[field] === "") {
         problems.push(`${where}.${field} is required`);
       }
@@ -96,11 +105,8 @@ export function loadPolicy(path = POLICY_PATH) {
     if (check.cadence === "change" && !SCOPES.has(check.scope)) {
       problems.push(`${where}.scope must be one of ${[...SCOPES].join(", ")}`);
     }
-    if (check.scope === "affected-files" && !Array.isArray(check.scopeMatch)) {
-      problems.push(`${where}.scopeMatch is required for an affected-files scope`);
-    }
-    if (check.widenTarget !== undefined && typeof check.widenTarget !== "string") {
-      problems.push(`${where}.widenTarget must be a target name`);
+    if (check.name !== undefined && typeof check.name !== "string") {
+      problems.push(`${where}.name must be a string when it is set`);
     }
     if (targets.has(check.target)) problems.push(`${where}.target "${check.target}" is repeated`);
     targets.add(check.target);
@@ -248,9 +254,17 @@ export function affectedBy(policy, changed) {
 }
 
 function scopeFiles(check, affected) {
+  // A scoped check that does not name its own scope verifies the same files
+  // whose change makes it apply.
   return affected.filter(
-    (path) => matchesAny(path, check.scopeMatch) && !matchesAny(path, check.scopeExclude ?? []),
+    (path) =>
+      matchesAny(path, check.scopeMatch ?? check.impact) &&
+      !matchesAny(path, check.scopeExclude ?? []),
   );
+}
+
+function noInput(check) {
+  return `no affected ${check.scopeDescription ?? "input"}`;
 }
 
 // The checks validation by change runs, the ones it reports instead, and the
@@ -272,9 +286,20 @@ export function planChange(policy, changed) {
   const affectedResult = affectedBy(policy, changed.paths);
   const affected = affectedResult.affected;
   const shared = changed.paths.filter((path) => matchesAny(path, policy.sharedPaths));
+  // A changed file no check consumes is an impact the policy cannot establish:
+  // it may configure anything, so it widens rather than quietly running the
+  // checks whose inputs it does not appear in.
+  const unmatched = changed.paths.filter(
+    (path) =>
+      !matchesAny(path, policy.sharedPaths) &&
+      !policy.checks.some((check) => matchesAny(path, check.impact)),
+  );
   const reasons = [
     ...(shared.length > 0
       ? [`shared configuration or dependency changed: ${shared.join(", ")}`]
+      : []),
+    ...(unmatched.length > 0
+      ? [`${unmatched.join(", ")} match no check's impact, so their reach is unknown`]
       : []),
     ...(affectedResult.reason === undefined ? [] : [affectedResult.reason]),
   ];
@@ -284,13 +309,21 @@ export function planChange(policy, changed) {
     for (const check of policy.checks) {
       if (check.cadence !== "change") continue;
       if (!affected.some((path) => matchesAny(path, check.impact))) {
-        plan.notApplicable.push({ gate: check.gate, check: check.name, reason: noInput(check) });
+        plan.notApplicable.push({
+          gate: check.gate,
+          check: checkName(check),
+          reason: noInput(check),
+        });
         continue;
       }
       if (check.scope === "affected-files") {
         const files = scopeFiles(check, affected);
         if (files.length === 0) {
-          plan.notApplicable.push({ gate: check.gate, check: check.name, reason: noInput(check) });
+          plan.notApplicable.push({
+            gate: check.gate,
+            check: checkName(check),
+            reason: noInput(check),
+          });
           continue;
         }
         plan.executed.push({ check, scope: files });
@@ -309,34 +342,18 @@ export function planChange(policy, changed) {
   };
 }
 
-function noInput(check) {
-  return `no affected ${check.scopeDescription ?? "input"}`;
-}
-
 // A widened selection is not narrowed by a dependency graph that just proved
-// unreliable: every applicable check sees its whole input. A check the policy
-// gives a wider target for the widened case runs that target, so the Gate's
-// scope widens with the selection instead of staying the changed set.
+// unreliable: every applicable check sees its whole input. A check whose scope
+// is its own changed set keeps it, because the wider selection does not make
+// that check's changed-set selection any less what it computes; the periodic
+// whole-input check stays integral-only.
 export function widenSelection(policy) {
   const executed = policy.checks
     .filter((check) => check.cadence === "change")
-    .map((check) => {
-      const wider =
-        check.widenTarget === undefined
-          ? undefined
-          : policy.checks.find((candidate) => candidate.target === check.widenTarget);
-      if (wider === undefined) {
-        return { check, scope: check.scope === "changed" ? "changed" : "whole" };
-      }
-      // The widened run is the wider target's run, so it reports that check's
-      // name and costs what it costs; the narrower check stays beside it for the
-      // one case that replaces the changed set: a Gate Proof's declared scope.
-      return {
-        check: { ...wider, gate: check.gate },
-        scope: "whole",
-        narrow: check,
-      };
-    });
+    .map((check) => ({
+      check,
+      scope: check.scope === "changed" ? "changed" : "whole",
+    }));
   return {
     executed,
     notApplicable: [],
@@ -357,7 +374,7 @@ export function planIntegral(policy) {
     if (check.cadence === "periodic") {
       executed.push({ check, scope: "whole" });
     } else if (periodicGates.has(check.gate)) {
-      superseded.push({ gate: check.gate, check: check.name });
+      superseded.push({ gate: check.gate, check: checkName(check) });
     } else {
       executed.push({ check, scope: "whole" });
     }
@@ -377,7 +394,7 @@ export function periodicIndependence(policy, failure, affected) {
   if (Array.isArray(failure.failedFiles) && failure.failedFiles.length > 0) {
     return affected.some((path) => failure.failedFiles.includes(path)) ? "affected" : "independent";
   }
-  const check = policy.checks.find((candidate) => candidate.name === failure.check);
+  const check = policy.checks.find((candidate) => checkName(candidate) === failure.check);
   if (check === undefined || check.impact.length === 0) return "uncertain";
   return affected.some((path) => matchesAny(path, check.impact)) ? "affected" : "independent";
 }

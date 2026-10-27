@@ -30,6 +30,16 @@ jobs:
           working_directory: examples/typescript
       - run: npm ci
       - run: make check MODE=integral
+      - name: Publish the integral result for validation by change
+        # The record is what validation by change reads for the periodic checks'
+        # last result. The cache is the transport between the two workflows: the
+        # check job restores the most recent record, whatever its outcome, so a
+        # failure stays visible to the changes it covers.
+        if: always() && hashFiles('examples/typescript/reports/integral-status.json') != ''
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: examples/typescript/reports/integral-status.json
+          key: integral-status-${{ runner.os }}-${{ github.run_id }}
       - name: Publish the integral result
         # The record is what validation by change reads for the periodic checks'
         # last result; publish it even when a check failed, so the failure stays
