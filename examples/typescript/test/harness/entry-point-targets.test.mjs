@@ -53,7 +53,11 @@ describe("Entry Point targets and the selection policy", () => {
         `${check.target} has no package script to run`,
       );
       if (check.tier === "full") {
-        assert.equal(fast.has(check.target), false, `${check.target} is fast-tier and full-tier`);
+        assert.equal(
+          fast.has(check.target),
+          false,
+          `${check.target} is full-tier but runs in the fast Entry Point`,
+        );
       }
     }
   });

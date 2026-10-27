@@ -335,21 +335,13 @@ export function planChange(policy, changed) {
     for (const check of policy.checks) {
       if (check.cadence !== "change") continue;
       if (!affected.some((path) => matchesAny(path, check.impact))) {
-        plan.notApplicable.push({
-          gate: check.gate,
-          check: checkName(check),
-          reason: noInput(check),
-        });
+        plan.notApplicable.push(notApplicable(check));
         continue;
       }
       if (check.scope === "affected-files") {
         const files = scopeFiles(check, affected);
         if (files.length === 0) {
-          plan.notApplicable.push({
-            gate: check.gate,
-            check: checkName(check),
-            reason: noInput(check),
-          });
+          plan.notApplicable.push(notApplicable(check));
           continue;
         }
         plan.executed.push({ check, scope: files });
@@ -364,8 +356,16 @@ export function planChange(policy, changed) {
     widened,
     ...plan,
     periodic,
-    estimatedSeconds: plan.executed.reduce((total, entry) => total + entry.check.costSeconds, 0),
+    estimatedSeconds: costOf(plan.executed),
   };
+}
+
+function notApplicable(check) {
+  return { gate: check.gate, check: checkName(check), reason: noInput(check) };
+}
+
+function costOf(executed) {
+  return executed.reduce((total, entry) => total + entry.check.costSeconds, 0);
 }
 
 // A widened selection is not narrowed by a dependency graph that just proved
@@ -380,11 +380,7 @@ export function widenSelection(policy) {
       check,
       scope: check.scope === "changed" ? "changed" : "whole",
     }));
-  return {
-    executed,
-    notApplicable: [],
-    estimatedSeconds: executed.reduce((total, entry) => total + entry.check.costSeconds, 0),
-  };
+  return { executed, notApplicable: [], estimatedSeconds: costOf(executed) };
 }
 
 // Integral validation runs every Gate over its whole input. Where a Gate has a
@@ -405,11 +401,7 @@ export function planIntegral(policy) {
       executed.push({ check, scope: "whole" });
     }
   }
-  return {
-    executed,
-    superseded,
-    estimatedSeconds: executed.reduce((total, entry) => total + entry.check.costSeconds, 0),
-  };
+  return { executed, superseded, estimatedSeconds: costOf(executed) };
 }
 
 // Whether a periodic failure reaches this change. The failed check's own record

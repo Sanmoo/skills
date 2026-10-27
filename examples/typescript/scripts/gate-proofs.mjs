@@ -44,11 +44,8 @@ import {
 
 // The runner passes a declared scope explicitly and never inherits one: a scope
 // exported in the operator's shell must not reach a proof that declares none.
-// The same holds for the Entry Point's mode, base and selection scope.
 delete process.env[MUTATION_SCOPE_ENV];
 delete process.env.HARNESS_SCOPE;
-delete process.env.HARNESS_MODE;
-delete process.env.HARNESS_BASE;
 
 const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
 const MAKE = process.platform === "win32" ? "make.exe" : "make";
