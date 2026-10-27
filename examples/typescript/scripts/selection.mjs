@@ -205,6 +205,9 @@ export function dependencyGraph(policy) {
   if (listed.files === undefined) return { reason: listed.reason };
   const nodes = new Set(listed.files.map(normalise));
   const dependents = new Map();
+  // An import of a file that is gone is how a deletion still has dependents:
+  // the specifier names a base the graph can match against the deleted path.
+  const dangling = new Map();
   const unresolved = [];
   for (const node of nodes) {
     if (!isCode(node)) continue;
@@ -218,14 +221,21 @@ export function dependencyGraph(policy) {
       const resolved = resolveSpecifier(node, specifier);
       if (resolved.external) continue;
       if (resolved.unresolved) {
-        unresolved.push(`${node} imports "${specifier}", which the dependency graph cannot place`);
+        const base = normalise(join(dirname(node), specifier)).replace(/\.(js|mjs|cjs|jsx)$/, "");
+        if (!dangling.has(base)) dangling.set(base, new Set());
+        dangling.get(base).add(node);
+        unresolved.push({
+          importer: node,
+          base,
+          message: `${node} imports "${specifier}", which the dependency graph cannot place`,
+        });
         continue;
       }
       if (!dependents.has(resolved.path)) dependents.set(resolved.path, new Set());
       dependents.get(resolved.path).add(node);
     }
   }
-  return { nodes, dependents, unresolved };
+  return { nodes, dependents, dangling, unresolved };
 }
 
 // The change and the files that depend on it. A file the graph cannot place, or
@@ -240,24 +250,40 @@ export function affectedBy(policy, changed) {
   const queue = [...changed];
   while (queue.length > 0) {
     const path = queue.pop();
-    for (const dependent of graph.dependents.get(path) ?? []) {
+    // A deleted file is no longer a graph node, but the importers whose
+    // specifier named it still are.
+    const deletedBase = path.replace(/\.(ts|tsx|mts|cts|js|mjs|cjs)$/, "");
+    const next = [
+      ...(graph.dependents.get(path) ?? []),
+      ...(existsSync(path) ? [] : (graph.dangling.get(deletedBase) ?? [])),
+    ];
+    for (const dependent of next) {
       if (affected.has(dependent)) continue;
       affected.add(dependent);
       queue.push(dependent);
     }
   }
-  const reason = graph.unresolved.find((message) => {
-    const where = message.slice(0, message.indexOf(" imports "));
-    return affected.has(where);
-  });
+  // An import that resolves nowhere is an uncertainty only when its importer is
+  // affected and the missing target is not simply a file this change deleted.
+  const deletedBases = new Set(
+    changed
+      .filter((path) => !existsSync(path))
+      .map((path) => path.replace(/\.(ts|tsx|mts|cts|js|mjs|cjs)$/, "")),
+  );
+  const reason = graph.unresolved.find(
+    (entry) => affected.has(entry.importer) && !deletedBases.has(entry.base),
+  )?.message;
   return { affected: [...affected].sort(), reason };
 }
 
 function scopeFiles(check, affected) {
   // A scoped check that does not name its own scope verifies the same files
-  // whose change makes it apply.
+  // whose change makes it apply. A deleted file has nothing left to verify, and
+  // handing it to the tool would make every deletion fail for the wrong reason;
+  // its dependents, which still exist, carry the effect.
   return affected.filter(
     (path) =>
+      existsSync(path) &&
       matchesAny(path, check.scopeMatch ?? check.impact) &&
       !matchesAny(path, check.scopeExclude ?? []),
   );

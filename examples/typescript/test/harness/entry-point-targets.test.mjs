@@ -15,6 +15,10 @@ const PROJECT = dirname(dirname(import.meta.dirname));
 const policy = JSON.parse(readFileSync(join(PROJECT, "harness", "policy.json"), "utf8"));
 const packageJson = JSON.parse(readFileSync(join(PROJECT, "package.json"), "utf8"));
 const makefile = readFileSync(join(PROJECT, "Makefile"), "utf8");
+const integralWorkflow = readFileSync(
+  join(PROJECT, "..", "..", ".github", "workflows", "integral.yml"),
+  "utf8",
+);
 
 function prerequisites(target) {
   const match = new RegExp(`^${target}\\s*:([^\\n]*)`, "m").exec(makefile);
@@ -29,6 +33,16 @@ describe("Entry Point targets and the selection policy", () => {
       .map((check) => check.target)
       .sort();
     assert.deepEqual(prerequisites("check-fast").sort(), fast);
+  });
+
+  it("keeps the periodic check's schedule in step with the integral workflow", () => {
+    const schedule = integralWorkflow.match(/cron:\s*"([^"]+)"/)?.[1];
+    assert.ok(schedule, "the integral workflow declares a cron schedule");
+    const periodic = policy.checks.filter((check) => check.cadence === "periodic");
+    assert.ok(periodic.length > 0, "the policy has a periodic check");
+    for (const check of periodic) {
+      assert.equal(check.schedule, schedule, `${check.gate} runs on a different schedule`);
+    }
   });
 
   it("gives every check target a package script and no full-tier target the fast Entry Point", () => {

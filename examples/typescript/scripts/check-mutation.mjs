@@ -53,10 +53,21 @@ function mutableFilesSince(commit) {
   return { files: changed.paths.filter(isEligible) };
 }
 
+// The comparison base the selection policy names, so the Gate and the Entry
+// Point's modes cannot measure different changes. A tree without a policy (the
+// Gate's own controlled checks) keeps the Contract's default.
+function policyBase() {
+  try {
+    return JSON.parse(readFileSync("harness/policy.json", "utf8")).baseBranch ?? "main";
+  } catch {
+    return "main";
+  }
+}
+
 // Returns the scope to mutate: the changed files, or why they cannot be
 // established. Widening is a scope change, not a failure.
 function mutationScope() {
-  const base = process.env.MUTATION_BASE ?? "main";
+  const base = process.env.MUTATION_BASE ?? policyBase();
   const resolved = resolveComparison(base);
   if (resolved.commit === undefined) {
     return { base, reason: resolved.reason };

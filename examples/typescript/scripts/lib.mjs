@@ -16,6 +16,19 @@ export function outputOf(result) {
   return `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
 }
 
+// The scope validation by change selected, as a check receives it. A check
+// without a scope verifies its whole input; one whose scope names no file it can
+// verify fails instead of passing with nothing examined.
+export function scopedFiles(gate, noun, matches) {
+  const declared = process.env.HARNESS_SCOPE;
+  if (declared === undefined) return undefined;
+  const files = JSON.parse(declared).filter(matches);
+  if (files.length === 0) {
+    report(gate, [`HARNESS_SCOPE names no ${noun} file, so the Gate would verify nothing`]);
+  }
+  return files;
+}
+
 export function report(gate, failures) {
   if (failures.length === 0) {
     console.log(`✔ ${gate}`);
