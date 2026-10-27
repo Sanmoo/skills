@@ -46,7 +46,8 @@
         "*.md",
         "*.yml",
         "docs/**/*.md",
-        ".github/**/*.yml"
+        ".github/**/*.yml",
+        "test/**/*.mjs"
       ]
     },
     {
