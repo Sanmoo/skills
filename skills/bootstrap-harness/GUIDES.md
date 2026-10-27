@@ -11,6 +11,7 @@ Everything else lives in code, and the Guide links to it. A Guide never lists th
 | Content | Where it lives |
 |---|---|
 | Thresholds and limits | the config file of the Gate that enforces them |
+| Tolerated findings | the Gate's tolerance policy, a versioned config file |
 | The list of bounded contexts and their allowed dependencies | the module structure and the context boundaries Gate config |
 | Formatting and lint rules | the formatter and linter config |
 | Commands | the Entry Point definitions; Guides name only the two Entry Points and the full Entry Point's modes, never the individual checks |
@@ -27,11 +28,13 @@ An existing application reconciles the documents it already has with the same in
 
 An adopted Harness ends with the same inventory as a greenfield one. The difference is the route: existing documents are the starting material, and changing one is a planned, approved change like any other.
 
-`ADOPTION-PLAN.md` is a stage record, not a Guide, and is not part of this inventory. It is written after approval, before the first change, when the approved plan is recorded for execution, and holds the approved stages, their adoption criteria, and their decisions. Each stage adds its completion and Gate states to that record; once a stage is executed, the code and its config are the current truth, so the plan must not become a second source of thresholds, tool versions, or commands. The proofs and outcomes themselves live in the project's Gate Proof record, `GATE-PROOFS.md`, which the plan points at instead of copying.
+An existing application also carries legacy debt. That debt is recorded as tolerated findings in each Gate's tolerance policy, never a parallel document; a stage records them there as part of its reviewed change, and a Guide points at that config instead of listing them.
+
+`ADOPTION-PLAN.md` is a stage record, not a Guide, and is not part of this inventory. It is written after approval, before the first change, when the approved plan is recorded for execution, and holds the approved stages, their adoption criteria, and their decisions. Each stage adds its completion and Gate states to that record; once a stage is executed, the code and its config are the current truth, so the plan must not become a second source of thresholds, tool versions, or commands. The proofs and outcomes themselves live in the project's Gate Proof record, `GATE-PROOFS.md`, which the plan points at instead of copying. The plan names the tolerated findings at approval and records any approved amendment; it does not become the tolerance policy, and editing it outside that approval never adds, removes, or revalues one.
 
 ### Records and reports that are not Guides
 
-`INTERVIEW-ANSWERS.md` records the confirmed interview answers so the run can be repeated. `GATE-PROOFS.md` is the Gate Proof record: each Gate's proof and outcome for a run. Neither is a Guide or a source of current policy; they are a decision record and run history. The raw report a run writes is uncommitted output; the Gate Proof record holds the row per Gate that ties the proof to its run. `ADOPTION-PLAN.md` is the stage record above. They live at the repository root beside the Guides but are not part of the inventory, and changing one never changes a rule the code enforces.
+`INTERVIEW-ANSWERS.md` records the confirmed interview answers so the run can be repeated. `GATE-PROOFS.md` is the Gate Proof record: each Gate's proof and outcome for a run. Neither is a Guide or a source of current policy; they are a decision record and run history. The raw report a run writes is uncommitted output; the Gate Proof record holds the row per Gate that ties the proof to its run. `ADOPTION-PLAN.md` is the stage record above. They live at the repository root beside the Guides but are not part of the inventory, and changing one never changes a rule the code enforces. The tolerance policy is not a record at all: it is Gate configuration and part of the code, so it lives in the Gate's config and changes only by a reviewed change.
 
 The final report is a message to the maintainer, not a Guide. It states every Gate's state, the evidence or blocker, and whether the Harness is established; it does not become a durable document alongside the inventory. What must outlive the session is the executable Gate configuration and proof file, plus the Gate Proof record that ties each proof to its outcome; the report never restates current policy.
 
@@ -66,7 +69,7 @@ Written during the domain interview, in the format given in [INTERVIEW.md](INTER
 ### `docs/guides/testing-strategy.md`
 
 - Intent: the definition of each test level (unit, integration, e2e), as in [GATE-CONTRACTS.md](GATE-CONTRACTS.md), stated for this project's stack and edge, including the scenario language the domain interview confirmed.
-- Judgment: which level a new behavior is tested at; test doubles only for third-party systems at the boundary; which candidate behavior deserves a place in the e2e portfolio rather than another integration case; and that the scenario approval the Contract requires precedes its step definitions.
+- Judgment: which level a new behavior is tested at; test doubles only for third-party systems at the boundary; which candidate behavior deserves a place in the e2e portfolio rather than another integration case; that a behavior already present is pinned by a regression test before it changes, and that such a test records observed behavior rather than auditing its correctness; and that the scenario approval the Contract requires precedes its step definitions.
 - Pointers: where each level's tests live, the e2e feature files with their step definitions, the executor config, the mutation config with its thresholds.
 
 ### `docs/adr/`

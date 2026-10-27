@@ -10,7 +10,7 @@ Establish a **Harness** in a repository: **Guides** that steer every change befo
 
 One principle governs every phase: **the code is the source of truth**, Gate configuration included. A Guide holds only what code cannot express (intent and rationale, judgment rules no Gate can verify, and pointers into the code). Thresholds, context lists, and commands live in code, and Guides point at them. The glossary is the one document with authority over the code, and only over naming.
 
-Both paths use the same [Gate Contracts](GATE-CONTRACTS.md); adoption changes when, where, and how often a Gate runs, and records the adoption criteria under which it runs, never what the Contract requires.
+Both paths use the same [Gate Contracts](GATE-CONTRACTS.md); adoption changes a Gate's approved scope, when it runs, and how often, and records the adoption criteria under which it runs, never what the Contract requires. It also records the specific existing violations those criteria tolerate, because an existing application carries legacy debt that adoption neither hides nor has to erase.
 
 Work the phases in order. Start a phase only when the previous one meets its completion criterion.
 
@@ -80,6 +80,8 @@ A changed-set Gate may have no eligible input on the branch that carries its pro
 
 The adoption path reconciles a Harness with an application that already exists. It does not build a replacement Walking Skeleton, restructure the application, rename its domain, reformat it, or replace working tools: the existing application is what the Gates run against. It changes nothing in the application, its tests, or its tooling before the maintainer approves the plan. Its steps are numbered A1 to A5 so the greenfield phases 2 to 7 keep their numbers.
 
+The application carries legacy debt. Adoption records each violation the maintainer accepts as a tolerated finding in its Gate's tolerance policy, never as a count, a path, or a snapshot a run regenerates; new code is held to the Contract's normal limits, and changing code that carries legacy debt must avoid worsening its findings, not eliminate them at once, except the explicit security decision the Contract allows. [GATE-CONTRACTS.md](GATE-CONTRACTS.md#tolerated-findings) holds the rules, and [GATE-CONTRACTS.md](GATE-CONTRACTS.md#observed-behavior) holds how observed behavior and failing suites are handled.
+
 ### A1. Inventory the existing application
 
 Survey what the repository and environment already answer:
@@ -89,6 +91,8 @@ Survey what the repository and environment already answer:
 - candidate bounded contexts, their subdomain kind, and the workflows the application already exercises;
 - boundaries and allowed dependencies, both declared and observed, and every mismatch between them;
 - existing tools and checks, with their versions and the config that holds their limits;
+- the findings those checks already report, and any existing report or CI history that holds them, by Gate, rule, location, and measured value or severity, as candidates for tolerated findings;
+- failing tests and missing tools already visible in the tree or CI history, with what a bounded investigation would need;
 - existing Gate Proofs and proof tooling, if any, and whether they are repeatable and still attribute a red Entry Point to the Gate under proof;
 - tests by level, and what they demonstrably cover;
 - the fast and full Entry Points, what each runs, and what CI calls;
@@ -100,15 +104,15 @@ Keep the inventory lightweight and factual. Read manifests, lockfiles, source la
 
 ### A2. Confirm the inventory and adoption decisions
 
-Run the interview in [INTERVIEW.md](INTERVIEW.md), section _Adoption_. Present the discovered facts; the maintainer confirms or corrects them and decides the domain classifications, boundaries to preserve, regression priorities, tools to retain or replace, stages, budgets, and cadence, and the adoption criteria for every Gate the plan will adopt: its scope, cadence, and any specific existing findings the maintainer accepts. Adoption criteria specialize the Contract and never relax it. Do not decide any of these unilaterally and do not invent a domain model where the application already has one.
+Run the interview in [INTERVIEW.md](INTERVIEW.md), section _Adoption_. Present the discovered facts; the maintainer confirms or corrects them and decides the domain classifications, boundaries to preserve, regression priorities, tools to retain or replace, stages, budgets, and cadence, and the adoption criteria for every Gate the plan will adopt: its scope, cadence, and any specific existing findings the maintainer accepts as tolerated findings. Each finding the maintainer accepts is a tolerated finding as [GATE-CONTRACTS.md](GATE-CONTRACTS.md#tolerated-findings) defines it, and a count, a path, or a rule-wide exclusion is not a decision this interview can record. A failing suite is investigated within the budget the interview agrees; the maintainer approves any expectation update before it records current behavior, and the Gate stays pending until that investigation ends. Adoption criteria specialize the Contract and never relax it. Do not decide any of these unilaterally and do not invent a domain model where the application already has one.
 
 Keep the confirmed answers and the inventory's evidence outside the application until the plan is approved.
 
-**Done when** the maintainer has confirmed the inventory, the domain understanding, the boundaries, the existing checks and tools to retain or replace, the regression priorities, the scope, budget, and cadence of every planned stage, and the adoption criteria of every Gate the plan will adopt, and the answers are recorded.
+**Done when** the maintainer has confirmed the inventory, the domain understanding, the boundaries, the existing checks and tools to retain or replace, the regression priorities, the scope, budget, and cadence of every planned stage, and the adoption criteria and tolerated findings of every Gate the plan will adopt, and the answers are recorded.
 
 ### A3. Write the adoption plan and obtain approval
 
-Draft `ADOPTION-PLAN.md` in a scratch location outside the application. Make it staged and prioritized: order stages by the protection they buy, not by tool convenience. Each stage names its scope, the Gate Contracts it realizes, the Gates it expects to adopt, the adoption criteria under which each will be adopted, the Gate Proof each adopted Gate will carry, the Guides it writes or reconciles, the tests and tooling changes it proposes, its validation budget and cadence, and what remains pending or blocked. Record every Gate's current [Gate state](GATE-CONTRACTS.md#gate-states) as adopted, pending, or blocked; a tool that exists in the tree is not an adopted Gate.
+Draft `ADOPTION-PLAN.md` in a scratch location outside the application. Make it staged and prioritized: order stages by the protection they buy, not by tool convenience. Each stage names its scope, the Gate Contracts it realizes, the Gates it expects to adopt, the adoption criteria under which each will be adopted, the specific tolerated findings each accepts at their recorded finding identity, the reviewed-change rule that tightens them when debt is removed, the Gate Proof each adopted Gate will carry, the Guides it writes or reconciles, the tests and tooling changes it proposes, its validation budget and cadence, and what remains pending or blocked. Record every Gate's current [Gate state](GATE-CONTRACTS.md#gate-states) as adopted, pending, or blocked; a tool that exists in the tree is not an adopted Gate. The plan names the tolerated findings at approval; it does not become the tolerance policy, which is the Gate's versioned config. Once a stage records them in the policy, that policy is the only current list; the plan keeps the approval-time expectation and points at it.
 
 Present the plan to the maintainer and obtain approval before anything in the application, its tests, or its tooling changes. Drafting and approving touch none of them.
 
@@ -120,7 +124,7 @@ After approval, record the approved plan in the repository as `ADOPTION-PLAN.md`
 
 Execute the plan one stage at a time and change only what the approved stage names. Reconcile rather than replace: retain a tool or check that satisfies its Contract under the agreed adoption criteria, and propose a replacement with its reason, compatibility cost, and migration work before making it; a replacement happens only with the maintainer's approval. Do not generate a Walking Skeleton: the existing application, its tests, and its tooling are what the Gates run against.
 
-Each stage adopts its Gates under the adoption criteria the maintainer approved. For every Gate the stage adopts, run a Gate Proof as phase 7 describes, under those criteria: the single deliberate violation must be one the Gate rejects and must lie outside any finding the criteria accept. Keep the proof executable and repeatable, out of both Entry Points, so anyone can re-run it. Record the Gate Proof and its outcome in `GATE-PROOFS.md`, with the row phase 7 records; a raw run report is evidence of that run and is not committed in its place.
+Each stage adopts its Gates under the adoption criteria the maintainer approved. For every Gate the stage adopts, run a Gate Proof as phase 7 describes, under those criteria: the single deliberate violation must be one the Gate rejects and must lie outside any tolerated finding. Keep the proof executable and repeatable, out of both Entry Points, so anyone can re-run it. Record the Gate Proof and its outcome in `GATE-PROOFS.md`, with the row phase 7 records; a raw run report is evidence of that run and is not committed in its place.
 
 A Gate is adopted only when it meets the [adopted Gate state](GATE-CONTRACTS.md#gate-states) under the approved scope and cadence. A Gate that does not run, cannot fail, selects no meaningful input, passes vacuously, or is not yet in scope stays pending, or blocked when something outside the stage prevents it. Neither a configured Gate nor a green run under another scope is adoption.
 
@@ -128,15 +132,19 @@ A stage that wires the full Entry Point's [modes](GATE-CONTRACTS.md#execution-mo
 
 End each stage by recording its completion and Gate states in `ADOPTION-PLAN.md` and reporting the same to the maintainer: what the stage changed, which Gates it adopted, which remain pending or blocked and why, and where each proof is recorded. A stage may complete with pending or blocked Gates; its record and report say so instead of hiding them. A later approved stage may adopt a Gate an earlier stage left pending only by running it under its approved criteria and proving it; no stage inherits adoption from another.
 
-**Done when** every approved stage has been executed or explicitly reported as pending or blocked, its completion and Gate states are recorded in `ADOPTION-PLAN.md`, and every Gate the plan adopted has its repeatable Gate Proof recorded.
+Record each tolerated finding the stage accepts in the Gate's tolerance policy, as part of the stage's reviewed change, with its finding identity. No run regenerates that policy. When a change fixes or lowers a tolerated finding, the same reviewed change removes or lowers its entry; until it does, the Gate fails the stale entry. A reviewed change never adds an entry for a violation that appeared after adoption began and never raises one, except the explicit security decision the Contract allows. An entry for legacy debt the plan did not name amends the adoption criteria, approved as the plan was. A new finding, an aggravated one, or the return of one an accepted fix removed fails even when another tolerated finding disappeared in the same change, except the explicit security decision the Contract allows. New code is held to the Contract's normal limits; changing code that carries a tolerated finding only has to avoid worsening it, not eliminate its legacy debt. A security finding is either removed or tolerated only by an explicit human decision recorded beside its entry in the same tolerance policy.
+
+Where the approved stage names a workflow whose behavior no test pins down, write the regression test that records what it does today before changing that behavior. A workflow the stage does not name is staged for a later approved stage, not changed now. The test records the behavior, not the business rule: it does not audit whether the behavior is right, and only exceptionally strong evidence of an obvious error opens a localized decision for the maintainer, as [GATE-CONTRACTS.md](GATE-CONTRACTS.md#observed-behavior) defines it. A failing suite is investigated within the stage's budget and ends in a fix, an expectation update the maintainer approves before it records current behavior, or a pending or blocked Gate. A count of failing assertions is never an accepted reference. A missing test leaves its Gate pending; a tool the environment cannot run leaves it blocked.
+
+**Done when** every approved stage has been executed or explicitly reported as pending or blocked, its completion and Gate states are recorded in `ADOPTION-PLAN.md`, every Gate the plan adopted has its repeatable Gate Proof recorded, its tolerated findings, if any, are recorded in the Gate's tolerance policy, and the regression tests the stage proposed are in place or their absence is recorded as a pending Gate.
 
 ### A5. Complete and report establishment
 
-Report every Gate in the Gate Floor with its [Gate state](GATE-CONTRACTS.md#gate-states): adopted, pending, or blocked, together with the evidence or blocker for each. Name the tools and checks retained and every replacement made with its approval and reason, the Guides reconciled, and the Gate Proofs recorded. State the validation budget, every check assigned to periodic execution with its cadence, the protection each gives between executions and the residual risk in between, and the result of the modes' rehearsal.
+Report every Gate in the Gate Floor with its [Gate state](GATE-CONTRACTS.md#gate-states): adopted, pending, or blocked, together with the evidence or blocker for each. Name the tools and checks retained and every replacement made with its approval and reason, the Guides reconciled, the Gate Proofs recorded, the tolerated findings each Gate accepts with their finding identity, and every localized decision taken during adoption. State the validation budget, every check assigned to periodic execution with its cadence, the protection each gives between executions and the residual risk in between, and the result of the modes' rehearsal.
 
-State explicitly whether the Harness counts as established, which [GATE-CONTRACTS.md](GATE-CONTRACTS.md#establishment) defines as every Gate in the Gate Floor being adopted. Establishment does not require eliminating debt or meeting every greenfield default threshold; specific findings the adoption criteria accept do not prevent it. A pending or blocked Gate does prevent it, and the report names which Gate and why. A final full Entry Point that is red for a finding the adoption criteria do not accept is not establishment: the report names that Gate.
+State explicitly whether the Harness counts as established, which [GATE-CONTRACTS.md](GATE-CONTRACTS.md#establishment) defines as every Gate in the Gate Floor being adopted. Establishment does not require eliminating legacy debt or meeting every greenfield default threshold; tolerated findings the adoption criteria accept do not prevent it. A pending or blocked Gate does prevent it, and the report names which Gate and why. A final full Entry Point that is red for a finding the adoption criteria do not accept is not establishment: the report names that Gate.
 
-**Done when** every Gate has one of the three states with its evidence or blocker, the establishment statement is explicit, the retained and replaced tools are reported, and the full Entry Point has been run on the final tree with its result reported.
+**Done when** every Gate has one of the three states with its evidence or blocker, the establishment statement is explicit, the retained and replaced tools are reported, the tolerated findings and localized decisions are reported, and the full Entry Point has been run on the final tree with its result reported.
 
 ## Gate states and blockers
 
@@ -144,7 +152,7 @@ The [Gate states](GATE-CONTRACTS.md#gate-states) are **adopted**, **pending**, a
 
 On the greenfield path, every Gate in the Gate Floor runs before the Harness counts as established. When the environment cannot run one, stop at that phase and report the blocker and what the user must provide. Blockers include a missing container runtime, no network for the vulnerability database, and a host binary a Gate shells out to; check what each tool needs before starting phase 7. The run resumes from that phase once the blocker is cleared.
 
-On the adoption path, record a Gate the environment cannot run as blocked in the inventory and the plan, with what the maintainer must provide. It stays out of the adopted count and the Harness cannot be established while it is blocked. A Gate that runs but whose green result does not exercise its Contract - an empty selection, a skipped suite, a check that cannot fail - passes vacuously and stays pending.
+On the adoption path, record a Gate the environment cannot run as blocked in the inventory and the plan, with what the maintainer must provide. It stays out of the adopted count and the Harness cannot be established while it is blocked. A Gate that runs but whose green result does not exercise its Contract - an empty selection, a skipped suite, a check that cannot fail - passes vacuously and stays pending. A Gate whose suite fails or whose test is missing is pending; a tool the environment cannot run is blocked; a count of failing assertions is not a state.
 
 ## Final report
 
@@ -155,7 +163,7 @@ On the greenfield path, report to the user:
 - the ADRs written;
 - any blocker that remains.
 
-On the adoption path, report the selected path, the confirmed inventory, the approved plan and its stage order, the state of every Gate in the Gate Floor with the evidence or blocker for each, the tools and checks retained or replaced with the approval and reason, and an explicit statement of whether the Harness is established. Do not report a Gate as adopted unless it meets the [adopted Gate state](GATE-CONTRACTS.md#gate-states), and do not call the Harness established while any Gate in the Gate Floor is pending or blocked.
+On the adoption path, report the selected path, the confirmed inventory, the approved plan and its stage order, the state of every Gate in the Gate Floor with the evidence or blocker for each, the tolerated findings each Gate accepts and every localized decision, the tools and checks retained or replaced with the approval and reason, and an explicit statement of whether the Harness is established. Do not report a Gate as adopted unless it meets the [adopted Gate state](GATE-CONTRACTS.md#gate-states), and do not call the Harness established while any Gate in the Gate Floor is pending or blocked.
 
 ## Stack Examples
 
