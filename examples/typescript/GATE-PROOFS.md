@@ -33,23 +33,38 @@ Before the E2E row was recorded, the level was also exercised by hand with five 
 
 The table records the complete run that established the Harness; the versions are the ones that run executed against. The full Entry Point was green on the final tree after every proof was reverted; CI's `example` job runs it on every pull request and does not run the proofs.
 
-The table above was re-run on 2026-10-26 against the tree that introduced the full Entry Point's two modes (commit `37c69f8`). All fourteen proofs went red for their own Gate and the tree was restored after each; the full tier's Entry Point was validation by change, and the proof's committed change widened its selection, so every check ran and only the Gate under proof was red. The E2E proof rebuilds the artifact during its cleanup, as before.
+## The re-run that introduced the modes
+
+The proof table above was re-run on 2026-10-26 against the tree that introduced the full Entry Point's two modes (commit `669fb4f`), with the same violation and the same tier's Entry Point as each row above. Every proof went red for its own Gate, the tree was restored after each, and the runner stopped on any proof whose violation left the tree changed. On that branch the committed change set included shared configuration, so each full-tier proof's validation by change widened its selection and ran every check; only the Gate under proof was red. The E2E proof rebuilds the artifact during its cleanup, as before.
+
+| Gate                       | Tier | Entry Point       | Failing Gate               | Scope requested / analyzed                                  | Result |
+| -------------------------- | ---- | ----------------- | -------------------------- | ----------------------------------------------------------- | ------ |
+| Format                     | fast | `make check-fast` | Format                     | —                                                           | red    |
+| Lint                       | fast | `make check-fast` | Lint                       | —                                                           | red    |
+| Types                      | fast | `make check-fast` | Types                      | —                                                           | red    |
+| Unit tests                 | fast | `make check-fast` | Unit tests                 | —                                                           | red    |
+| Integration tests          | full | `make check`      | Integration tests          | —                                                           | red    |
+| E2E tests                  | full | `make check`      | E2E tests                  | —                                                           | red    |
+| Mutation                   | full | `make check`      | Mutation                   | `src/lending/domain/loan.ts` / `src/lending/domain/loan.ts` | red    |
+| Context boundaries         | fast | `make check-fast` | Context boundaries         | —                                                           | red    |
+| Dependency rule            | fast | `make check-fast` | Dependency rule            | —                                                           | red    |
+| Static metrics             | fast | `make check-fast` | Static metrics             | —                                                           | red    |
+| Dependency vulnerabilities | full | `make check`      | Dependency vulnerabilities | —                                                           | red    |
+| Secrets                    | fast | `make check-fast` | Secrets                    | —                                                           | red    |
+| Avoided terms              | fast | `make check-fast` | Avoided terms              | —                                                           | red    |
+| Guide pointers             | fast | `make check-fast` | Guide pointers             | —                                                           | red    |
+
+The Mutation row is the only changed-set Gate, so the re-run records both scopes: the proof declared `src/lending/domain/loan.ts`, the Gate analyzed exactly that file, and the declaration replaced its changed-set selection for that one execution. The report the runner wrote for the complete run is run output, published by the `gate-proofs` workflow and not committed.
 
 ## Validation modes
 
-`make check` is validation by change and `make check MODE=integral` is integral validation; the check list, impacts, scopes, costs, budget and periodic cadence live in [harness/policy.json](harness/policy.json), and [ADR 0006](docs/adr/0006-validation-modes.md) records why. A green validation-by-change result states the checks it ran, their scopes, the checks that did not apply and the periodic checks it left to integral validation; it does not claim integral verification. The whole-codebase mutation is the periodic check: validation by change reports it, integral validation runs it, and a failure in its scope keeps a change in that scope from reporting green while a demonstrably independent change proceeds.
+`make check` is validation by change and `make check MODE=integral` is integral validation; the check list, impacts, scopes, costs, validation budget, and each periodic check's cadence, protection and residual risk live in [harness/policy.json](harness/policy.json), and [ADR 0006](docs/adr/0006-validation-modes.md) records why. A green validation-by-change result states the checks it ran, their scopes, the checks that did not apply and the periodic checks it left to integral validation; it does not claim integral verification. The whole-codebase mutation is the periodic check: validation by change reports it and never runs it, integral validation runs it, and a failure in its scope keeps a change in that scope from reporting green while a demonstrably independent change proceeds. The CI change job restores the last integral record that the integral workflow publishes as a cache, so a periodic failure reaches a change outside a developer's worktree; with no record, the result says `not recorded` rather than assuming a pass.
 
-The modes are rehearsed on a disposable copy with a controlled budget fixture by [scripts/rehearse-validation.mjs](scripts/rehearse-validation.mjs), run with `npm run rehearse-validation` and not part of either Entry Point. The rehearsal copies the project to a temporary directory, replaces the policy with a small fixture whose checks record the scope they were asked to verify, and drives `make check` and `make check MODE=integral` there. It demonstrates, and asserts, that:
+The modes are rehearsed on a disposable copy with a controlled budget fixture by [scripts/rehearse-validation.mjs](scripts/rehearse-validation.mjs), run with `npm run rehearse-validation` and not part of either Entry Point. The rehearsal copies the project to a temporary directory, replaces the policy with a small fixture whose checks record the scope they were asked to verify, and drives `make check` and `make check MODE=integral` there. It asserts that a violation in an affected dependent is caught with the dependent in the verified scope and not merely listed; that a shared dependency change widens the selection, and required validation beyond the fixture's approved budget exits non-zero and inconclusive while starting no check; that a green validation-by-change result reports the periodic check it omitted and does not claim integral verification; that integral validation actually runs that check and records its result; and that a periodic integral failure stays visible, is required treatment in its scope, and leaves an independent change able to proceed.
 
-- a violation in an affected dependent is caught, with the dependent in the scope the check was asked to verify, and not merely listed;
-- a shared dependency change widens the selection, and required validation beyond the fixture's approved budget exits non-zero with an inconclusive result while starting no check;
-- a green validation-by-change result reports the periodic check it omitted and does not claim integral verification;
-- integral validation actually runs that periodic check and records its result;
-- a periodic integral failure stays visible, a change in its scope is not reported green and requires treatment, and an independent change proceeds with the failure reported.
+The rehearsal's transcript is run output: the script prints it and writes it under `reports/`, which Git ignores. Its fixture is deliberately tiny, so it demonstrates the policy's behaviour and says nothing about durations on a production-sized application; each adoption measures its own budget against its own tree. The run recorded here (commit `669fb4f`) printed `Rehearsal: every expectation held.`
 
-The rehearsal's transcript is run output: the script prints it and writes it under `reports/`, which Git ignores. Its fixture is deliberately tiny, so it demonstrates the policy's behaviour and says nothing about durations on a production-sized application; each adoption measures its own budget against its own tree. The run recorded here (commit `37c69f8`) printed `Rehearsal: every expectation held.`
-
-The table is history, not current evidence: a row says what a Gate did to the tree of that run, and no row speaks for a later change. The explicit-scope Mutation proof was re-run on its own after the change that introduced it, on a branch that changed no eligible Mutation input. That run printed:
+The table is history, not current evidence: a row says what a Gate did to the tree of that run, and no row speaks for a later change. Before this re-run only the Mutation proof had been re-run on its own, on a branch that changed no eligible Mutation input; that run printed:
 
 ```text
 ✔ Gate Proof: Mutation
@@ -57,4 +72,4 @@ The table is history, not current evidence: a row says what a Gate did to the tr
   scope analyzed: src/lending/domain/loan.ts
 ```
 
-and the Mutation Gate's own report for the same run scored the declared file 0 of 79 mutants detected, so the Entry Point went red on Mutation alone and for its score rather than for the setup. That transcript records what that run observed; it is not evidence about the current tree, which a fresh run of the proof runner has to establish. The other rows were not re-run, so nothing here claims they were.
+and the Mutation Gate's own report for the same run scored the declared file 0 of 79 mutants detected, so the Entry Point went red on Mutation alone and for its score rather than for the setup. That transcript records what that run observed. The complete re-run above supersedes it for the tree it names, and neither speaks for a later tree, which a fresh run of the proof runner has to establish.
