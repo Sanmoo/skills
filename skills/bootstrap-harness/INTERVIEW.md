@@ -110,7 +110,7 @@ Settle these decisions, in dependency order:
 
 4. **Observed behavior and regression priorities.** Which workflows form the regression contract, and where does their evidence live?
 
-   Recommended: start from the existing tests and the workflows the application already exercises. Preserve surprising but stable observed behavior; do not revalidate business correctness. Stage further regression tests where evidence is thin. Exceptionally strong evidence of an obvious error is a localized decision, never an automatic correction and never a reason to stop unrelated adoption. A failing suite is investigated within the agreed budget; an expectation update is approved before it records current behavior, and a count of failing assertions is never an accepted reference.
+   Recommended: start from the existing tests and the workflows the application already exercises. Preserve surprising but stable observed behavior; do not revalidate business correctness. Stage further regression tests where evidence is thin. Exceptionally strong evidence of an obvious error is a localized decision, never an automatic correction and never a reason to stop unrelated adoption. A failing suite, an expectation update and the localized decision follow the [observed-behavior rules](GATE-CONTRACTS.md#observed-behavior).
 
 5. **Existing tools and checks.** Which existing tools and checks satisfy the agreed criteria and are retained, and which do you want replaced?
 
