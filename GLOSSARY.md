@@ -57,7 +57,7 @@ The Gate, rule, location, and measured value or severity that identify one repor
 _Avoid_: Tolerance key, Suppression key
 
 **Tolerance policy**:
-The versioned Gate config that records tolerated findings, each entry recording one tolerated finding. It changes only by a reviewed change, no run regenerates it, and an entry the Gate no longer matches exactly fails until that change updates it.
+The versioned Gate config that records tolerated findings, each entry recording one tolerated finding. It changes only by a reviewed change, no run regenerates it, and an entry the Gate no longer reports in the scope its run analyzed fails until that change updates it.
 _Avoid_: Baseline snapshot, Suppression list
 
 **Localized decision**:
