@@ -130,6 +130,6 @@ Settle these decisions, in dependency order:
 
 9. **Plan approval.** Does the plan record every confirmed decision, every Gate's current state, and, for every Gate it expects to adopt, its adoption criteria, the specific tolerated findings it accepts at their recorded finding identity, and the Gate Proof it will carry, and do you approve it?
 
-   Recommended: approve the plan before any change. Drafting it touches nothing in the application, its tests, or its tooling, and no stage starts until the maintainer approves. Approval adopts no Gate; execution and proof do, and no Gate is adopted by accepting a count of failing assertions.
+   Recommended: approve the plan before any change. Drafting it touches nothing in the application, its tests, or its tooling, and no stage starts until the maintainer approves. Approval adopts no Gate; execution and proof do, under the [observed-behavior rules](GATE-CONTRACTS.md#observed-behavior).
 
 This interview ends when the frontier is empty, every stage has its scope, budget, and cadence, every Gate the plan will adopt has its adoption criteria and specific tolerated findings recorded, and the maintainer approves the plan. Keep every confirmed answer outside the application until that approval. After approval, record the answers in `INTERVIEW-ANSWERS.md` under _Adoption_ and the approved plan in `ADOPTION-PLAN.md` before the first change. This step changes nothing in the application, its tests, or its tooling.
