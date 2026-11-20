@@ -56,11 +56,11 @@ Implement every Gate in [GATE-CONTRACTS.md](GATE-CONTRACTS.md) with the tools co
 
 Put the [selection policy](GATE-CONTRACTS.md#execution-modes) in versioned code: every check with its tier, the changes that make it apply, the scope it verifies, its cadence, and its estimated cost, plus the validation budget agreed in the interview. Selection must include the files that depend on a change, and must widen on a shared configuration or dependency change and on any impact it cannot establish; required validation wider than the budget exits non-zero and inconclusive without starting an expensive check. Report executed checks and their scopes, non-applicable checks, periodic checks with their last integral result, failures and inconclusive outcomes distinctly.
 
-Rehearse the modes on a disposable copy of the project with a controlled budget fixture, and keep the rehearsal executable and out of both Entry Points: a violation in an affected dependent is caught rather than listed, a shared configuration change widens the selection, a required validation beyond the budget is inconclusive and starts nothing, and integral validation runs a check validation by change only reported. Keep the rehearsal's transcript uncommitted; commit the script that reproduces it.
+Rehearse the modes on a disposable copy of the project with a controlled budget fixture, and keep the rehearsal executable and out of both Entry Points: a violation in an affected dependent is caught rather than listed, by a selection that did not widen, so a selector that always widens cannot pass the rehearsal; a shared configuration change widens the selection, a required validation beyond the budget is inconclusive and starts nothing, and integral validation runs a check validation by change only reported. Keep the rehearsal's transcript uncommitted; commit the script that reproduces it.
 
 When wiring the e2e Gate, verify that its executor fails rather than passes on a wrong assertion and on each case the Contract's E2E section names: no scenarios, an undefined or pending step, and an artifact that does not start. A configuration that behaves otherwise does not satisfy the Contract.
 
-**Done when** every Gate Contract has a Gate, both modes of the full Entry Point run, the modes have been rehearsed on a disposable copy, and the full Entry Point is green.
+**Done when** every Gate Contract has a Gate, both modes of the full Entry Point run, the modes have been rehearsed on a disposable copy, and the full Entry Point is green except for the Guide pointers Gate, which has no Guides to point from until phase 6 writes them.
 
 ### 6. Write the Guides
 
