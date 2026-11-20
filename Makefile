@@ -4,6 +4,7 @@
 check-fast:
 	node scripts/check-pointers.mjs
 	node scripts/check-avoided-terms.mjs
+	node scripts/check-adr-numbers.mjs
 
 # Full Entry Point: every Gate. CI calls this and nothing else.
 check: check-fast
