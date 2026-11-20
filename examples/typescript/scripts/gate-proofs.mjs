@@ -157,9 +157,12 @@ ${Array.from({ length: 11 }, (_, i) => `  if (code === ${String(i)}) return "she
   },
   {
     gate: "Mutation",
-    violation: "delete the assertions of the core Lending domain's unit tests",
+    violation:
+      "delete the assertions of the core Lending tests that cover the Loan, at both levels the mutation run executes",
     scope: ["src/lending/domain/loan.ts"],
-    // The tests still exercise the Loan; only what they assert is gone.
+    // The tests still exercise the Loan; only what they assert is gone. The
+    // mutation run executes unit and integration tests, so deleting the unit
+    // assertions alone leaves the integration tests killing the mutants.
     edits: [
       create(
         "src/lending/domain/loan.test.ts",
@@ -169,6 +172,25 @@ import { isOverdue, recordReturn, takeOnLoan } from "./loan.js";
 it("exercises a Loan without asserting anything", () => {
   const loan = takeOnLoan("loan-1", "b", " Ada ", new Date("2026-03-01T00:00:00Z"));
   isOverdue(recordReturn(loan, new Date("2026-03-20T00:00:00Z")), new Date("2026-04-01T00:00:00Z"));
+});
+`,
+      ),
+      create(
+        "src/lending/application/lending-service.integration.test.ts",
+        `import { it } from "vitest";
+import { useDatabase } from "../../../test/support/database.js";
+import { createCatalog } from "../../catalog/index.js";
+import { createLending } from "../index.js";
+
+const pool = useDatabase();
+
+it("exercises Lending without asserting anything", async () => {
+  const catalog = await createCatalog(pool);
+  await catalog.register("dispossessed", "The Dispossessed");
+  const lending = await createLending(pool, catalog);
+  const loan = await lending.lend("dispossessed", "Ada");
+  await lending.consult(loan.id);
+  await lending.recordReturn(loan.id);
 });
 `,
       ),
