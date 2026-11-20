@@ -52,14 +52,19 @@ export function dependents(files, graph) {
 
 /**
  * Why the change's impact cannot be reduced, or undefined when it can.
- * `change` is `{ files, deleted }` or `{ widened }`; `graph` is a Map, or
- * undefined when the dependency information could not be built.
+ * `change` is `{ files, deleted, outside }` or `{ widened }`; `graph` is a
+ * Map, with the modules holding an unresolvable import in `graph.unresolved`,
+ * or undefined when the dependency information could not be built.
  */
 export function wideningReason(change, policy, graph) {
   if (change.widened) return `impact unknown: ${change.widened}`;
+  if (change.outside?.length > 0)
+    return `impact unknown: the change touches paths outside the project: ${change.outside.join(", ")}`;
   const shared = change.files.filter((file) => matchesAny(file, policy.sharedConfiguration));
   if (shared.length > 0) return `shared configuration changed: ${shared.join(", ")}`;
   if (graph === undefined) return "impact unknown: the dependency graph could not be built";
+  if (graph.unresolved?.length > 0)
+    return `impact unknown: the graph cannot place an import in ${graph.unresolved.join(", ")}`;
   const inRoots = (file) =>
     SOURCE.test(file) && policy.dependencyRoots.some((root) => file.startsWith(`${root}/`));
   const deleted = change.files.filter((file) => inRoots(file) && change.deleted.includes(file));
@@ -109,9 +114,19 @@ export function plan(mode, policy, change, graph, integral) {
         affected === null || affected.some((file) => matchesAny(file, check.appliesTo));
       return { check, decision: "periodic", last, blocking: last.outcome === "failed" && inScope };
     }
-    if (widened) return { check, decision: "run", scope: "whole" };
-    const files = affected.filter((file) => matchesAny(file, check.appliesTo));
-    if (files.length === 0) return { check, decision: "not-applicable" };
+    // A check with its own changed-set rule keeps it when the selection
+    // widens; its whole-codebase run stays the periodic check.
+    if (widened)
+      return { check, decision: "run", scope: check.scope === "changed" ? "changed" : "whole" };
+    // A deleted file is part of the change, and its dependents are affected,
+    // but no check is handed a file that no longer exists.
+    const files = affected.filter(
+      (file) => matchesAny(file, check.appliesTo) && !change.deleted.includes(file),
+    );
+    const touched = affected.some((file) => matchesAny(file, check.appliesTo));
+    if (!touched) return { check, decision: "not-applicable" };
+    if (files.length === 0 && check.scope === "affected")
+      return { check, decision: "not-applicable" };
     if (check.scope === "affected") return { check, decision: "run", scope: files };
     return { check, decision: "run", scope: check.scope };
   });

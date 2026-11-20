@@ -85,11 +85,10 @@ describe("validation by change", () => {
     for (const file of ["package.json", "harness/policy.json"]) {
       const result = plan("change", policy, change(file), graph, undefined);
       assert.match(result.widened, /shared configuration changed/);
-      assert.ok(
-        result.entries
-          .filter((e) => e.check.cadence === "change")
-          .every((e) => e.scope === "whole"),
-      );
+      for (const e of result.entries.filter((e) => e.check.cadence === "change")) {
+        assert.equal(e.scope, e.check.scope === "changed" ? "changed" : "whole", e.check.id);
+      }
+      assert.equal(entry(result, "mutation-whole").decision, "periodic");
     }
   });
 
@@ -105,6 +104,38 @@ describe("validation by change", () => {
       ),
       /deleted modules/,
     );
+  });
+
+  it("widens on a change outside the project and on an import the graph cannot place", () => {
+    assert.match(
+      wideningReason(
+        { files: [], deleted: [], outside: [".github/workflows/check.yml"] },
+        policy,
+        graph,
+      ),
+      /outside the project: .github\/workflows\/check.yml/,
+    );
+    const unresolved = new Map(graph);
+    unresolved.unresolved = ["src/lending/service.ts"];
+    assert.match(
+      wideningReason(change("src/lending/other.ts"), policy, unresolved),
+      /cannot place an import/,
+    );
+  });
+
+  it("never hands a deleted file to a check, but still verifies its dependents", () => {
+    const deletion = { files: ["src/catalog/book.ts", "docs/old.md"], deleted: ["docs/old.md"] };
+    const result = plan("change", policy, deletion, graph, undefined);
+    assert.ok(!entry(result, "lint").scope.includes("docs/old.md"));
+    assert.equal(entry(result, "docs").decision, "run");
+    const onlyDeleted = plan(
+      "change",
+      policy,
+      { files: ["docs/old.md"], deleted: ["docs/old.md"] },
+      graph,
+      undefined,
+    );
+    assert.equal(entry(onlyDeleted, "lint").decision, "not-applicable");
   });
 
   it("selects the same checks over the same scopes for equivalent changes", () => {

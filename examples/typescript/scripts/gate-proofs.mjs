@@ -103,8 +103,15 @@ ${Array.from({ length: 11 }, (_, i) => `  if (code === ${String(i)}) return "she
   },
   {
     gate: "Secrets",
-    violation: "add a file containing a well-formed fake AWS access key",
-    edits: [create("config/proof.env", "AWS_ACCESS_KEY_ID=AKIAZ4Q7VXD2LMB9K4WT\n")],
+    violation:
+      "add a file containing a well-formed fake AWS access key (base32 body, as the rule requires)",
+    // Assembled at run time, so no committed file carries a well-formed key.
+    edits: [
+      create(
+        "config/proof.env",
+        `AWS_ACCESS_KEY_ID=${["AKIA", "Z4Q7VXD2", "LMB3K4WT"].join("")}\n`,
+      ),
+    ],
   },
   {
     gate: "Avoided terms",
@@ -152,12 +159,19 @@ ${Array.from({ length: 11 }, (_, i) => `  if (code === ${String(i)}) return "she
     gate: "Mutation",
     violation: "delete the assertions of the core Lending domain's unit tests",
     scope: ["src/lending/domain/loan.ts"],
+    // The tests still exercise the Loan; only what they assert is gone.
     edits: [
-      {
-        file: "src/lending/domain/loan.test.ts",
-        deleteLines:
-          /^\s*expect\(|^\s*new (InvalidLoan|LoanAlreadyReturned)\(|^\s*\);$|^\s*\)\.to|^\s*"2027-01-08",$/,
-      },
+      create(
+        "src/lending/domain/loan.test.ts",
+        `import { it } from "vitest";
+import { isOverdue, recordReturn, takeOnLoan } from "./loan.js";
+
+it("exercises a Loan without asserting anything", () => {
+  const loan = takeOnLoan("loan-1", "b", " Ada ", new Date("2026-03-01T00:00:00Z"));
+  isOverdue(recordReturn(loan, new Date("2026-03-20T00:00:00Z")), new Date("2026-04-01T00:00:00Z"));
+});
+`,
+      ),
     ],
   },
   {
@@ -179,10 +193,8 @@ ${Array.from({ length: 11 }, (_, i) => `  if (code === ${String(i)}) return "she
   },
 ];
 
-const tierOf = (gate) =>
-  ["Integration tests", "E2E tests", "Mutation", "Dependency vulnerabilities"].includes(gate)
-    ? "full"
-    : "fast";
+const policy = JSON.parse(readFileSync("harness/policy.json", "utf8"));
+const tierOf = (gate) => policy.checks.find((c) => c.gate === gate && c.cadence === "change")?.tier;
 const entryPointOf = (tier) => (tier === "fast" ? ["check-fast"] : ["check"]);
 
 function status() {
@@ -190,7 +202,6 @@ function status() {
 }
 
 function refuseUnattributable(selected) {
-  const policy = JSON.parse(readFileSync("harness/policy.json", "utf8"));
   const gates = PROOFS.map((p) => p.gate);
   const duplicated = gates.filter((g, i) => gates.indexOf(g) !== i);
   const unproved = GATE_FLOOR.filter((g) => !gates.includes(g));
@@ -276,8 +287,15 @@ function prove(proof) {
       record.declared = proof.scope;
       record.analyzed = scope?.analyzed ?? "unavailable";
     }
+    // Red because of the Gate: the Entry Point failed, the failing check is the
+    // Gate under proof, it actually ran and failed, and a declared scope was
+    // analyzed exactly as declared by an analysis that completed.
+    const scopeHeld =
+      !proof.scope ||
+      (Array.isArray(record.analyzed) &&
+        JSON.stringify(record.analyzed) === JSON.stringify(proof.scope));
     record.outcome =
-      run.status !== 0 && record.failingGate === proof.gate
+      run.status !== 0 && record.failingGate === proof.gate && ran !== undefined && scopeHeld
         ? "red because of the Gate"
         : "not proved";
   } catch (error) {

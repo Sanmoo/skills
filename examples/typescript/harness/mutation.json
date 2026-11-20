@@ -2,7 +2,6 @@
   "$comment": "Mutation Gate thresholds, in percent: the Gate Contract's defaults. Core contexts are the ones the context map in .dependency-cruiser.contexts.cjs marks core.",
   "overall": 80,
   "core": 90,
-  "base": "main",
   "eligible": "^src/.+\\.ts$",
   "ineligible": "\\.test\\.ts$"
 }

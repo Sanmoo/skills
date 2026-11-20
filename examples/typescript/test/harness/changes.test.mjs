@@ -81,6 +81,17 @@ describe("changed-set discovery", () => {
     assert.deepEqual(changedFiles("main", repo.git).files, []);
   });
 
+  it("reports changes outside the project directory separately", () => {
+    const repo = scratchRepository({ "project/src/a.ts": "a\n", "other/b.md": "b\n" });
+    topic(repo);
+    repo.write("other/b.md", "b2\n");
+    repo.write("project/src/a.ts", "a2\n");
+    const inProject = (args) => repo.git(["-C", "project", ...args]);
+    const result = changedFiles("main", inProject);
+    assert.deepEqual(result.files, ["src/a.ts"]);
+    assert.deepEqual(result.outside, ["other/b.md"]);
+  });
+
   it("widens when the base cannot be resolved", () => {
     const repo = scratchRepository({ "src/a.ts": "a\n" });
     assert.match(changedFiles("trunk", repo.git).widened, /base branch trunk cannot be resolved/);
