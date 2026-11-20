@@ -279,6 +279,31 @@ function readJson(path) {
   return existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : undefined;
 }
 
+/**
+ * Whether one proof's run went red because of its Gate: the Entry Point
+ * failed, the failing check is the Gate under proof, that check actually ran
+ * and failed, and a declared scope was analyzed exactly as declared by an
+ * analysis that completed. A missing report or scope record attributes nothing.
+ */
+export function attribute(proof, exitStatus, report, scopeRecord) {
+  const failingGate = report?.failed?.gate ?? null;
+  const ran = report?.checks.find((c) => c.gate === proof.gate && c.outcome === "failed");
+  const result = { failingGate, scope: ran ? ran.scope : null };
+  if (proof.scope) {
+    result.declared = proof.scope;
+    result.analyzed = scopeRecord?.analyzed ?? "unavailable";
+  }
+  const scopeHeld =
+    !proof.scope ||
+    (Array.isArray(result.analyzed) &&
+      JSON.stringify(result.analyzed) === JSON.stringify(proof.scope));
+  result.outcome =
+    exitStatus !== 0 && failingGate === proof.gate && ran !== undefined && scopeHeld
+      ? "red because of the Gate"
+      : "not proved";
+  return result;
+}
+
 function prove(proof) {
   const tier = tierOf(proof.gate);
   const target = entryPointOf(tier);
@@ -299,27 +324,9 @@ function prove(proof) {
     if (proof.scope) env.MUTATION_SCOPE = proof.scope.join(",");
     console.log(`\n### ${proof.gate}: ${proof.violation}\n`);
     const run = spawnSync("make", ["--no-print-directory", ...target], { stdio: "inherit", env });
-    const report = readJson(reportFile);
     record.exitStatus = run.status;
-    record.failingGate = report?.failed?.gate ?? null;
-    const ran = report?.checks.find((c) => c.gate === proof.gate && c.outcome === "failed");
-    record.scope = ran ? ran.scope : null;
-    if (proof.scope) {
-      const scope = readJson("reports/mutation/scope.json");
-      record.declared = proof.scope;
-      record.analyzed = scope?.analyzed ?? "unavailable";
-    }
-    // Red because of the Gate: the Entry Point failed, the failing check is the
-    // Gate under proof, it actually ran and failed, and a declared scope was
-    // analyzed exactly as declared by an analysis that completed.
-    const scopeHeld =
-      !proof.scope ||
-      (Array.isArray(record.analyzed) &&
-        JSON.stringify(record.analyzed) === JSON.stringify(proof.scope));
-    record.outcome =
-      run.status !== 0 && record.failingGate === proof.gate && ran !== undefined && scopeHeld
-        ? "red because of the Gate"
-        : "not proved";
+    const scopeRecord = proof.scope ? readJson("reports/mutation/scope.json") : undefined;
+    Object.assign(record, attribute(proof, run.status, readJson(reportFile), scopeRecord));
   } catch (error) {
     record.outcome = "not proved";
     record.error = error.message;

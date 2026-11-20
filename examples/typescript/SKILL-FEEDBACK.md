@@ -6,19 +6,19 @@ This tree is the result of the greenfield acceptance run of `bootstrap-harness` 
 
 - **When and where.** 2026-11-20, in a fresh session, on branch `agent-issue-23`.
 - **Starting commit.** `ecfce57c566ab0a7dd5588feb019727da71ae538`. The session deleted `examples/typescript/` and regenerated it from an empty directory, following the greenfield path of [SKILL.md](../../skills/bootstrap-harness/SKILL.md) from phase 1 to phase 7.
-- **Interview answers.** Fixed: they are [INTERVIEW-ANSWERS.md](INTERVIEW-ANSWERS.md) as it stood at the starting commit. Two changes were made to the file:
-  - its closing history section was dropped, because it described how the old tree had deferred and later restored the E2E level;
-  - Book's avoided synonym `title` and Copy's `unit` were replaced in [GLOSSARY.md](GLOSSARY.md). Both are identifiers the code and the stack already use, which the Avoided terms Contract warns against.
+- **Interview answers.** Fixed: they are [INTERVIEW-ANSWERS.md](INTERVIEW-ANSWERS.md) as it stood at the starting commit. The run departed from the file in two places:
+  - it dropped the file's closing history section, because it described how the old tree had deferred and later restored the E2E level;
+  - in [GLOSSARY.md](GLOSSARY.md), the answer to Q6, it replaced Book's avoided synonym `title` and Copy's `unit`. Both are identifiers the code and the stack already use, which the Avoided terms Contract warns against.
 - **What the session read.** It did not consult the old example while generating. The skill points at the Stack Example as a reference, but an acceptance run that reads the tree it is regenerating cannot tell which rules live only in that tree. The old tree was read only afterwards, to diff against.
-- **Outcome.** Every Gate Proof in [GATE-PROOFS.md](GATE-PROOFS.md) went red because of its own Gate. The other evidence, all on the final tree:
-  - the [rehearsal](scripts/rehearse-validation.mjs) of both modes passed all five scenarios;
+- **Outcome.** Every Gate Proof in [GATE-PROOFS.md](GATE-PROOFS.md) went red because of its own Gate. The other evidence, each run at a named commit:
+  - the [rehearsal](scripts/rehearse-validation.mjs) of both modes passed all five scenarios at `a57e016`;
   - the [E2E executor verification](scripts/verify-e2e-executor.mjs) passed;
-  - `make check` and `make check MODE=integral` were both green; the whole-codebase mutation scored 90.34% overall and 100% in core.
-- **Re-runs.** Fixes 5 to 10 below changed Gate Contract obligations. After them, the rehearsal, both Entry Points, and every Gate Proof ran again. The last fix, 4, re-ran only the Mutation proof, as the issue allows.
+  - `make check MODE=integral` was green at `a57e016`, where the whole-codebase mutation scored 90.34% overall and 100% in core; `make check` was green there and again on the final tree.
+- **Re-runs.** Fixes 5 to 12 below changed Gate Contract obligations. The example implemented them before the final runs, so the rehearsal, both Entry Points, and every Gate Proof ran against that behavior; fix 4 re-ran only the Mutation proof, as the issue allows. Fixes 11 and 12 came from review and added only tests of the Harness, which run in the full Entry Point; it was green on the final tree, and they change no Gate's analysis, so no Gate Proof re-ran for them. Fix 2 changes phase 5's **Done when**, which the adoption run in [#24](https://github.com/Sanmoo/skills/issues/24) must follow.
 
 ## Gaps and fixes
 
-The run surfaced 1 to 4 while following the text. The diff against the old tree surfaced 5 to 10: rules the old example carried that the skill never stated, so a faithful regeneration dropped them.
+The run surfaced 1 to 4 while following the text. The diff against the old tree surfaced 5 to 10, and its review 11 and 12: rules the old example carried that the skill never stated, so a faithful regeneration dropped them.
 
 1. **The rehearsal could be passed by a selector that always widens.** Phase 5 asked the rehearsal to show "a violation in an affected dependent is caught rather than listed". A selection that widens to everything also catches it. This run's selector did exactly that: its dependency graph config was invalid, so every change widened, and only an extra assertion exposed it. Fixed: phase 5 now requires the dependent to be caught by a selection that did not widen.
 2. **Phase 5 could not be done before phase 6.** Phase 5 wires the Guide pointers Gate and is done when the full Entry Point is green. That Gate has no Guides to check until phase 6 writes them, so it can only pass vacuously or fail. Fixed: phase 5's **Done when** exempts the Guide pointers Gate, which phase 6's criterion already covers.
@@ -36,6 +36,9 @@ The run surfaced 1 to 4 while following the text. The diff against the old tree 
 
 9. **Integral validation could lose its periodic result.** Stopping at the first failure, as validation by change does, means a failing Lint in the weekly run records the periodic mutation as never run. Its last failure then blocks nothing. Fixed: integral validation runs every check even after one fails.
 10. **"Red because of that Gate" did not exclude a crash.** A Stryker crash, or an integration run without Docker, fails the Gate under proof, and the record would have called it proved. Fixed: a new Gate Proof rule counts a proof only when the Gate under proof ran, its analysis completed, and it analyzed the declared input.
+
+11. **Nothing tested the proof tooling's own attribution.** The old tree tested which red results its proof runner counts; the regeneration had the rules but no test, so a runner that miscounted would have recorded a Gate as proved. Fixed: the Red-for-its-own-reason Gate Proof rule now requires those attribution rules to be tested. Here [test/harness/gate-proofs.test.mjs](test/harness/gate-proofs.test.mjs) runs in the full Entry Point.
+12. **The periodic cadence could drift from CI.** The policy recorded the schedule as prose, with nothing tying it to the workflow that runs it. Fixed: the Contract now requires the recorded cadence to be checked against the schedule CI runs. Here the policy's `cron` is compared with `.github/workflows/integral.yml`.
 
 ## Regeneration defects, not skill gaps
 
