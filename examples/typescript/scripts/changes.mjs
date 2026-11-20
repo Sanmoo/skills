@@ -2,12 +2,12 @@
 // since the merge base, the working tree, and untracked files. Shared by the
 // selection policy and the Mutation Gate, so both see the same change.
 
-/** Resolves the base branch, preferring origin so a stale local branch cannot change the measured set. */
 /** The one base branch the selection and every changed-set Gate compare against. */
 export function baseBranch(policyBase) {
   return process.env.MUTATION_BASE ?? policyBase;
 }
 
+/** Resolves the base branch, preferring origin so a stale local branch cannot change the measured set. */
 export function resolveBase(base, git) {
   const remotes = (git(["remote"]) ?? "").split("\n").filter(Boolean);
   const others = remotes.filter((remote) => remote !== "origin");

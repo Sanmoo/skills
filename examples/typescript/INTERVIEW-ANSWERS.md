@@ -2,7 +2,7 @@
 
 The fixed answers this example was generated from. They are recorded here so the same tree can be regenerated, and so the decisions can be reviewed without replaying the conversation.
 
-The questions follow [the skill's interview](../../skills/bootstrap-harness/INTERVIEW.md), in the order it asks them. Answers marked **confirmed** were accepted as-is by the user. The [acceptance run](SKILL-FEEDBACK.md#the-acceptance-run) that regenerated this tree took them unchanged from its starting commit.
+The questions follow [the skill's interview](../../skills/bootstrap-harness/INTERVIEW.md), in the order it asks them. Answers marked **confirmed** were accepted as-is by the user. The [acceptance run](SKILL-FEEDBACK.md#the-acceptance-run) that regenerated this tree took them from its starting commit; that record lists its two departures.
 
 ## Domain
 

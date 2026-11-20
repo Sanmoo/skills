@@ -225,7 +225,7 @@ describe("the project's policy", () => {
 
   it("states the protection and residual risk of every periodic check", () => {
     for (const c of project.checks.filter((c) => c.cadence === "periodic")) {
-      assert.ok(c.schedule && c.protectionBetweenRuns && c.residualRisk, c.id);
+      assert.ok(c.schedule && c.cron && c.protectionBetweenRuns && c.residualRisk, c.id);
     }
   });
 
