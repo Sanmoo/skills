@@ -1,15 +1,16 @@
+// Static metrics Gate: cyclomatic complexity per function. The limit is the
+// Gate Contract's default. The target is first-party production code under
+// src/; tests and tooling are non-production targets and are not measured.
 import tseslint from "typescript-eslint";
-import { SOURCE_TREES } from "./scripts/source-trees.mjs";
 
-// Static metrics Gate: cyclomatic complexity at most 10 per function. This
-// config runs only that rule, so the Gate Proof cannot be confused with Lint.
-export default tseslint.config({
-  ignores: ["**/*.test.ts"],
-  files: SOURCE_TREES.map((directory) => `${directory}/**/*.ts`),
-  languageOptions: {
-    parser: tseslint.parser,
+export const COMPLEXITY_LIMIT = 10;
+
+export default [
+  {
+    files: ["src/**/*.ts"],
+    ignores: ["src/**/*.test.ts"],
+    languageOptions: { parser: tseslint.parser },
+    linterOptions: { reportUnusedDisableDirectives: "error", noInlineConfig: true },
+    rules: { complexity: ["error", { max: COMPLEXITY_LIMIT }] },
   },
-  rules: {
-    complexity: ["error", 10],
-  },
-});
+];

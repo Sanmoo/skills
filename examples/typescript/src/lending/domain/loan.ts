@@ -1,76 +1,61 @@
-// Lending domain, the core of the system. No framework, storage, or node
-// built-in imports belong here.
-export type Loan = Readonly<{
-  id: string;
-  bookId: string;
-  borrower: string;
-  borrowedAt: Date;
-  dueAt: Date;
-  returnedAt: Date | null;
-}>;
-
+/** Days between the day a Loan is made and its Due Date, under the lending policy. */
 export const LOAN_PERIOD_DAYS = 14;
 
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+const DAY_MS = 86_400_000;
 
-export interface BorrowRequest {
-  readonly id: string;
+export type LoanId = string;
+
+/** A calendar day, written YYYY-MM-DD. */
+export type Day = string;
+
+export interface Loan {
+  readonly id: LoanId;
   readonly bookId: string;
   readonly borrower: string;
-  readonly now: Date;
+  readonly loanedOn: Day;
+  readonly dueDate: Day;
+  readonly returnedOn: Day | null;
 }
 
-export class InvalidLoanError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "InvalidLoanError";
-  }
+export class InvalidLoan extends Error {
+  override readonly name = "InvalidLoan";
 }
 
-export class LoanAlreadyReturnedError extends Error {
-  constructor(loanId: string) {
-    super(`loan ${loanId} has already been returned`);
-    this.name = "LoanAlreadyReturnedError";
-  }
+export class LoanAlreadyReturned extends Error {
+  override readonly name = "LoanAlreadyReturned";
 }
 
-export function borrowBook(request: BorrowRequest): Loan {
-  if (typeof request.id !== "string" || request.id.trim() === "") {
-    throw new InvalidLoanError("loan id must not be empty");
-  }
-  if (typeof request.bookId !== "string" || request.bookId.trim() === "") {
-    throw new InvalidLoanError("loan book id must not be empty");
-  }
-  if (typeof request.borrower !== "string" || request.borrower.trim() === "") {
-    throw new InvalidLoanError("loan borrower must not be empty");
-  }
-  if (Number.isNaN(request.now.getTime())) {
-    throw new InvalidLoanError("loan start must be a valid date");
-  }
-  const borrowedAt = new Date(request.now.getTime());
-  return Object.freeze({
-    id: request.id,
-    bookId: request.bookId,
-    borrower: request.borrower.trim(),
-    borrowedAt,
-    dueAt: new Date(borrowedAt.getTime() + LOAN_PERIOD_DAYS * MILLISECONDS_PER_DAY),
-    returnedAt: null,
-  });
+export function dayOf(date: Date): Day {
+  return date.toISOString().slice(0, 10);
 }
 
-export function returnLoan(loan: Loan, now: Date): Loan {
-  if (loan.returnedAt !== null) {
-    throw new LoanAlreadyReturnedError(loan.id);
-  }
-  if (Number.isNaN(now.getTime())) {
-    throw new InvalidLoanError("return moment must be a valid date");
-  }
-  if (now.getTime() < loan.borrowedAt.getTime()) {
-    throw new InvalidLoanError("return moment must not precede the loan");
-  }
-  return Object.freeze({ ...loan, returnedAt: new Date(now.getTime()) });
+function addDays(day: Day, days: number): Day {
+  return dayOf(new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY_MS));
 }
 
-export function isOverdue(loan: Loan, now: Date): boolean {
-  return loan.returnedAt === null && now.getTime() > loan.dueAt.getTime();
+/** Makes a Loan of a Book to a Borrower, due LOAN_PERIOD_DAYS after `today`. */
+export function takeOnLoan(id: LoanId, bookId: string, borrower: string, today: Date): Loan {
+  const name = borrower.trim();
+  if (name === "") throw new InvalidLoan("a Loan needs a Borrower");
+  const loanedOn = dayOf(today);
+  return {
+    id,
+    bookId,
+    borrower: name,
+    loanedOn,
+    dueDate: addDays(loanedOn, LOAN_PERIOD_DAYS),
+    returnedOn: null,
+  };
+}
+
+/** Records the Return of a Loan, which closes it. */
+export function recordReturn(loan: Loan, today: Date): Loan {
+  if (loan.returnedOn !== null)
+    throw new LoanAlreadyReturned(`Loan ${loan.id} was already returned`);
+  return { ...loan, returnedOn: dayOf(today) };
+}
+
+/** An open Loan is Overdue once its Due Date has passed. */
+export function isOverdue(loan: Loan, today: Date): boolean {
+  return loan.returnedOn === null && dayOf(today) > loan.dueDate;
 }

@@ -1,149 +1,90 @@
 import { describe, expect, it } from "vitest";
 import {
-  borrowBook,
-  InvalidLoanError,
-  isOverdue,
+  InvalidLoan,
   LOAN_PERIOD_DAYS,
-  LoanAlreadyReturnedError,
-  returnLoan,
-  type Loan,
+  LoanAlreadyReturned,
+  dayOf,
+  isOverdue,
+  recordReturn,
+  takeOnLoan,
 } from "./loan.js";
 
-const start = new Date("2026-01-10T09:00:00.000Z");
-const request = { id: "loan-1", bookId: "book-1", borrower: "Ada Lovelace", now: start };
+const madeOn = new Date("2026-03-01T15:30:00Z");
 
-function borrowed(): Loan {
-  return borrowBook(request);
-}
-
-function daysAfter(date: Date, days: number): Date {
-  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
-}
-
-describe("borrowBook", () => {
-  it("creates a loan due fourteen days after it starts", () => {
-    expect(borrowed()).toEqual({
+describe("takeOnLoan", () => {
+  it("makes an open Loan due after the loan period", () => {
+    expect(takeOnLoan("loan-1", "dispossessed", "Ada", madeOn)).toEqual({
       id: "loan-1",
-      bookId: "book-1",
-      borrower: "Ada Lovelace",
-      borrowedAt: start,
-      dueAt: daysAfter(start, LOAN_PERIOD_DAYS),
-      returnedAt: null,
+      bookId: "dispossessed",
+      borrower: "Ada",
+      loanedOn: "2026-03-01",
+      dueDate: "2026-03-15",
+      returnedOn: null,
     });
+  });
+
+  it("uses a fourteen-day loan period", () => {
     expect(LOAN_PERIOD_DAYS).toBe(14);
   });
 
-  it("trims the borrower and freezes the loan", () => {
-    const loan = borrowBook({ ...request, borrower: "  Ada Lovelace " });
-
-    expect(loan.borrower).toBe("Ada Lovelace");
-    expect(Object.isFrozen(loan)).toBe(true);
-  });
-
-  it("copies the start date instead of sharing it", () => {
-    const now = new Date(start.getTime());
-    const loan = borrowBook({ ...request, now });
-
-    now.setUTCFullYear(2030);
-
-    expect(loan.borrowedAt).toEqual(start);
-  });
-
-  it.each([
-    ["an empty id", { id: "" }, "loan id must not be empty"],
-    ["a blank id", { id: "  " }, "loan id must not be empty"],
-    ["an empty book id", { bookId: "" }, "loan book id must not be empty"],
-    ["a blank book id", { bookId: " " }, "loan book id must not be empty"],
-    ["an empty borrower", { borrower: "" }, "loan borrower must not be empty"],
-    ["a blank borrower", { borrower: "   " }, "loan borrower must not be empty"],
-  ])("rejects %s", (_label, override, message) => {
-    expect(() => borrowBook({ ...request, ...override })).toThrow(new InvalidLoanError(message));
-  });
-
-  it("rejects an invalid start date", () => {
-    expect(() => borrowBook({ ...request, now: new Date("not a date") })).toThrow(
-      new InvalidLoanError("loan start must be a valid date"),
+  it("crosses month and year ends", () => {
+    expect(takeOnLoan("loan-2", "b", "Ada", new Date("2026-12-25T00:00:00Z")).dueDate).toBe(
+      "2027-01-08",
     );
   });
 
-  it("rejects a non-string borrower from an untyped caller", () => {
-    const untyped = { ...request, borrower: 7 } as unknown as typeof request;
+  it("trims the Borrower", () => {
+    expect(takeOnLoan("loan-1", "b", "  Ada ", madeOn).borrower).toBe("Ada");
+  });
 
-    expect(() => borrowBook(untyped)).toThrow(
-      new InvalidLoanError("loan borrower must not be empty"),
+  it("refuses a Loan without a Borrower", () => {
+    expect(() => takeOnLoan("loan-1", "b", "  ", madeOn)).toThrow(
+      new InvalidLoan("a Loan needs a Borrower"),
     );
   });
 });
 
-describe("returnLoan", () => {
-  it("records the return moment without mutating the original loan", () => {
-    const loan = borrowed();
-    const returnedAt = daysAfter(start, 3);
-
-    const returned = returnLoan(loan, returnedAt);
-
-    expect(returned).toEqual({ ...loan, returnedAt });
-    expect(returned.returnedAt).toEqual(returnedAt);
-    expect(loan.returnedAt).toBeNull();
-    expect(Object.isFrozen(returned)).toBe(true);
+describe("recordReturn", () => {
+  it("closes the Loan on the day of its Return", () => {
+    const loan = takeOnLoan("loan-1", "b", "Ada", madeOn);
+    expect(recordReturn(loan, new Date("2026-03-10T09:00:00Z"))).toEqual({
+      ...loan,
+      returnedOn: "2026-03-10",
+    });
   });
 
-  it("copies the return moment instead of sharing it", () => {
-    const returnedAt = daysAfter(start, 3);
-    const returned = returnLoan(borrowed(), returnedAt);
-
-    returnedAt.setUTCFullYear(2030);
-
-    expect(returned.returnedAt).toEqual(daysAfter(start, 3));
-  });
-
-  it("accepts a return at the exact moment of borrowing", () => {
-    const returned = returnLoan(borrowed(), start);
-
-    expect(returned.returnedAt).toEqual(start);
-  });
-
-  it("rejects a second return", () => {
-    const returned = returnLoan(borrowed(), daysAfter(start, 1));
-
-    expect(() => returnLoan(returned, daysAfter(start, 2))).toThrow(
-      new LoanAlreadyReturnedError("loan-1"),
-    );
-  });
-
-  it("rejects an invalid return moment", () => {
-    expect(() => returnLoan(borrowed(), new Date("nope"))).toThrow(
-      new InvalidLoanError("return moment must be a valid date"),
-    );
-  });
-
-  it("rejects a return before the loan started", () => {
-    const before = new Date(start.getTime() - 1);
-
-    expect(() => returnLoan(borrowed(), before)).toThrow(
-      new InvalidLoanError("return moment must not precede the loan"),
+  it("refuses a second Return", () => {
+    const returned = recordReturn(takeOnLoan("loan-1", "b", "Ada", madeOn), madeOn);
+    expect(() => recordReturn(returned, madeOn)).toThrow(
+      new LoanAlreadyReturned("Loan loan-1 was already returned"),
     );
   });
 });
 
 describe("isOverdue", () => {
-  it("is false before the due date", () => {
-    expect(isOverdue(borrowed(), daysAfter(start, LOAN_PERIOD_DAYS - 1))).toBe(false);
+  const loan = takeOnLoan("loan-1", "b", "Ada", madeOn);
+
+  it("is not Overdue on its Due Date", () => {
+    expect(isOverdue(loan, new Date("2026-03-15T23:59:59Z"))).toBe(false);
   });
 
-  it("is false at the exact due date", () => {
-    expect(isOverdue(borrowed(), daysAfter(start, LOAN_PERIOD_DAYS))).toBe(false);
+  it("is Overdue the day after its Due Date", () => {
+    expect(isOverdue(loan, new Date("2026-03-16T00:00:00Z"))).toBe(true);
   });
 
-  it("is true one millisecond after the due date", () => {
-    const dueAt = daysAfter(start, LOAN_PERIOD_DAYS);
+  it("is never Overdue once returned", () => {
+    const returned = recordReturn(loan, new Date("2026-03-20T00:00:00Z"));
+    expect(isOverdue(returned, new Date("2026-04-01T00:00:00Z"))).toBe(false);
+  });
+});
 
-    expect(isOverdue(borrowed(), new Date(dueAt.getTime() + 1))).toBe(true);
+describe("errors and days", () => {
+  it("names its errors", () => {
+    expect(new InvalidLoan("x").name).toBe("InvalidLoan");
+    expect(new LoanAlreadyReturned("x").name).toBe("LoanAlreadyReturned");
   });
 
-  it("is false once the loan is returned, even after the due date", () => {
-    const returned = returnLoan(borrowed(), daysAfter(start, 2));
-
-    expect(isOverdue(returned, daysAfter(start, LOAN_PERIOD_DAYS + 30))).toBe(false);
+  it("writes a day as YYYY-MM-DD in UTC", () => {
+    expect(dayOf(new Date("2026-03-01T23:30:00-03:00"))).toBe("2026-03-02");
   });
 });

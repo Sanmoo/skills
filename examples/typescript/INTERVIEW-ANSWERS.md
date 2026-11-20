@@ -2,7 +2,7 @@
 
 The fixed answers this example was generated from. They are recorded here so the same tree can be regenerated, and so the decisions can be reviewed without replaying the conversation.
 
-The questions follow [the skill's interview](../../skills/bootstrap-harness/INTERVIEW.md), in the order it asks them. The interview later added the scenario language and initial business scenarios (Q7-Q8); this example records them, as [#7](https://github.com/Sanmoo/skills/issues/7) applied the rule. Answers marked **confirmed** were accepted as-is by the user.
+The questions follow [the skill's interview](../../skills/bootstrap-harness/INTERVIEW.md), in the order it asks them. Answers marked **confirmed** were accepted as-is by the user. The [acceptance run](SKILL-FEEDBACK.md#the-acceptance-run) that regenerated this tree took them unchanged from its starting commit.
 
 ## Domain
 
@@ -93,16 +93,6 @@ The executable wording is in [features/library_lending.feature](features/library
 **Q8 - Threshold departures**: none. Mutation 80% overall and 90% in core, complexity 10, zero cycles, duplication 3%, vulnerabilities high and critical only - all at the defaults. **Confirmed.**
 
 **Q9 - Validation budget and periodic execution**: 2400 seconds for validating one change, recorded in `harness/policy.json`; there is no universal CI target. The whole-codebase mutation is the periodic check, because no reliable reduced scope exists for the code a change did not touch; it runs under integral validation on the scheduled weekly job and on demand. Validation by change reports it instead of running it. Between executions its protection is the reduced-scope mutation validation by change does run, and the residual risk is the unmutated code outside the change's affected scope; the scheduled run limits how long that gap stays open. Both statements, and the cadence, are recorded beside the check in `harness/policy.json`. Adopting the modes elsewhere measures the budget against that project's own cost. **Confirmed.**
-
-## Restored: the E2E level
-
-[ADR 0003](docs/adr/0003-defer-the-e2e-level.md) deferred the level, and [ADR 0004](docs/adr/0004-defer-the-e2e-level-under-the-universal-rule.md) carried that deferral under the universal Gherkin rule that [Sanmoo/skills#6](https://github.com/Sanmoo/skills/issues/6) establishes. [Sanmoo/skills#7](https://github.com/Sanmoo/skills/issues/7) applied the rule and [ADR 0005](docs/adr/0005-restore-the-e2e-level-with-cucumber.md) supersedes ADR 0004:
-
-- English Gherkin scenarios run directly by `@cucumber/cucumber`, with TypeScript steps loaded through `tsx`;
-- the compiled service runs as a separate process against a real Postgres container, and scenarios reach it only over HTTP;
-- the full Entry Point builds the deliverable before the E2E Gate runs;
-- the two journeys in Q8 are the initial portfolio;
-- `src/main.ts` reports its listening port, which is the readiness signal the level waits for.
 
 ## Gate Proofs
 

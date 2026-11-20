@@ -1,530 +1,318 @@
-// Runs the Gate Proof for every Gate, one at a time.
-//
-// A Gate Proof introduces the smallest violation the Gate exists to catch, runs
-// the Entry Point of that Gate's tier with only that violation present, confirms
-// it went red because of that Gate, then restores the tree. It is a one-off
-// proof that the Gate works, not part of either Entry Point.
-//
-// The Entry Point is the same command in every proof of the same tier, and that
-// is deliberate: what differs between two runs is the tree, which carries
-// exactly one violation each time. A Gate that analyzes the changed set needs
-// the violation's input inside that set, and the proof's branch may change none
-// of it, so such a proof declares the smallest eligible scope it needs. The
-// declaration is setup, not a second violation: the tree still carries only the
-// deliberate fault. It replaces the Gate's changed-set selection for that one
-// execution through the stack's own transport (here `MUTATION_SCOPE`), and the
-// record keeps both the requested files and the files the Gate actually
-// analyzed, read from the Gate's own scope record rather than from output that
-// may be truncated below. Attribution comes from the Entry Point's own output,
-// where every Gate names itself, because it stops at the first Gate that fails -
-// so a correct proof leaves exactly one Gate marked red, and it is the Gate
-// under proof (see `wentRed` below). Several violations in one tree would
-// leave several Gates red, the first failure would hide the rest, and no run
-// could say which Gate caught which violation.
-//
-// The full tier is not free - it runs a container, the mutation Gate and the
-// advisory database - and a complete run pays that cost once per full-tier
-// proof. That is why the script is in neither Entry Point, and why `--gate=`
-// exists to iterate on one proof without the rest.
-//
-// The preconditions attribution rests on are checked rather than assumed: every
-// Gate an Entry Point runs must have exactly one proof with one label, the tree
-// must be clean before each proof and again after it, and each injection must
-// have left a change behind. Any of those failing is a setup error, not evidence.
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { outputOf, report, run } from "./lib.mjs";
-import { loadPolicy } from "./selection.mjs";
-import {
-  MUTATION_REPORT,
-  MUTATION_SCOPE_ENV,
-  MUTATION_SCOPE_RECORD,
-  SELECTION,
-  readScopeRecord,
-} from "./mutation-scope.mjs";
+// Gate Proofs: for each Gate, introduce the smallest violation it exists to
+// catch, run the Entry Point of its tier with only that violation present, and
+// confirm it goes red because of that Gate; then restore the tree before the
+// next proof. Kept out of both Entry Points; run with `npm run gate-proofs`
+// (or `npm run gate-proofs -- Mutation` for one Gate). The report it writes,
+// reports/gate-proofs.json, is run output; GATE-PROOFS.md is the record.
+import { execFileSync, spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 
-// The runner passes a declared scope explicitly and never inherits one: a scope
-// exported in the operator's shell must not reach a proof that declares none.
-delete process.env[MUTATION_SCOPE_ENV];
-delete process.env.HARNESS_SCOPE;
+// Every Gate Contract in the Gate Floor, as the policy names its Gate.
+export const GATE_FLOOR = [
+  "Format",
+  "Lint",
+  "Types",
+  "Unit tests",
+  "Integration tests",
+  "E2E tests",
+  "Mutation",
+  "Context boundaries",
+  "Dependency rule",
+  "Static metrics",
+  "Dependency vulnerabilities",
+  "Secrets",
+  "Avoided terms",
+  "Guide pointers",
+];
 
-const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
-const MAKE = process.platform === "win32" ? "make.exe" : "make";
-// The Mutation Gate's scope record and the transport that carries a declared
-// scope into one run are this stack's choice; a contract only asks that the
-// proof reaches its inputs and that the evidence names them. Both live in
-// scripts/mutation-scope.mjs, shared with the wrapper that writes them.
+const replace = (file, from, to) => ({ file, from, to });
+const append = (file, text) => ({ file, append: text });
+const create = (file, text) => ({ file, create: text });
 
-function tempFile(path, content) {
-  writeFileSync(path, content);
-  return () => rmSync(path, { force: true });
-}
-
-function patch(path, transform) {
-  const original = readFileSync(path, "utf8");
-  writeFileSync(path, transform(original));
-  return () => writeFileSync(path, original);
-}
-
-const proofs = [
+export const PROOFS = [
   {
     gate: "Format",
-    target: "format",
-    description: "misindented a source file",
-    violation: () => tempFile("src/format-proof.ts", "export const formatProof = { a:1 };\n"),
+    violation: "misindent one line of the Catalog domain",
+    edits: [
+      replace(
+        "src/catalog/domain/book.ts",
+        "  const bookId = id.trim();",
+        "    const bookId = id.trim();",
+      ),
+    ],
   },
   {
     gate: "Lint",
-    target: "lint",
-    description: "added an unused variable",
-    violation: () => tempFile("src/lint-proof.ts", "const unusedProof = 1;\n"),
+    violation: "add an unused variable to the Catalog domain",
+    edits: [append("src/catalog/domain/book.ts", "\nconst unusedProof = 1;\n")],
   },
   {
     gate: "Types",
-    target: "types",
-    description: "assigned a string to a number",
-    violation: () => tempFile("src/types-proof.ts", 'export const wrongType: number = "text";\n'),
+    violation: "pass a number where registerBook takes the title string",
+    edits: [
+      replace(
+        "src/catalog/application/catalog-service.ts",
+        "const book = registerBook(id, title);",
+        "const book = registerBook(id, title.length);",
+      ),
+    ],
   },
   {
     gate: "Unit tests",
-    target: "unit",
-    description: "inverted the already-returned condition",
-    violation: () =>
-      patch("src/lending/domain/loan.ts", (source) =>
-        source.replace("if (loan.returnedAt !== null) {", "if (loan.returnedAt === null) {"),
+    violation: "invert the Overdue condition in the Lending domain",
+    edits: [
+      replace(
+        "src/lending/domain/loan.ts",
+        "dayOf(today) > loan.dueDate",
+        "dayOf(today) < loan.dueDate",
       ),
-  },
-  {
-    gate: "Integration tests",
-    target: "integration",
-    description: "mapped borrowed_at from the wrong column",
-    violation: () =>
-      patch("src/lending/adapters/postgres-loan-repository.ts", (source) =>
-        source.replace("borrowedAt: row.borrowed_at,", "borrowedAt: row.due_at,"),
-      ),
-  },
-  {
-    gate: "E2E tests",
-    target: "e2e",
-    description: "renamed the route that registers a book",
-    violation: () => {
-      const restore = patch("src/http/server.ts", (source) =>
-        source.replace("pattern: /^\\/books$/,", "pattern: /^\\/catalogue$/,"),
-      );
-      // The proof builds the broken tree into dist/; rebuild on cleanup so a
-      // later e2e run does not see the violation.
-      return () => {
-        restore();
-        const build = run(NPM, ["run", "build"]);
-        if (build.status !== 0) {
-          throw new Error(`rebuilding dist after the E2E proof failed: ${outputOf(build)}`);
-        }
-      };
-    },
-  },
-  {
-    gate: "Mutation",
-    target: "mutation",
-    description: "deleted the assertions of the core loan unit test",
-    // This Gate mutates the changed set, and a proof branch may change none of
-    // it, so the proof declares the smallest eligible input instead of marking
-    // a source file to look changed. The declaration cannot dilute the proof
-    // either: unrelated changed files are not analyzed. An empty, missing, or
-    // ineligible entry fails the run as a setup error, never as this violation.
-    scope: ["src/lending/domain/loan.ts"],
-    violation: () =>
-      patch(
-        "src/lending/domain/loan.test.ts",
-        () =>
-          'import { describe, expect, it } from "vitest";\n' +
-          'import { borrowBook } from "./loan.js";\n\n' +
-          'describe("loan", () => {\n' +
-          '  it("still runs", () => {\n' +
-          '    expect(typeof borrowBook).toBe("function");\n' +
-          "  });\n" +
-          "});\n",
-      ),
+    ],
   },
   {
     gate: "Context boundaries",
-    target: "boundaries",
-    description: "imported a Catalog domain module from Lending",
-    violation: () =>
-      tempFile(
-        "src/lending/domain/boundary-proof.ts",
-        'import { createBook } from "../../catalog/domain/book.js";\n' +
-          "export const boundaryProof = createBook;\n",
+    violation: "import the Catalog's non-public domain module from Lending",
+    edits: [
+      replace(
+        "src/lending/application/lending-service.ts",
+        'import type { CatalogService } from "../../catalog/index.js";',
+        'import type { CatalogService } from "../../catalog/index.js";\nimport type { Book } from "../../catalog/domain/book.js";\n\nexport type ProofBook = Book;',
       ),
+    ],
   },
   {
     gate: "Dependency rule",
-    target: "dependency-rule",
-    description: "imported pg in the Catalog domain",
-    violation: () =>
-      tempFile(
-        "src/catalog/domain/dependency-proof.ts",
-        'import { Pool } from "pg";\n' + "export const dependencyProof = Pool;\n",
-      ),
+    violation: "import the Postgres client in the Lending domain",
+    edits: [
+      replace("src/lending/domain/loan.ts", "/** Days between", 'import "pg";\n\n/** Days between'),
+    ],
   },
   {
     gate: "Static metrics",
-    target: "metrics",
-    description: "wrote a function with eleven branches",
-    violation: () =>
-      tempFile(
-        "src/metrics-proof.ts",
-        "export function metricsProof(n: number): number {\n" +
-          "  let total = 0;\n" +
-          Array.from({ length: 11 }, (_, i) => `  if (n === ${i + 1}) total += 1;`).join("\n") +
-          "\n  return total;\n}\n",
+    violation: "write a function with eleven independent branches (complexity 12)",
+    edits: [
+      append(
+        "src/catalog/domain/book.ts",
+        `
+export function shelfOf(code: number): string {
+${Array.from({ length: 11 }, (_, i) => `  if (code === ${String(i)}) return "shelf ${String(i)}";`).join("\n")}
+  return "unshelved";
+}
+`,
       ),
-  },
-  {
-    gate: "Dependency vulnerabilities",
-    target: "vulnerabilities",
-    description: "locked tinypool@2.1.1 (critical advisory)",
-    violation: () => {
-      let packageJson;
-      try {
-        packageJson = JSON.parse(readFileSync("package.json", "utf8"));
-      } catch {
-        throw new Error("package.json is not valid JSON");
-      }
-      packageJson.dependencies.tinypool = "2.1.1";
-      const originalPackage = readFileSync("package.json", "utf8");
-      const originalLock = readFileSync("package-lock.json", "utf8");
-      // The vulnerable version must be on disk while the Entry Point runs; the
-      // cleanup at the end of the proof restores both files.
-      writeFileSync("package.json", `${JSON.stringify(packageJson, null, 2)}\n`);
-      const install = run(NPM, ["install", "--package-lock-only", "--no-audit", "--no-fund"]);
-      if (install.status !== 0) {
-        console.error(outputOf(install));
-      }
-      return () => {
-        writeFileSync("package.json", originalPackage);
-        writeFileSync("package-lock.json", originalLock);
-      };
-    },
+    ],
   },
   {
     gate: "Secrets",
-    target: "secrets",
-    description: "added a well-formed fake cloud access key",
-    violation: () => {
-      // Assembled at runtime so this proof file contains no key-shaped text.
-      const fakeCloudKey = ["AKIA", "3Q7Z2XK9WQ4MLP7V"].join("");
-      return tempFile("src/secrets-proof.ts", `export const accessKey = "${fakeCloudKey}";\n`);
-    },
+    violation: "add a file containing a well-formed fake AWS access key",
+    edits: [create("config/proof.env", "AWS_ACCESS_KEY_ID=AKIAZ4Q7VXD2LMB9K4WT\n")],
   },
   {
     gate: "Avoided terms",
-    target: "avoided-terms",
-    description: "named an identifier inventory",
-    violation: () => tempFile("src/avoided-proof.ts", "export const inventory = 1;\n"),
+    violation: "rename the Borrower's local name in the Lending domain to an avoided synonym",
+    edits: [
+      replace(
+        "src/lending/domain/loan.ts",
+        "  const name = borrower.trim();",
+        "  const patron = borrower.trim();",
+      ),
+      replace("src/lending/domain/loan.ts", '  if (name === "")', '  if (patron === "")'),
+      replace("src/lending/domain/loan.ts", "    borrower: name,", "    borrower: patron,"),
+    ],
   },
   {
     gate: "Guide pointers",
-    target: "guide-pointers",
-    description: "linked a Guide to a missing file",
-    violation: () =>
-      patch("docs/guides/architecture.md", (source) => `${source}\n[broken](missing-file.md)\n`),
+    violation: "point a Guide link at a file that does not exist",
+    edits: [
+      replace(
+        "AGENTS.md",
+        "(docs/guides/architecture.md)",
+        "(docs/guides/architecture-missing.md)",
+      ),
+    ],
+  },
+  {
+    gate: "Integration tests",
+    violation: "map a Book's title from the wrong column in the Catalog adapter",
+    edits: [
+      replace(
+        "src/catalog/adapters/postgres-book-repository.ts",
+        "{ id: row.id, title: row.title }",
+        "{ id: row.id, title: row.id }",
+      ),
+    ],
+  },
+  {
+    gate: "E2E tests",
+    violation: "drop the route that reaches Lending's Loan creation from the shipped composition",
+    edits: [
+      replace("src/main.ts", "...lendingRoutes(lending)]", "...lendingRoutes(lending).slice(1)]"),
+    ],
+  },
+  {
+    gate: "Mutation",
+    violation: "delete the assertions of the core Lending domain's unit tests",
+    scope: ["src/lending/domain/loan.ts"],
+    edits: [
+      {
+        file: "src/lending/domain/loan.test.ts",
+        deleteLines:
+          /^\s*expect\(|^\s*new (InvalidLoan|LoanAlreadyReturned)\(|^\s*\);$|^\s*\)\.to|^\s*"2027-01-08",$/,
+      },
+    ],
+  },
+  {
+    gate: "Dependency vulnerabilities",
+    violation: "lock lodash 4.17.4, which has published critical advisories",
+    edits: [
+      {
+        npm: [
+          "install",
+          "--package-lock-only",
+          "--no-audit",
+          "--no-fund",
+          "--save-exact",
+          "lodash@4.17.4",
+        ],
+      },
+    ],
+    touches: ["package.json", "package-lock.json"],
   },
 ];
 
-// The versioned selection policy is the authority on which Gates exist, which
-// tier each one runs in, and which targets realize it, so the script reads it
-// rather than keeping a copy that could drift from it. A Gate in the policy and
-// left unproven is then a setup error, and a proof cannot claim a tier the
-// policy does not give its Gate.
-const loadedPolicy = loadPolicy();
-if (loadedPolicy.policy === undefined) {
-  report("Gate proofs", loadedPolicy.problems);
-}
-const POLICY = loadedPolicy.policy;
+const tierOf = (gate) =>
+  ["Integration tests", "E2E tests", "Mutation", "Dependency vulnerabilities"].includes(gate)
+    ? "full"
+    : "fast";
+const entryPointOf = (tier) => (tier === "fast" ? ["check-fast"] : ["check"]);
 
-// One entry per Gate in the Gate Floor as this stack realizes it, with every
-// target the policy maps to it: a Gate may have a reduced-scope check and a
-// periodic whole-input one, and either proves the Gate.
-const GATES = new Map();
-for (const check of POLICY.checks) {
-  const gate = GATES.get(check.gate) ?? { tier: check.tier, targets: new Set() };
-  gate.targets.add(check.target);
-  GATES.set(check.gate, gate);
+function status() {
+  return execFileSync("git", ["status", "--porcelain", "--", "."], { encoding: "utf8" }).trim();
 }
 
-// The Entry Point whose tier runs this Gate target, or undefined when no Gate
-// in the policy has it. Its name is also the tier's name.
-function entryPointOf(target) {
-  for (const gate of GATES.values()) {
-    if (!gate.targets.has(target)) continue;
-    return gate.tier === "fast" ? "check-fast" : "check";
+function refuseUnattributable(selected) {
+  const policy = JSON.parse(readFileSync("harness/policy.json", "utf8"));
+  const gates = PROOFS.map((p) => p.gate);
+  const duplicated = gates.filter((g, i) => gates.indexOf(g) !== i);
+  const unproved = GATE_FLOOR.filter((g) => !gates.includes(g));
+  const unknown = gates.filter((g) => !policy.checks.some((c) => c.gate === g));
+  const problems = [
+    ...duplicated.map((g) => `two proofs claim ${g}`),
+    ...unproved.map((g) => `${g} has no proof`),
+    ...unknown.map((g) => `${g} is not a Gate the policy runs`),
+  ];
+  if (selected.length === 0) problems.push("no proof matches the requested Gates");
+  if (status() !== "") problems.push(`the tree is not clean:\n${status()}`);
+  if (problems.length > 0) {
+    console.error(`Gate Proofs refused:\n  ${problems.join("\n  ")}`);
+    process.exit(2);
   }
-  return undefined;
 }
 
-// The fields every record shares; the caller adds what only a finished run can
-// know. `treeChanges` is null when the violation never got applied, so an
-// unmeasured tree cannot be read as a clean one.
-function recordOf(proof, tree) {
-  const entryPoint = entryPointOf(proof.target);
-  return {
-    gate: proof.gate,
-    tier: entryPoint === "check" ? "full" : "fast",
-    description: proof.description,
-    command: `${MAKE} ${entryPoint}`,
-    treeChanges: tree,
-  };
-}
-
-// A proof that declared a scope has shown something only if the Gate reports
-// that selection and analyzed the files it named. A red Gate over other inputs,
-// over none, or over a rejected declaration does not say the intended violation
-// was measured, so it cannot count as a Gate Proof.
-function scopeProblems(requested, recorded) {
-  const { record, reason } = recorded;
-  if (record === null) return [reason];
-  const problems = [];
-  if (record.selection !== SELECTION.explicit) {
-    problems.push(
-      `the Mutation Gate selected by "${record.selection}" instead of the declared scope`,
-    );
+function apply(edit) {
+  if (edit.npm) {
+    execFileSync("npm", edit.npm, { stdio: "inherit" });
+    return;
   }
-  if (record.analyzedFiles === null) {
-    problems.push(
-      record.analyzedFilesUnavailable ?? "the Mutation Gate recorded no analyzed files",
-    );
-    return problems;
+  if (edit.create !== undefined) {
+    mkdirSync(edit.file.split("/").slice(0, -1).join("/") || ".", { recursive: true });
+    writeFileSync(edit.file, edit.create);
+    return;
   }
-  if (record.analysisCompleted !== true) {
-    problems.push(
-      "the Mutation Gate's analysis did not complete, so its red result is not a score",
-    );
-  }
-  // The analysis must be exactly the declared scope. A wider one would let
-  // healthy unrelated code dilute the intended failure, so it cannot count.
-  for (const file of requested) {
-    if (!record.analyzedFiles.includes(file)) {
-      problems.push(`the declared input "${file}" was not analyzed`);
-    }
-  }
-  for (const file of record.analyzedFiles) {
-    if (!requested.includes(file)) {
-      problems.push(`"${file}" was analyzed although the proof declared no such input`);
-    }
-  }
-  return problems;
-}
-
-// The scope fields every record carries: what the proof asked for, what the
-// Gate said it selected, and what it analyzed. Requested and effective scope
-// live here rather than in the output, so a shortened log cannot erase them.
-function scopeOf(proof, recorded, problems = []) {
-  const record = recorded?.record ?? null;
-  return {
-    requested: proof.scope ?? null,
-    selection: record?.selection ?? null,
-    analyzed: record?.analyzedFiles ?? null,
-    analysisCompleted: record?.analysisCompleted ?? null,
-    // A record that holds `null` here has answered the question: the analysis
-    // produced nothing to mark unavailable. Only a missing record falls through
-    // to why there is no scope to show.
-    unavailable:
-      record !== null
-        ? (record.analyzedFilesUnavailable ?? null)
-        : (recorded?.reason ??
-          (proof.scope === undefined ? "no scope was declared" : "the Entry Point did not run")),
-    problems,
-  };
-}
-
-// A proof that ran one Gate target would show the Gate works, not that the Entry
-// Point catches it, and that is the whole point. A duplicated label would make
-// "this Gate went red" unattributable, and a Gate an Entry Point runs without a
-// proof would go unproven in silence. Each is rejected up front.
-function attributionProblems(proofList) {
-  const problems = [];
-  const labels = new Set();
-  const targets = new Set();
-  for (const proof of proofList) {
-    if (labels.has(proof.gate)) {
-      problems.push(
-        `"${proof.gate}" labels more than one proof, so a red run could not say which one it proves`,
+  const text = readFileSync(edit.file, "utf8");
+  let next;
+  if (edit.append !== undefined) next = text + edit.append;
+  else if (edit.deleteLines)
+    next = text
+      .split("\n")
+      .filter((line) => !edit.deleteLines.test(line))
+      .join("\n");
+  else {
+    if (!text.includes(edit.from))
+      throw new Error(
+        `proof edit does not apply: ${edit.file} has no ${JSON.stringify(edit.from)}`,
       );
-    }
-    labels.add(proof.gate);
-    if (targets.has(proof.target)) {
-      problems.push(`Gate target "${proof.target}" is proven more than once`);
-    }
-    targets.add(proof.target);
-    if (entryPointOf(proof.target) === undefined) {
-      problems.push(`"${proof.gate}" proves "${proof.target}", which neither Entry Point runs`);
-    }
-    if (proof.scope !== undefined && (!Array.isArray(proof.scope) || proof.scope.length === 0)) {
-      problems.push(`"${proof.gate}" declares an empty scope, so its proof would exercise nothing`);
-    }
+    next = text.replace(edit.from, edit.to);
   }
-  for (const [gate, details] of GATES) {
-    if (!labels.has(gate)) {
-      problems.push(`Gate "${gate}" is in the policy but has no proof`);
-    }
-    if (![...details.targets].some((target) => targets.has(target))) {
-      problems.push(`Gate "${gate}" has no proof running one of its targets`);
-    }
-  }
-  return problems;
+  if (next === text) throw new Error(`proof edit changed nothing in ${edit.file}`);
+  writeFileSync(edit.file, next);
 }
 
-// Porcelain lines for what is changed in the project right now, status codes
-// included, so the report shows what a Gate could have reacted to.
-function treeChanges() {
-  const status = run("git", ["status", "--porcelain", "--", "./"]);
-  if (status.status !== 0) {
-    throw new Error("the tree cannot be inspected with git status");
-  }
-  return status.stdout
-    .split("\n")
-    .map((line) => line.trimEnd())
-    .filter((line) => line !== "");
+function restore() {
+  execFileSync("git", ["checkout", "--", "."]);
+  execFileSync("git", ["clean", "-fdq", "--", "."]);
 }
 
-const problems = attributionProblems(proofs);
-const alreadyDirty = treeChanges();
-if (alreadyDirty.length > 0) {
-  problems.push(
-    "the tree is not clean, so a Gate could react to a change no proof made:",
-    ...alreadyDirty.map((change) => `  ${change}`),
-  );
-}
-if (problems.length > 0) {
-  report("Gate proofs", problems);
+function readJson(path) {
+  return existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : undefined;
 }
 
-const only = process.argv
-  .find((argument) => argument.startsWith("--gate="))
-  ?.slice("--gate=".length);
-const selected = only === undefined ? proofs : proofs.filter((proof) => proof.gate === only);
-if (selected.length === 0) {
-  report("Gate proofs", [`no Gate named "${only}"`]);
-}
-
-const results = [];
-for (const proof of selected) {
-  let cleanup = () => {};
-  let result;
-  let setupError;
-  let treeChangesWhileRunning = null;
+function prove(proof) {
+  const tier = tierOf(proof.gate);
+  const target = entryPointOf(tier);
+  const reportFile = tier === "fast" ? "reports/fast.json" : "reports/validation.json";
+  rmSync(reportFile, { force: true });
+  rmSync("reports/mutation/scope.json", { force: true });
+  const record = {
+    gate: proof.gate,
+    tier,
+    entryPoint: `make ${target.join(" ")}`,
+    violation: proof.violation,
+  };
   try {
-    // An earlier run's scope record or analysis report must not be read as this
-    // run's evidence.
-    rmSync(MUTATION_SCOPE_RECORD, { force: true });
-    rmSync(MUTATION_REPORT, { force: true });
-    cleanup = proof.violation() ?? (() => {});
-    // What the violation left in the tree, recorded before the Entry Point runs
-    // so the report shows what a Gate could have reacted to.
-    treeChangesWhileRunning = treeChanges();
-    if (treeChangesWhileRunning.length === 0) {
-      throw new Error("the violation left the tree unchanged, so nothing was there to catch");
+    for (const edit of proof.edits) apply(edit);
+    record.files = proof.touches ?? [...new Set(proof.edits.map((e) => e.file))];
+    const env = { ...process.env };
+    delete env.MUTATION_SCOPE;
+    if (proof.scope) env.MUTATION_SCOPE = proof.scope.join(",");
+    console.log(`\n### ${proof.gate}: ${proof.violation}\n`);
+    const run = spawnSync("make", ["--no-print-directory", ...target], { stdio: "inherit", env });
+    const report = readJson(reportFile);
+    record.exitStatus = run.status;
+    record.failingGate = report?.failed?.gate ?? null;
+    const ran = report?.checks.find((c) => c.gate === proof.gate && c.outcome === "failed");
+    record.scope = ran ? ran.scope : null;
+    if (proof.scope) {
+      const scope = readJson("reports/mutation/scope.json");
+      record.declared = proof.scope;
+      record.analyzed = scope?.analyzed ?? "unavailable";
     }
-    // A declared scope reaches the Gate through the environment of this one
-    // execution, so it cannot apply to an earlier or later run and needs no
-    // state on disk that a failure could leave behind.
-    result = run(MAKE, [entryPointOf(proof.target)], {
-      timeout: 30 * 60 * 1000,
-      env: proof.scope === undefined ? {} : { [MUTATION_SCOPE_ENV]: proof.scope.join(",") },
-    });
+    record.outcome =
+      run.status !== 0 && record.failingGate === proof.gate
+        ? "red because of the Gate"
+        : "not proved";
   } catch (error) {
-    setupError = error;
+    record.outcome = "not proved";
+    record.error = error.message;
   } finally {
-    try {
-      cleanup();
-    } catch (error) {
-      setupError ??= error;
-    }
+    restore();
   }
-  // The scope record is only read for a proof that declared one: an unscoped
-  // proof says nothing about selection, and the Mutation Gate's own record from
-  // the same run would read as if it had.
-  const recordedScope = proof.scope === undefined ? undefined : readScopeRecord();
-  // A violation that is still in the tree would ride along into the next proof
-  // and be attributed to it, so the run stops here instead of recording a proof
-  // that could not say what its red Gate reacted to.
-  const leftBehind = treeChanges();
-  if (leftBehind.length > 0) {
-    report("Gate proofs", [
-      `${proof.gate} did not leave the tree as it found it, so no later proof could be attributed:`,
-      ...leftBehind.map((change) => `  ${change}`),
-    ]);
+  if (status() !== "") {
+    console.error(`the tree did not survive the ${proof.gate} proof:\n${status()}`);
+    process.exit(2);
   }
-  if (setupError !== undefined || result === undefined) {
-    const message = setupError instanceof Error ? setupError.message : String(setupError);
-    results.push({
-      ...recordOf(proof, treeChangesWhileRunning),
-      scope: scopeOf(proof, undefined),
-      wentRed: false,
-      redGates: [],
-      exitCode: null,
-      output: message,
-    });
-    console.log(`✘ Gate Proof: ${proof.gate}\n${message}`);
-    continue;
-  }
-  const output = outputOf(result);
-  const redGates = [...output.matchAll(/^✘ (.+)$/gm)].map((match) => match[1].trim());
-  const foundScopeProblems =
-    proof.scope === undefined ? [] : scopeProblems(proof.scope, recordedScope);
-  const wentRed =
-    result.status !== 0 &&
-    redGates.length === 1 &&
-    redGates[0] === proof.gate &&
-    foundScopeProblems.length === 0;
-  const scope = scopeOf(proof, recordedScope, foundScopeProblems);
-  results.push({
-    ...recordOf(proof, treeChangesWhileRunning),
-    scope,
-    wentRed,
-    redGates,
-    exitCode: result.status,
-    output,
-  });
-  console.log(`${wentRed ? "✔" : "✘"} Gate Proof: ${proof.gate}`);
-  if (proof.scope !== undefined) {
-    console.log(`  scope requested: ${proof.scope.join(", ")}`);
-    if (scope.analyzed === null) {
-      console.log(`  scope unavailable: ${scope.unavailable ?? "no reason recorded"}`);
-    } else {
-      console.log(`  scope analyzed: ${scope.analyzed.join(", ") || "nothing"}`);
-    }
-  }
-  if (!wentRed) {
-    console.log(foundScopeProblems.map((problem) => `  ${problem}`).join("\n"));
-    console.log(output.split("\n").slice(-20).join("\n"));
-  }
+  return record;
 }
 
-// The report only ever holds a complete run: `--gate=` is for iterating on one
-// proof, and writing it over the evidence of the others would lose them.
-if (only === undefined) {
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const requested = process.argv.slice(2);
+  const selected =
+    requested.length === 0 ? PROOFS : PROOFS.filter((p) => requested.includes(p.gate));
+  refuseUnattributable(selected);
+  const commit = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  const results = selected.map(prove);
   mkdirSync("reports", { recursive: true });
   writeFileSync(
     "reports/gate-proofs.json",
-    `${JSON.stringify(
-      results.map((result) => ({
-        ...result,
-        output: result.output.split("\n").slice(-20).join("\n"),
-      })),
-      null,
-      2,
-    )}\n`,
+    `${JSON.stringify({ commit, finishedAt: new Date().toISOString(), results }, null, 2)}\n`,
   );
-} else {
-  console.log(`  one proof ran; reports/gate-proofs.json is left as the last complete run`);
+  console.log("\n── Gate Proofs");
+  for (const r of results) {
+    const scopes = r.declared
+      ? `; declared ${r.declared.join(", ")}; analyzed ${Array.isArray(r.analyzed) ? r.analyzed.join(", ") : r.analyzed}`
+      : "";
+    console.log(
+      `   ${r.outcome === "red because of the Gate" ? "✔" : "✘"} ${r.gate} (${r.entryPoint}): ${r.outcome}; failing Gate ${String(r.failingGate)}${scopes}`,
+    );
+  }
+  process.exit(results.every((r) => r.outcome === "red because of the Gate") ? 0 : 1);
 }
-
-report(
-  "Gate proofs",
-  results
-    .filter((result) => !result.wentRed)
-    .flatMap((result) => [
-      `${result.gate} did not go red`,
-      ...result.scope.problems.map((problem) => `  ${problem}`),
-    ]),
-);

@@ -1,15 +1,3 @@
-# One Postgres database, one schema per context
+# 1. One Postgres, one schema per context
 
-Lending and Catalog both persist to the same Postgres instance, but each context owns a schema of its own: `lending.loans` and `catalog.books`. A context's adapter migrates and queries only its own schema, and no context joins across the boundary.
-
-## Context
-
-At day zero a single instance keeps the example runnable with one container and one connection string. Separate schemas keep the ownership rule visible: a cross-context join becomes an obvious violation rather than an accidental convenience.
-
-## Decision
-
-Use one database and one schema per bounded context; cross-context reads go through the callee's public interface.
-
-## Consequences
-
-A future split into one database per context changes connection configuration and migration wiring, but not the domain code or the SQL inside each adapter. Reporting that needs both contexts must compose public interfaces instead of joining tables.
+Each context owns its infrastructure, but at this size a database server per context costs more to run than it buys. Lending owns the `lending` schema and Catalog the `catalog` schema, in one Postgres instance; neither context reads the other's schema, and each adapter creates only its own. Splitting into one instance per context later means moving a schema, not untangling shared tables.

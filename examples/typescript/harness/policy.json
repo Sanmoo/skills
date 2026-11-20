@@ -1,193 +1,180 @@
 {
+  "$comment": "Selection policy of the full Entry Point (make check). Read by scripts/run-mode.mjs. Changing this file widens validation by change to every check.",
   "version": 1,
-  "baseBranch": "main",
   "budgetSeconds": 2400,
-  "sourceTrees": ["src", "features", "test", "scripts"],
-  "sharedPaths": [
+  "base": "main",
+  "dependencyRoots": ["src", "test", "features"],
+  "sharedConfiguration": [
     "package.json",
     "package-lock.json",
-    "harness/**",
-    "Makefile",
     "mise.toml",
-    "tsconfig*.json",
-    "eslint*.mjs",
-    "stryker.config.mjs",
-    "cucumber.mjs",
-    "vitest*.ts",
-    ".gitleaks.toml",
-    ".jscpd.json",
-    ".dependency-cruiser*",
-    ".prettierrc*",
+    "Makefile",
+    "tsconfig.json",
+    "tsconfig.build.json",
+    "eslint.config.mjs",
+    "eslint.metrics.config.mjs",
+    ".prettierrc.json",
     ".prettierignore",
-    ".gitignore",
-    ".editorconfig",
-    "*.config.mjs",
-    "*.config.ts",
-    "*.config.js",
-    "*.config.cjs",
-    ".github/**"
+    ".dependency-cruiser.*.cjs",
+    ".jscpd.json",
+    ".gitleaks.toml",
+    "stryker.config.mjs",
+    "vitest.config.ts",
+    "vitest.mutation.config.ts",
+    "cucumber.mjs",
+    "harness/**",
+    "scripts/**",
+    "test/support/**",
+    "features/support/**"
   ],
   "checks": [
     {
+      "id": "format",
       "gate": "Format",
-      "target": "format",
       "tier": "fast",
+      "appliesTo": ["**"],
+      "scope": "affected",
       "cadence": "change",
-      "costSeconds": 5,
-      "scope": "affected-files",
-      "scopeDescription": "formattable files",
-      "impact": [
-        "src/**/*.ts",
-        "features/**/*.ts",
-        "test/**/*.ts",
-        "scripts/**/*.mjs",
-        "*.mjs",
-        "*.json",
-        "*.md",
-        "*.yml",
-        "docs/**/*.md",
-        ".github/**/*.yml",
-        "test/**/*.mjs"
-      ]
+      "costSeconds": 5
     },
     {
+      "id": "lint",
       "gate": "Lint",
-      "target": "lint",
       "tier": "fast",
+      "appliesTo": ["**/*.ts", "**/*.mjs", "**/*.cjs"],
+      "scope": "affected",
       "cadence": "change",
-      "costSeconds": 15,
-      "scope": "affected-files",
-      "scopeDescription": "lintable files",
-      "scopeExclude": ["dist/**", "reports/**", "coverage/**", ".stryker-tmp/**"],
-      "impact": ["**/*.ts", "**/*.mjs", "**/*.cjs"]
+      "costSeconds": 30
     },
     {
+      "id": "types",
       "gate": "Types",
-      "target": "types",
       "tier": "fast",
-      "cadence": "change",
-      "costSeconds": 20,
+      "appliesTo": ["**/*.ts"],
       "scope": "whole",
-      "impact": ["**/*.ts", "**/*.mjs", "tsconfig*.json", "package.json"]
+      "cadence": "change",
+      "costSeconds": 10
     },
     {
+      "id": "unit",
       "gate": "Unit tests",
-      "target": "unit",
       "tier": "fast",
+      "appliesTo": ["src/**/*.ts"],
+      "scope": "affected",
       "cadence": "change",
-      "costSeconds": 10,
-      "scope": "affected-files",
-      "scopeDescription": "unit test files",
-      "scopeMatch": ["src/**/*.test.ts"],
-      "scopeExclude": ["src/**/*.integration.test.ts"],
-      "impact": ["src/**/*.ts"]
+      "costSeconds": 5
     },
     {
-      "gate": "Integration tests",
-      "target": "integration",
-      "tier": "full",
-      "cadence": "change",
-      "costSeconds": 180,
-      "scope": "affected-files",
-      "scopeDescription": "integration test files",
-      "scopeMatch": ["src/**/*.integration.test.ts"],
-      "impact": ["src/**/*.ts", "test/**/*.ts"]
-    },
-    {
-      "gate": "E2E tests",
-      "target": "e2e",
-      "tier": "full",
-      "cadence": "change",
-      "costSeconds": 60,
-      "scope": "whole",
-      "impact": ["src/**/*.ts", "features/**", "test/**/*.ts"]
-    },
-    {
+      "id": "boundaries",
       "gate": "Context boundaries",
-      "target": "boundaries",
       "tier": "fast",
-      "cadence": "change",
-      "costSeconds": 15,
+      "appliesTo": ["src/**"],
       "scope": "whole",
-      "impact": ["src/**/*.ts", "scripts/check-boundaries.mjs"]
+      "cadence": "change",
+      "costSeconds": 3
     },
     {
+      "id": "dependency-rule",
       "gate": "Dependency rule",
-      "target": "dependency-rule",
       "tier": "fast",
-      "cadence": "change",
-      "costSeconds": 10,
+      "appliesTo": ["src/**"],
       "scope": "whole",
-      "impact": ["src/**/*.ts", "scripts/check-dependency-rule.mjs"]
+      "cadence": "change",
+      "costSeconds": 3
     },
     {
+      "id": "metrics",
       "gate": "Static metrics",
-      "target": "metrics",
       "tier": "fast",
-      "cadence": "change",
-      "costSeconds": 20,
+      "appliesTo": ["src/**"],
       "scope": "whole",
-      "impact": ["src/**", "features/**", "test/**", "scripts/**"]
+      "cadence": "change",
+      "costSeconds": 10
     },
     {
-      "gate": "Dependency vulnerabilities",
-      "target": "vulnerabilities",
-      "tier": "full",
-      "cadence": "change",
-      "costSeconds": 30,
-      "scope": "whole",
-      "impact": ["package.json", "package-lock.json"]
-    },
-    {
+      "id": "secrets",
       "gate": "Secrets",
-      "target": "secrets",
       "tier": "fast",
-      "cadence": "change",
-      "costSeconds": 10,
+      "appliesTo": ["**"],
       "scope": "whole",
-      "impact": ["**/*"]
+      "cadence": "change",
+      "costSeconds": 5
     },
     {
+      "id": "avoided-terms",
       "gate": "Avoided terms",
-      "target": "avoided-terms",
       "tier": "fast",
-      "cadence": "change",
-      "costSeconds": 5,
+      "appliesTo": ["src/**", "test/**", "features/**", "GLOSSARY.md"],
       "scope": "whole",
-      "impact": ["**/*.ts", "**/*.md", "scripts/**/*.mjs"]
+      "cadence": "change",
+      "costSeconds": 3
     },
     {
+      "id": "guide-pointers",
       "gate": "Guide pointers",
-      "target": "guide-pointers",
       "tier": "fast",
-      "cadence": "change",
-      "costSeconds": 5,
+      "appliesTo": ["**"],
       "scope": "whole",
-      "impact": ["**/*.md", "src/**", "scripts/**", "test/**", "features/**"]
-    },
-    {
-      "gate": "Mutation",
-      "name": "Mutation (changed code)",
-      "target": "mutation",
-      "tier": "full",
       "cadence": "change",
-      "costSeconds": 120,
-      "scope": "changed",
-      "scopeRecord": "mutation",
-      "impact": ["src/**/domain/**/*.ts"]
+      "costSeconds": 2
     },
     {
-      "gate": "Mutation",
-      "name": "Mutation (whole codebase)",
-      "target": "mutation-full",
+      "id": "harness",
+      "gate": "Harness tests",
       "tier": "full",
+      "appliesTo": ["scripts/**", "harness/**", "test/harness/**"],
+      "scope": "whole",
+      "cadence": "change",
+      "costSeconds": 20
+    },
+    {
+      "id": "integration",
+      "gate": "Integration tests",
+      "tier": "full",
+      "appliesTo": ["src/**/*.ts"],
+      "scope": "affected",
+      "cadence": "change",
+      "costSeconds": 60
+    },
+    {
+      "id": "e2e",
+      "gate": "E2E tests",
+      "tier": "full",
+      "appliesTo": ["src/**/*.ts", "features/**"],
+      "scope": "whole",
+      "cadence": "change",
+      "costSeconds": 90
+    },
+    {
+      "id": "vulnerabilities",
+      "gate": "Dependency vulnerabilities",
+      "tier": "full",
+      "appliesTo": ["**"],
+      "scope": "whole",
+      "cadence": "change",
+      "costSeconds": 10
+    },
+    {
+      "id": "mutation",
+      "gate": "Mutation",
+      "tier": "full",
+      "appliesTo": ["src/**/*.ts"],
+      "scope": "changed",
+      "cadence": "change",
+      "costSeconds": 600,
+      "integral": "covered by mutation-whole, which mutates every file this check could"
+    },
+    {
+      "id": "mutation-whole",
+      "gate": "Mutation",
+      "tier": "full",
+      "appliesTo": ["src/**/*.ts"],
+      "scope": "whole",
       "cadence": "periodic",
-      "costSeconds": 900,
-      "scopeRecord": "mutation",
-      "schedule": "0 3 * * 1",
-      "protection": "The reduced-scope Mutation check still mutates the changed domain files on every change.",
-      "residualRisk": "Domain code outside the changed set is not mutated between integral runs, so a surviving mutant there stays undetected until the next run.",
-      "impact": ["src/**/domain/**/*.ts"]
+      "schedule": "weekly, Monday 03:00 UTC (.github/workflows/integral.yml), and on demand",
+      "protectionBetweenRuns": "validation by change mutates every production file a change touches, at the same thresholds",
+      "residualRisk": "a weakened test can let a mutant survive in production code the change did not touch; the weekly run bounds how long that stays unseen",
+      "costSeconds": 900
     }
   ]
 }

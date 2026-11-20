@@ -1,0 +1,11 @@
+#!/bin/sh
+# Pre-commit hook: the fast Entry Point, run when the commit touches this
+# project. Enable it by pointing git's core.hooksPath at this directory.
+set -e
+project=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+top=$(git rev-parse --show-toplevel)
+prefix=${project#"$top"/}
+if [ "$prefix" != "$project" ] && [ -z "$(git diff --cached --name-only -- "$project")" ]; then
+  exit 0
+fi
+exec make -C "$project" --no-print-directory check-fast

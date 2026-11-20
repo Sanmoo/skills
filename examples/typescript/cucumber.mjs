@@ -1,12 +1,9 @@
-// E2E Gate configuration.
-//
-// The scenarios are English Gherkin, executed directly by Cucumber. Support
-// code is TypeScript loaded through tsx; the full Entry Point builds dist/
-// before this runs, and the scenarios drive that compiled service.
+// E2E Gate executor config. Strict mode (cucumber's default, stated here so it
+// cannot drift) fails a run with an undefined or pending step; the Gate's
+// wrapper, scripts/run-e2e.mjs, fails a run with no scenarios.
 export default {
-  import: ["features/support/**/*.ts", "features/step_definitions/**/*.ts"],
   paths: ["features/**/*.feature"],
+  import: ["features/support/**/*.ts", "features/step_definitions/**/*.ts"],
   strict: true,
-  order: "defined",
-  format: ["progress"],
+  format: ["progress", "message:reports/e2e/messages.ndjson"],
 };

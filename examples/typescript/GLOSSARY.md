@@ -1,43 +1,43 @@
 # Library Lending
 
-An HTTP service that lets a small library catalogue the books it holds and lend them to borrowers, on Postgres.
+A small public library's system for lending the books it holds under its own lending policy.
 
 ## Lending
 
-The core context: it decides whether a book may be lent, records loans, and records their returns.
+Owns the lending policy: who borrows which book, until when, and whether it came back in time.
 
 **Loan**:
-An agreement that a borrower holds a copy of a book from the moment it is borrowed until it is returned or becomes overdue.
-_Avoid_: Checkout, Rental, Transaction, Borrow Record
+One Borrower holding one Book from the Catalog for a period that ends at its Due Date. A Loan is open until its Return is recorded.
+_Avoid_: checkout, rental
 
 **Borrower**:
-The person who takes a book on loan, identified by name.
-_Avoid_: User, Client, Patron, Member
+The person a Loan is made to, identified by the library.
+_Avoid_: user, patron, member
 
 **Due Date**:
-The moment by which a loan must be returned; it is fourteen days after the loan starts.
-_Avoid_: Deadline, Expiry
+The day by which a Loan's Book must be back. The lending policy sets it when the Loan is made.
+_Avoid_: deadline, expiry
 
 **Return**:
-The act that ends a loan by recording when the book came back.
-_Avoid_: Check-in, Give Back
+The recorded moment a Loan's Book came back, which closes the Loan.
+_Avoid_: checkin, giveback
 
 **Overdue**:
-A loan that is past its due date and has not been returned.
-_Avoid_: Late, Expired
+The state of an open Loan whose Due Date has passed without a Return.
+_Avoid_: late, delinquent
 
 ## Catalog
 
-The supporting context: it owns which books the library holds, their authors, and how many copies exist.
+Owns what the library holds: the Books it has registered and their Copies.
 
 **Book**:
-A work the library holds, with an id, a title, an author, and a number of copies.
-_Avoid_: Item, Volume
+A work the library has registered in its Catalog, identified independently of any physical unit.
+_Avoid_: item, volume
 
 **Copy**:
-One physical unit of a book; the catalog records how many copies of a book the library holds.
-_Avoid_: Piece
+One physical unit of a Book that the library holds.
+_Avoid_: exemplar, specimen
 
 **Catalog**:
-The context that owns books and their copies, and answers whether a book is held.
-_Avoid_: Inventory, Stock
+The register of every Book the library holds.
+_Avoid_: inventory, stock

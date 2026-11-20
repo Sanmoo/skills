@@ -1,33 +1,20 @@
-import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import { Pool } from "pg";
+// One real Postgres per test run, in an ephemeral container. Integration tests
+// read its URL with inject("databaseUrl").
+import { PostgreSqlContainer } from "@testcontainers/postgresql";
+import type { TestProject } from "vitest/node";
 
-export interface PostgresHarness {
-  readonly pool: Pool;
-  readonly connectionUri: string;
-  stop(): Promise<void>;
+export const POSTGRES_IMAGE = "postgres:17.2-alpine";
+
+declare module "vitest" {
+  export interface ProvidedContext {
+    databaseUrl: string;
+  }
 }
 
-// The e2e lifecycle owns this ephemeral database. Reset is test infrastructure,
-// not a call into either context's public interface, so it lives with the
-// container harness rather than in a step or in application code.
-export async function resetLibraryData(pool: Pool): Promise<void> {
-  await pool.query("truncate table catalog.books, lending.loans");
-}
-
-// Integration and e2e tests run against a real Postgres, never a fake. The image
-// is pinned in one place and bumped together with the deployment target.
-export async function startPostgres(): Promise<PostgresHarness> {
-  const container: StartedPostgreSqlContainer = await new PostgreSqlContainer(
-    "postgres:17.2-alpine",
-  ).start();
-  const connectionUri = container.getConnectionUri();
-  const pool = new Pool({ connectionString: connectionUri });
-  return {
-    pool,
-    connectionUri,
-    async stop(): Promise<void> {
-      await pool.end();
-      await container.stop();
-    },
+export default async function setup(project: TestProject): Promise<() => Promise<void>> {
+  const container = await new PostgreSqlContainer(POSTGRES_IMAGE).start();
+  project.provide("databaseUrl", container.getConnectionUri());
+  return async () => {
+    await container.stop();
   };
 }

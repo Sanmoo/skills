@@ -1,63 +1,61 @@
-import type { Pool } from "pg";
-import type { Loan } from "../domain/loan.js";
+import type pg from "pg";
+import type { Loan, LoanId } from "../domain/loan.js";
 import type { LoanRepository } from "../application/lending-service.js";
 
 interface LoanRow {
   id: string;
   book_id: string;
   borrower: string;
-  borrowed_at: Date;
-  due_at: Date;
-  returned_at: Date | null;
+  loaned_on: string;
+  due_date: string;
+  returned_on: string | null;
 }
 
+/** Stores Loans in the `lending` schema, which this context owns. */
 export class PostgresLoanRepository implements LoanRepository {
-  constructor(private readonly pool: Pool) {}
+  constructor(private readonly pool: pg.Pool) {}
+
+  static async migrate(pool: pg.Pool): Promise<void> {
+    await pool.query("CREATE SCHEMA IF NOT EXISTS lending");
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS lending.loans (
+        id text PRIMARY KEY,
+        book_id text NOT NULL,
+        borrower text NOT NULL,
+        loaned_on date NOT NULL,
+        due_date date NOT NULL,
+        returned_on date
+      )`,
+    );
+  }
 
   async save(loan: Loan): Promise<void> {
     await this.pool.query(
-      `insert into lending.loans (id, book_id, borrower, borrowed_at, due_at, returned_at)
-       values ($1, $2, $3, $4, $5, $6)
-       on conflict (id) do update
-         set book_id = excluded.book_id,
-             borrower = excluded.borrower,
-             borrowed_at = excluded.borrowed_at,
-             due_at = excluded.due_at,
-             returned_at = excluded.returned_at`,
-      [loan.id, loan.bookId, loan.borrower, loan.borrowedAt, loan.dueAt, loan.returnedAt],
+      `INSERT INTO lending.loans (id, book_id, borrower, loaned_on, due_date, returned_on)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (id) DO UPDATE SET returned_on = EXCLUDED.returned_on`,
+      [loan.id, loan.bookId, loan.borrower, loan.loanedOn, loan.dueDate, loan.returnedOn],
     );
   }
 
-  async findById(id: string): Promise<Loan | null> {
+  async findById(id: LoanId): Promise<Loan | undefined> {
     const result = await this.pool.query<LoanRow>(
-      `select id, book_id, borrower, borrowed_at, due_at, returned_at
-         from lending.loans
-        where id = $1`,
+      `SELECT id, book_id, borrower, loaned_on::text, due_date::text, returned_on::text
+       FROM lending.loans WHERE id = $1`,
       [id],
     );
     const row = result.rows[0];
-    if (row === undefined) return null;
-    return Object.freeze({
-      id: row.id,
-      bookId: row.book_id,
-      borrower: row.borrower,
-      borrowedAt: row.borrowed_at,
-      dueAt: row.due_at,
-      returnedAt: row.returned_at,
-    });
+    return row === undefined ? undefined : toLoan(row);
   }
 }
 
-export async function migrateLoanRepository(pool: Pool): Promise<void> {
-  await pool.query(`create schema if not exists lending`);
-  await pool.query(
-    `create table if not exists lending.loans (
-       id text primary key,
-       book_id text not null,
-       borrower text not null,
-       borrowed_at timestamptz not null,
-       due_at timestamptz not null,
-       returned_at timestamptz
-     )`,
-  );
+function toLoan(row: LoanRow): Loan {
+  return {
+    id: row.id,
+    bookId: row.book_id,
+    borrower: row.borrower,
+    loanedOn: row.loaned_on,
+    dueDate: row.due_date,
+    returnedOn: row.returned_on,
+  };
 }

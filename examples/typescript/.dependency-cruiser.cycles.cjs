@@ -1,20 +1,13 @@
-"use strict";
-
-// Static metrics Gate: zero dependency cycles between modules.
+// Static metrics Gate, cycles: zero dependency cycles between modules.
 module.exports = {
   forbidden: [
     {
-      name: "no-circular",
-      comment: "A cycle between modules means neither can be understood alone.",
+      name: "no-cycles",
+      comment: "modules must not depend on each other in a cycle",
       severity: "error",
       from: {},
       to: { circular: true },
     },
   ],
-  options: {
-    doNotFollow: { path: "node_modules" },
-    exclude: { path: "(node_modules|dist|reports|coverage|\\.stryker-tmp)" },
-    tsConfig: { fileName: "tsconfig.json" },
-    tsPreCompilationDeps: true,
-  },
+  options: require("./.dependency-cruiser.base.cjs"),
 };

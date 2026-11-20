@@ -1,111 +1,54 @@
+// Delivery mechanics for the lending scenarios: HTTP requests and status codes
+// stay here, out of the feature files.
 import assert from "node:assert/strict";
 import { Given, Then, When } from "@cucumber/cucumber";
-import type { HttpReply } from "../support/http.js";
 import type { LibraryWorld } from "../support/world.js";
 
-interface BookBody extends Record<string, unknown> {
-  readonly id: string;
-  readonly title: string;
-  readonly author: string;
-  readonly copies: number;
-}
-
-interface LoanBody extends Record<string, unknown> {
-  readonly id: string;
-  readonly bookId: string;
-  readonly borrower: string;
-  readonly returnedAt: string | null;
-}
-
-interface ErrorBody extends Record<string, unknown> {
-  readonly error: string;
-}
-
-function required(value: string | undefined, name: string): string {
-  assert.ok(value !== undefined, `the scenario has no ${name} yet`);
-  return value;
-}
-
-function expectStatus(reply: HttpReply, expected: number, action: string): void {
-  assert.equal(reply.status, expected, `${action}: expected ${expected}, got ${reply.status}`);
-}
-
-function takeOnLoan(world: LibraryWorld, borrower: string): Promise<HttpReply> {
-  return world.send("POST", "/loans", {
-    bookId: required(world.bookId, "book"),
-    borrower,
-  });
-}
-
-async function consultLoan(world: LibraryWorld): Promise<LoanBody> {
-  const reply = await world.send("GET", `/loans/${required(world.loanId, "loan")}`);
-  expectStatus(reply, 200, "consulting the loan");
-  return reply.body as LoanBody;
-}
-
 Given(
-  "the library holds the book {string} by {string}",
-  async function (this: LibraryWorld, title: string, author: string) {
-    const reply = await this.send("POST", "/books", {
-      title,
-      author,
-      copies: 1,
-    });
-    expectStatus(reply, 201, "registering the book");
-    this.bookId = (reply.body as BookBody).id;
-  },
-);
-
-Given(
-  "the book {string} is not in the catalog",
+  "the Book {string} is registered in the Catalog",
   async function (this: LibraryWorld, title: string) {
-    // The edge addresses a Book by id; the scenario's title stands in for the id
-    // of the Book that was never registered.
-    this.bookId = title;
-    const reply = await this.send("GET", `/books/${encodeURIComponent(this.bookId)}`);
-    assert.equal(reply.status, 404, `${title} unexpectedly exists in the catalog`);
+    const answer = await this.send("PUT", `/books/${this.bookId(title)}`, { title });
+    assert.equal(answer.status, 200);
   },
 );
 
 When(
-  "the borrower {string} takes the book on loan",
-  async function (this: LibraryWorld, borrower: string) {
-    const reply = await takeOnLoan(this, borrower);
-    expectStatus(reply, 201, "taking the book on loan");
-    this.loanId = (reply.body as LoanBody).id;
+  "the Borrower {string} takes {string} on Loan",
+  async function (this: LibraryWorld, borrower: string, title: string) {
+    const answer = await this.send("POST", "/loans", { bookId: this.bookId(title), borrower });
+    assert.equal(answer.status, 201);
+    this.loanId = String(answer.body.id);
   },
 );
 
 When(
-  "the borrower {string} asks to take the book on loan",
-  async function (this: LibraryWorld, borrower: string) {
-    this.lastReply = await takeOnLoan(this, borrower);
+  "the Borrower {string} tries to take {string} on Loan",
+  async function (this: LibraryWorld, borrower: string, title: string) {
+    await this.send("POST", "/loans", { bookId: this.bookId(title), borrower });
   },
 );
 
-Then("the loan can be consulted and has not been returned", async function (this: LibraryWorld) {
-  const loan = await consultLoan(this);
-  assert.equal(loan.bookId, required(this.bookId, "book"));
-  assert.equal(loan.returnedAt, null);
+Then("the Loan can be consulted and is still open", async function (this: LibraryWorld) {
+  const answer = await this.send("GET", `/loans/${String(this.loanId)}`);
+  assert.equal(answer.status, 200);
+  assert.equal(answer.body.returnedOn, null);
 });
 
-When("the borrower records the return of the loan", async function (this: LibraryWorld) {
-  const reply = await this.send("POST", `/loans/${required(this.loanId, "loan")}/return`);
-  expectStatus(reply, 200, "recording the return");
-  const loan = reply.body as LoanBody;
-  assert.notEqual(loan.returnedAt, null, "the recorded return did not report a returned loan");
+When("the Return of the Loan is recorded", async function (this: LibraryWorld) {
+  const answer = await this.send("POST", `/loans/${String(this.loanId)}/return`);
+  assert.equal(answer.status, 200);
 });
 
-Then("a later consultation shows the loan has been returned", async function (this: LibraryWorld) {
-  const loan = await consultLoan(this);
-  assert.notEqual(loan.returnedAt, null, "the loan does not show that it has been returned");
-});
+Then(
+  "a later consultation shows that the Loan has been returned",
+  async function (this: LibraryWorld) {
+    const answer = await this.send("GET", `/loans/${String(this.loanId)}`);
+    assert.equal(answer.status, 200);
+    assert.match(String(answer.body.returnedOn), /^\d{4}-\d{2}-\d{2}$/);
+  },
+);
 
-Then("the loan request is refused because the book was not found", function (this: LibraryWorld) {
-  const reply = this.lastReply;
-  assert.ok(reply !== undefined, "the scenario has no loan request yet");
-  expectStatus(reply, 404, "the loan request");
-  assert.ok(reply.body !== null, "the refused loan request carried no reason");
-  const body = reply.body as ErrorBody;
-  assert.match(body.error, /not in the catalog/);
+Then("the Loan is refused because the Book was not found", function (this: LibraryWorld) {
+  assert.equal(this.lastAnswer?.status, 404);
+  assert.match(String(this.lastAnswer.body.error), /not in the Catalog/);
 });
