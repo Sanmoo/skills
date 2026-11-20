@@ -4,6 +4,8 @@ Personal agent skills by Samuel Santos, installable with the [skills CLI](https:
 
 `bootstrap-harness` has two starting paths: it establishes a Harness from day zero in a greenfield repository, and adopts one in an existing application through a staged plan the maintainer approves and the skill executes stage by stage, reporting the Harness established only when every Gate is adopted. An existing application keeps its legacy debt as specific tolerated findings in a versioned tolerance policy instead of a count, and new code is still held to the Contract's normal limits.
 
+Status: neither starting path has had an acceptance run of the current text yet, so `bootstrap-harness` is not ready for use. The greenfield run is tracked in [#23](https://github.com/Sanmoo/skills/issues/23) and the adoption run in [#24](https://github.com/Sanmoo/skills/issues/24).
+
 List the available skills:
 
 ```sh
