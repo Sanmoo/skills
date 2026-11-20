@@ -1,7 +1,7 @@
 import { defineConfig } from "vitest/config";
 
-// One project per test level defined in docs/guides/testing-strategy.md.
-// Unit tests run offline; integration tests start real containers.
+const integration = ["src/**/*.integration.test.ts"];
+
 export default defineConfig({
   test: {
     projects: [
@@ -9,17 +9,18 @@ export default defineConfig({
         test: {
           name: "unit",
           include: ["src/**/*.test.ts"],
-          exclude: ["src/**/*.integration.test.ts"],
-          environment: "node",
+          exclude: integration,
         },
       },
       {
         test: {
           name: "integration",
-          include: ["src/**/*.integration.test.ts"],
-          environment: "node",
-          testTimeout: 60_000,
-          hookTimeout: 180_000,
+          include: integration,
+          globalSetup: ["test/support/postgres.ts"],
+          // The contexts share one Postgres and own fixed schemas.
+          fileParallelism: false,
+          hookTimeout: 120_000,
+          testTimeout: 30_000,
         },
       },
     ],

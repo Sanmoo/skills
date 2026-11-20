@@ -1,83 +1,71 @@
-// Gate: Avoided terms.
-//
-// Reads _Avoid_ lists straight from GLOSSARY.md and rejects any identifier in
-// the TypeScript source that uses one of those terms. Identifiers are split on
-// camelCase and snake_case boundaries; matching is case-insensitive and
-// whole-word.
-import { readFileSync, readdirSync } from "node:fs";
+// Avoided terms Gate: no identifier in source code contains a term GLOSSARY.md
+// lists under _Avoid_. Identifiers come from the TypeScript parser, so strings
+// and comments are not identifiers. They are split on camelCase, snake_case,
+// and kebab-case boundaries and matched case-insensitively on whole words.
+import { readFileSync } from "node:fs";
 import ts from "typescript";
-import { report } from "./lib.mjs";
-import { SOURCE_TREES } from "./source-trees.mjs";
+import { listFiles, report } from "./lib.mjs";
 
-const SKIP_DIRECTORIES = /(^|\/)(node_modules|dist|reports|coverage|\.stryker-tmp)(\/|$)/;
+// Source code the Gate reads: production code, its tests, and the e2e steps.
+const SOURCE_DIRS = ["src", "test", "features"];
 
-function avoidedTerms(glossary) {
-  return glossary
-    .split("\n")
-    .filter((line) => line.startsWith("_Avoid_:"))
-    .flatMap((line) => line.slice("_Avoid_:".length).split(","))
-    .map((term) => term.trim().toLowerCase())
-    .filter(Boolean);
+export function avoidedTerms(glossary) {
+  return [...glossary.matchAll(/^_Avoid_:(.*)$/gm)].flatMap(([, list]) =>
+    list
+      .split(",")
+      .map((term) => term.trim())
+      .filter(Boolean)
+      .map((term) => ({ term, words: splitWords(term) })),
+  );
 }
 
-function sourceFiles(directory) {
-  const files = [];
-  const walk = (dir) => {
-    for (const item of readdirSync(dir, { withFileTypes: true })) {
-      const path = `${dir}/${item.name}`;
-      if (SKIP_DIRECTORIES.test(path)) continue;
-      if (item.isDirectory()) walk(path);
-      else if (path.endsWith(".ts")) files.push(path);
-    }
-  };
-  walk(directory);
-  return files;
-}
-
-function tokensOf(identifier) {
-  return identifier
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+export function splitWords(name) {
+  return name
     .split(/[^A-Za-z0-9]+/)
-    .filter(Boolean)
-    .map((token) => token.toLowerCase());
+    .flatMap((part) => part.match(/[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+/g) ?? [])
+    .map((word) => word.toLowerCase());
 }
 
-function matches(tokens, term) {
-  const wanted = term.split(/\s+/).filter(Boolean);
-  if (wanted.length === 0) return false;
-  for (let start = 0; start + wanted.length <= tokens.length; start++) {
-    let all = true;
-    for (let offset = 0; offset < wanted.length; offset++) {
-      const token = tokens[start + offset];
-      if (token !== wanted[offset] && token !== `${wanted[offset]}s`) {
-        all = false;
-        break;
-      }
-    }
-    if (all) return true;
+export function containsTerm(words, termWords) {
+  for (let i = 0; i + termWords.length <= words.length; i++) {
+    if (termWords.every((word, j) => words[i + j] === word)) return true;
   }
   return false;
 }
 
-const terms = avoidedTerms(readFileSync("GLOSSARY.md", "utf8"));
-const failures = [];
-
-for (const file of SOURCE_TREES.flatMap(sourceFiles)) {
-  const text = readFileSync(file, "utf8");
-  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+export function identifiers(file, text) {
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+  const found = [];
   const visit = (node) => {
-    if (ts.isIdentifier(node)) {
-      const tokens = tokensOf(node.text);
-      for (const term of terms) {
-        if (matches(tokens, term)) {
-          const { line } = source.getLineAndCharacterOfPosition(node.getStart(source));
-          failures.push(`${file}:${line + 1} uses avoided term "${term}"`);
-        }
-      }
+    if (ts.isIdentifier(node) || ts.isPrivateIdentifier(node)) {
+      const { line } = source.getLineAndCharacterOfPosition(node.getStart(source));
+      found.push({ name: node.text, line: line + 1 });
     }
     ts.forEachChild(node, visit);
   };
   visit(source);
+  return found;
 }
 
-report("Avoided terms", failures);
+export function findAvoidedTerms(glossary, files) {
+  const terms = avoidedTerms(glossary);
+  const failures = [];
+  for (const [file, text] of files) {
+    for (const { name, line } of identifiers(file, text)) {
+      const words = splitWords(name);
+      for (const { term, words: termWords } of terms) {
+        if (containsTerm(words, termWords))
+          failures.push(`${file}:${String(line)} identifier "${name}" uses avoided term "${term}"`);
+      }
+    }
+  }
+  return failures;
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const files = listFiles(SOURCE_DIRS, /\.(ts|mts|mjs)$/).map((file) => [
+    file,
+    readFileSync(file, "utf8"),
+  ]);
+  report("Avoided terms", findAvoidedTerms(readFileSync("GLOSSARY.md", "utf8"), files));
+}

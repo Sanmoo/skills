@@ -1,16 +1,30 @@
-import { setWorldConstructor, World } from "@cucumber/cucumber";
-import { request, type HttpReply } from "./http.js";
+import { World, setWorldConstructor } from "@cucumber/cucumber";
 
-// One scenario's business state. Each scenario gets a new World, and the Before
-// hook empties the database, so no scenario depends on another's data or order.
+export interface Answer {
+  readonly status: number;
+  readonly body: Record<string, unknown>;
+}
+
+/** One scenario's state. Book ids are unique per scenario so scenarios never share rows. */
 export class LibraryWorld extends World {
-  baseUrl = "";
-  bookId: string | undefined;
+  static baseUrl = "";
+  readonly run = Math.random().toString(36).slice(2, 10);
   loanId: string | undefined;
-  lastReply: HttpReply | undefined;
+  lastAnswer: Answer | undefined;
 
-  send(method: "GET" | "POST", path: string, body?: unknown): Promise<HttpReply> {
-    return request(this.baseUrl, method, path, body);
+  bookId(title: string): string {
+    return `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${this.run}`;
+  }
+
+  async send(method: string, path: string, body?: unknown): Promise<Answer> {
+    const init: RequestInit =
+      body === undefined ? { method } : { method, body: JSON.stringify(body) };
+    const response = await fetch(`${LibraryWorld.baseUrl}${path}`, init);
+    this.lastAnswer = {
+      status: response.status,
+      body: (await response.json()) as Record<string, unknown>,
+    };
+    return this.lastAnswer;
   }
 }
 

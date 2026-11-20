@@ -1,60 +1,52 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { Pool } from "pg";
-import { createBook, InvalidBookError } from "../domain/book.js";
-import { migrateBookRepository, PostgresBookRepository } from "./postgres-book-repository.js";
-import { startPostgres, type PostgresHarness } from "../../../test/support/postgres.js";
+import { describe, expect, it } from "vitest";
+import { useDatabase } from "../../../test/support/database.js";
+import { PostgresBookRepository } from "./postgres-book-repository.js";
 
-let harness: PostgresHarness;
-let pool: Pool;
-let repository: PostgresBookRepository;
+const pool = useDatabase();
 
-beforeAll(async () => {
-  harness = await startPostgres();
-  pool = harness.pool;
-  await migrateBookRepository(pool);
-  repository = new PostgresBookRepository(pool);
-});
-
-afterAll(async () => {
-  await harness.stop();
-});
+async function repository(): Promise<PostgresBookRepository> {
+  await PostgresBookRepository.migrate(pool);
+  return new PostgresBookRepository(pool);
+}
 
 describe("PostgresBookRepository", () => {
-  it("round-trips a book", async () => {
-    const book = createBook({
-      id: "book-1",
-      title: "Piranesi",
-      author: "Susanna Clarke",
-      copies: 2,
+  it("finds a Book it saved", async () => {
+    const books = await repository();
+    await books.save({ id: "dispossessed", title: "The Dispossessed" });
+    expect(await books.findById("dispossessed")).toEqual({
+      id: "dispossessed",
+      title: "The Dispossessed",
     });
-
-    await repository.save(book);
-
-    await expect(repository.findById("book-1")).resolves.toEqual(book);
   });
 
-  it("returns null for a book the catalog does not hold", async () => {
-    await expect(repository.findById("missing")).resolves.toBeNull();
+  it("finds nothing under an id it never saved", async () => {
+    const books = await repository();
+    await books.save({ id: "dispossessed", title: "The Dispossessed" });
+    expect(await books.findById("lathe")).toBeUndefined();
   });
 
-  it("updates an existing book instead of inserting a duplicate", async () => {
-    const book = createBook({
-      id: "book-2",
-      title: "Piranesi",
-      author: "Susanna Clarke",
-      copies: 2,
+  it("replaces the title of a Book saved again", async () => {
+    const books = await repository();
+    await books.save({ id: "dispossessed", title: "Draft" });
+    await books.save({ id: "dispossessed", title: "The Dispossessed" });
+    expect(await books.findById("dispossessed")).toEqual({
+      id: "dispossessed",
+      title: "The Dispossessed",
     });
-    await repository.save(book);
-    const updated = createBook({ ...book, title: "The Ladies of Grace Adieu", copies: 5 });
-
-    await repository.save(updated);
-
-    await expect(repository.findById("book-2")).resolves.toEqual(updated);
   });
 
-  it("rejects a book the domain considers invalid", () => {
-    expect(() => createBook({ id: "book-3", title: "", author: "Ada", copies: 1 })).toThrow(
-      InvalidBookError,
-    );
+  it("keeps its rows in the catalog schema, and migrates twice safely", async () => {
+    const books = await repository();
+    await PostgresBookRepository.migrate(pool);
+    await books.save({ id: "dispossessed", title: "The Dispossessed" });
+    const rows = await pool.query("SELECT id, title FROM catalog.books");
+    expect(rows.rows).toEqual([{ id: "dispossessed", title: "The Dispossessed" }]);
+  });
+
+  it("refuses a Book without a title at the schema", async () => {
+    await repository();
+    await expect(
+      pool.query("INSERT INTO catalog.books (id, title) VALUES ('x', NULL)"),
+    ).rejects.toThrow(/null value/);
   });
 });

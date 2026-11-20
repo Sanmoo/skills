@@ -1,6 +1,6 @@
+# Generated or third-party output; the Format Gate measures first-party files.
 node_modules/
 dist/
 reports/
-coverage/
 .stryker-tmp/
 package-lock.json

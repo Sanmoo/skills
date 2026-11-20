@@ -1,15 +1,11 @@
 {
-  "minTokens": 50,
   "threshold": 3,
-  "reporters": ["console"],
+  "path": ["src"],
   "format": ["typescript"],
-  "absolute": true,
-  "ignore": [
-    "**/*.test.ts",
-    "**/node_modules/**",
-    "**/dist/**",
-    "**/reports/**",
-    "**/.stryker-tmp/**"
-  ],
-  "output": "reports/jscpd"
+  "ignore": ["**/*.test.ts"],
+  "reporters": ["console", "json"],
+  "output": "reports/jscpd",
+  "absolute": false,
+  "gitignore": true,
+  "exitCode": 1
 }

@@ -1,34 +1,43 @@
-import { spawnSync } from "node:child_process";
+// Helpers shared by the repository-owned Gates and the Harness tooling.
+import { execFileSync } from "node:child_process";
+import { readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 
-// Runs a command with the caller's environment plus the colour-free defaults a
-// Gate's output needs. A caller that passes `env` adds to that environment
-// rather than replacing the defaults, so a Gate Proof can hand one execution a
-// setting written here and the child still prints without colour codes.
-export function run(command, args, { env = {}, ...options } = {}) {
-  return spawnSync(command, args, {
-    encoding: "utf8",
-    ...options,
-    env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0", ...env },
-  });
+/** Files under `dirs` (recursively) whose names match `pattern`, sorted. */
+export function listFiles(dirs, pattern) {
+  const found = [];
+  const walk = (dir) => {
+    let entries;
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      return;
+    }
+    for (const name of entries) {
+      if (name === "node_modules" || name.startsWith(".")) continue;
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) walk(path);
+      else if (pattern.test(path)) found.push(path);
+    }
+  };
+  for (const dir of dirs) walk(dir);
+  return found.sort();
 }
 
-export function outputOf(result) {
-  return `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
-}
-
-// The scope validation by change selected, as a check receives it. A check
-// without a scope verifies its whole input; one whose scope names no file it can
-// verify fails instead of passing with nothing examined.
-export function scopedFiles(gate, noun, matches) {
-  const declared = process.env.HARNESS_SCOPE;
-  if (declared === undefined) return undefined;
-  const files = JSON.parse(declared).filter(matches);
-  if (files.length === 0) {
-    report(gate, [`HARNESS_SCOPE names no ${noun} file, so the Gate would verify nothing`]);
+/** Runs git in the example directory and returns trimmed stdout, or undefined on failure. */
+export function git(args, cwd = process.cwd()) {
+  try {
+    return execFileSync("git", args, {
+      cwd,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return undefined;
   }
-  return files;
 }
 
+/** Prints a Gate's result and exits non-zero naming the Gate and each offending location. */
 export function report(gate, failures) {
   if (failures.length === 0) {
     console.log(`✔ ${gate}`);

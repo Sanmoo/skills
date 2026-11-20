@@ -1,31 +1,17 @@
-// Mutation Gate configuration.
-//
-// Scope: the domain models that unit tests can kill. Adapters and application
-// services are exercised by integration tests, which need containers and would
-// make every mutant pay for one; they are covered at that level.
-//
-// The per-context thresholds (80% overall, 90% in the core Lending context)
-// are enforced by scripts/check-mutation.mjs, not by Stryker's global
-// `thresholds.break`, because Stryker has no per-directory threshold.
+// Mutation Gate: Stryker with its Vitest runner over unit and integration
+// tests. Which files are mutated, and the overall and core thresholds, are
+// decided by scripts/check-mutation.mjs, which reads the JSON report: Stryker's
+// own `thresholds.break` is global and cannot hold core contexts to more.
 export default {
-  packageManager: "npm",
   testRunner: "vitest",
-  vitest: {
-    configFile: "vitest.mutation.config.ts",
-  },
-  mutate: ["src/lending/domain/**/*.ts", "src/catalog/domain/**/*.ts", "!src/**/*.test.ts"],
-  reporters: ["clear-text", "json"],
-  jsonReporter: {
-    fileName: "reports/mutation/mutation.json",
-  },
+  vitest: { configFile: "vitest.mutation.config.ts" },
+  plugins: ["@stryker-mutator/vitest-runner"],
   coverageAnalysis: "perTest",
-  concurrency: 2,
-  timeoutMS: 30_000,
-  thresholds: {
-    high: 90,
-    low: 80,
-    break: 0,
-  },
+  reporters: ["clear-text", "progress", "json"],
+  jsonReporter: { fileName: "reports/mutation/mutation.json" },
   tempDirName: ".stryker-tmp",
-  cleanTempDir: true,
+  cleanTempDir: "always",
+  concurrency: 2,
+  timeoutMS: 10000,
+  thresholds: { high: 90, low: 80, break: null },
 };

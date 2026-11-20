@@ -1,51 +1,36 @@
-import { Pool } from "pg";
-import type { Book } from "../domain/book.js";
+import type pg from "pg";
+import type { Book, BookId } from "../domain/book.js";
 import type { BookRepository } from "../application/catalog-service.js";
 
 interface BookRow {
   id: string;
   title: string;
-  author: string;
-  copies: number;
 }
 
+/** Stores the Catalog in the `catalog` schema, which this context owns. */
 export class PostgresBookRepository implements BookRepository {
-  constructor(private readonly pool: Pool) {}
+  constructor(private readonly pool: pg.Pool) {}
+
+  static async migrate(pool: pg.Pool): Promise<void> {
+    await pool.query("CREATE SCHEMA IF NOT EXISTS catalog");
+    await pool.query(
+      "CREATE TABLE IF NOT EXISTS catalog.books (id text PRIMARY KEY, title text NOT NULL)",
+    );
+  }
 
   async save(book: Book): Promise<void> {
     await this.pool.query(
-      `insert into catalog.books (id, title, author, copies)
-       values ($1, $2, $3, $4)
-       on conflict (id) do update
-         set title = excluded.title, author = excluded.author, copies = excluded.copies`,
-      [book.id, book.title, book.author, book.copies],
+      "INSERT INTO catalog.books (id, title) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title",
+      [book.id, book.title],
     );
   }
 
-  async findById(id: string): Promise<Book | null> {
+  async findById(id: BookId): Promise<Book | undefined> {
     const result = await this.pool.query<BookRow>(
-      `select id, title, author, copies from catalog.books where id = $1`,
+      "SELECT id, title FROM catalog.books WHERE id = $1",
       [id],
     );
     const row = result.rows[0];
-    if (row === undefined) return null;
-    return Object.freeze({
-      id: row.id,
-      title: row.title,
-      author: row.author,
-      copies: row.copies,
-    });
+    return row === undefined ? undefined : { id: row.id, title: row.title };
   }
-}
-
-export async function migrateBookRepository(pool: Pool): Promise<void> {
-  await pool.query(`create schema if not exists catalog`);
-  await pool.query(
-    `create table if not exists catalog.books (
-       id text primary key,
-       title text not null,
-       author text not null,
-       copies integer not null
-     )`,
-  );
 }

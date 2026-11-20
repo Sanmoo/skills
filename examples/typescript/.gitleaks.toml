@@ -1,16 +1,14 @@
-# Secret scanning: gitleaks' default ruleset, with generated and vendored
-# trees excluded. Every exclusion needs a reason; keep this list short.
+# Secrets Gate. The default rule set, extended. The path allowlist only stops
+# the working-tree scan from traversing third-party code and generated output;
+# it excludes no first-party file.
 [extend]
 useDefault = true
 
 [allowlist]
-description = "Generated lockfiles and build output contain no secrets of ours"
+description = "third-party code and generated output"
 paths = [
-  '''package-lock\.json''',
-  '''node_modules/''',
-  '''dist/''',
-  '''reports/''',
-  '''coverage/''',
-  '''\.stryker-tmp/''',
-  '''\.git/''',
+  '''(^|/)node_modules/''',
+  '''(^|/)dist/''',
+  '''(^|/)reports/''',
+  '''(^|/)\.stryker-tmp/''',
 ]
