@@ -142,8 +142,10 @@ scenario("a shared configuration change widens the selection", (expect) => {
       `widened, got ${String(report.widened)}`,
     );
     expect(
-      report.checks.filter((c) => c.decision === "run").every((c) => c.scope === "whole"),
-      "every applicable check runs over its whole input",
+      report.checks
+        .filter((c) => c.decision === "run")
+        .every((c) => c.scope === (c.id === "mutation" ? "changed" : "whole")),
+      "every applicable check runs over its whole input; Mutation keeps its changed set",
     );
     expect(
       report.failed?.id === "format",

@@ -8,7 +8,7 @@
 // the outcome.
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { changedFiles } from "./changes.mjs";
+import { baseBranch, changedFiles } from "./changes.mjs";
 import { runCheck } from "./gates.mjs";
 import { git } from "./lib.mjs";
 import { cost, plan, policyVersion } from "./selection.mjs";
@@ -39,13 +39,20 @@ function dependencyGraph() {
   );
   if (result.status !== 0) return undefined;
   const graph = new Map();
+  graph.unresolved = [];
   for (const module of JSON.parse(result.stdout).modules) {
-    const local = module.dependencies.filter(
+    if (module.source.startsWith("node_modules/") || module.coreModule) continue;
+    // A local import the graph cannot place hides dependents; an unresolved
+    // third-party import has none in this project.
+    const local = (d) => d.module.startsWith(".") || d.module.startsWith("/");
+    if (module.dependencies.some((d) => d.couldNotResolve && local(d)))
+      graph.unresolved.push(module.source);
+    const deps = module.dependencies.filter(
       (d) => !d.coreModule && !d.couldNotResolve && !d.resolved.startsWith("node_modules/"),
     );
     graph.set(
       module.source,
-      local.map((d) => d.resolved),
+      deps.map((d) => d.resolved),
     );
   }
   return graph;
@@ -72,7 +79,7 @@ function buildPlan() {
     };
   }
   if (mode === "integral") return plan("integral", policy, null, null, null);
-  const base = process.env.HARNESS_BASE ?? policy.base;
+  const base = baseBranch(policy.base);
   const changed = changedFiles(base, git);
   const change = changed.widened
     ? changed
@@ -84,22 +91,31 @@ function buildPlan() {
     change.widened ? undefined : dependencyGraph(),
     readIntegral(),
   );
-  return { ...result, base: changed.base ?? base, changed: changed.files ?? null };
+  return {
+    ...result,
+    base: changed.base ?? base,
+    changed: changed.files ?? null,
+    outside: changed.outside ?? null,
+    declaredMutationScope: process.env.MUTATION_SCOPE ?? null,
+  };
 }
 
 const scopeText = (scope) => (Array.isArray(scope) ? scope.join(", ") : scope);
 
+// Validation by change stops at the first failing check, so a red result
+// names one Gate. Integral validation runs every check regardless, so a
+// periodic check's result is never lost to an earlier failure.
 function execute(selected) {
   let failed;
   for (const entry of selected.entries) {
     if (entry.decision !== "run") continue;
-    if (failed) {
+    if (failed && mode !== "integral") {
       entry.outcome = "not run";
       continue;
     }
     console.log(`\n▶ ${entry.check.gate} [${entry.check.id}] over ${scopeText(entry.scope)}`);
     entry.outcome = runCheck(entry.check, entry.scope) ? "passed" : "failed";
-    if (entry.outcome === "failed") failed = entry;
+    if (entry.outcome === "failed") failed ??= entry;
   }
   return failed;
 }
@@ -149,6 +165,8 @@ function writeReport(selected, outcome, failed) {
     finishedAt: new Date().toISOString(),
     base: selected.base ?? null,
     changed: selected.changed ?? null,
+    outside: selected.outside ?? null,
+    declaredMutationScope: selected.declaredMutationScope ?? null,
     widened: selected.widened,
     affected: selected.affected,
     outcome,
@@ -172,6 +190,18 @@ function writeReport(selected, outcome, failed) {
       `${JSON.stringify({ policyVersion: version, commit: report.commit, finishedAt: report.finishedAt, outcome, checks }, null, 2)}\n`,
     );
   }
+}
+
+if (process.env.MUTATION_SCOPE !== undefined) {
+  if (mode === "integral") {
+    console.error(
+      "MUTATION_SCOPE is a Gate Proof's declared scope; it cannot narrow integral validation.",
+    );
+    process.exit(2);
+  }
+  console.log(
+    `Gate Proof scope declared for this execution only: MUTATION_SCOPE=${process.env.MUTATION_SCOPE}`,
+  );
 }
 
 const selected = buildPlan();

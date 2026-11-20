@@ -8,6 +8,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { git, listFiles } from "./lib.mjs";
+import { baseBranch } from "./changes.mjs";
 import { InvalidScope, changedSet, declaredScope, isEligible } from "./mutation-scope.mjs";
 
 const REPORT = "reports/mutation/mutation.json";
@@ -27,10 +28,14 @@ function wholeCodebase() {
 
 function selectScope() {
   const declared = declaredScope(process.env.MUTATION_SCOPE, policy);
+  // A declared scope belongs to one Gate Proof execution; it never narrows
+  // integral validation.
+  if (declared && process.argv.includes("--whole"))
+    throw new InvalidScope("a declared mutation scope cannot narrow the whole-codebase run");
   if (declared) return { source: "declared", requested: declared, files: declared };
   if (process.argv.includes("--whole"))
     return { source: "whole", requested: null, files: wholeCodebase() };
-  const base = process.env.MUTATION_BASE ?? policy.base;
+  const base = baseBranch(JSON.parse(readFileSync("harness/policy.json", "utf8")).base);
   const changed = changedSet(base, policy, git);
   if (changed.widened) {
     console.log(

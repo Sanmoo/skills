@@ -3,6 +3,11 @@
 // selection policy and the Mutation Gate, so both see the same change.
 
 /** Resolves the base branch, preferring origin so a stale local branch cannot change the measured set. */
+/** The one base branch the selection and every changed-set Gate compare against. */
+export function baseBranch(policyBase) {
+  return process.env.MUTATION_BASE ?? policyBase;
+}
+
 export function resolveBase(base, git) {
   const remotes = (git(["remote"]) ?? "").split("\n").filter(Boolean);
   const others = remotes.filter((remote) => remote !== "origin");
@@ -19,7 +24,8 @@ export function resolveBase(base, git) {
 }
 
 /**
- * Every changed path relative to `base`, deleted ones included, or
+ * Every changed path relative to `base`, deleted ones included, as project
+ * paths in `files` and repository paths outside the project in `outside`; or
  * `{ widened: reason }` when the change cannot be established. When HEAD is
  * the base tip, the change is what landed with the tip commit. `git` runs a
  * git command in the project directory and returns stdout or undefined.
@@ -37,12 +43,20 @@ export function changedFiles(base, git) {
     compare = git(["merge-base", "HEAD", resolved.sha]);
     if (!compare) return { widened: `HEAD shares no history with ${resolved.ref}` };
   }
-  const tracked = git(["diff", "--name-only", "--relative", "--no-renames", compare]);
-  const untracked = git(["ls-files", "--others", "--exclude-standard"]);
-  if (tracked === undefined || untracked === undefined)
+  // Paths come from the repository root, so a change outside this project is
+  // seen too: the caller decides what it means rather than never knowing.
+  const prefix = git(["rev-parse", "--show-prefix"]);
+  const top = git(["rev-parse", "--show-toplevel"]);
+  const tracked = git(["diff", "--name-only", "--no-renames", compare, "--", top ?? "."]);
+  const untracked =
+    top === undefined ? undefined : git(["-C", top, "ls-files", "--others", "--exclude-standard"]);
+  if (prefix === undefined || tracked === undefined || untracked === undefined)
     return { widened: "the changed files cannot be listed" };
-  const files = [...new Set([...tracked.split("\n"), ...untracked.split("\n")])]
-    .filter(Boolean)
+  const all = [...new Set([...tracked.split("\n"), ...untracked.split("\n")])].filter(Boolean);
+  const files = all
+    .filter((path) => path.startsWith(prefix))
+    .map((path) => path.slice(prefix.length))
     .sort();
-  return { files, base: resolved.ref, compare };
+  const outside = all.filter((path) => !path.startsWith(prefix)).sort();
+  return { files, outside, base: resolved.ref, compare };
 }
