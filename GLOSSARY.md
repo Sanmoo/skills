@@ -131,3 +131,7 @@ _Avoid_: Boilerplate, hello world
 **Stack Example**:
 A concrete, non-normative realization of the Gate Contracts for one technology stack.
 _Avoid_: Reference implementation, supported stack
+
+**Acceptance run**:
+A fresh session that follows one starting path of the skill's current text from a fixed starting commit to that path's final report. Its outcome is evidence for the skill text it followed, not for a later one.
+_Avoid_: Trial run, Dogfooding run
