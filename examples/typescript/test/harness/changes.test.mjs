@@ -68,6 +68,15 @@ describe("changed-set discovery", () => {
     assert.deepEqual(changedFiles("main", repo.git).files, ["src/b.ts"]);
   });
 
+  it("measures the work of a new branch that still starts at the base tip, not the tip commit", () => {
+    const repo = scratchRepository({ "src/a.ts": "a\n", "src/b.ts": "b\n" });
+    repo.write("src/b.ts", "b2\n");
+    repo.commit("tip");
+    repo.run("switch", "-q", "-c", "topic");
+    repo.write("src/a.ts", "a2\n");
+    assert.deepEqual(changedFiles("main", repo.git).files, ["src/a.ts"]);
+  });
+
   it("prefers origin's base over a stale local branch", () => {
     const upstream = scratchRepository({ "src/a.ts": "a\n" });
     upstream.write("src/a.ts", "a2\n");
