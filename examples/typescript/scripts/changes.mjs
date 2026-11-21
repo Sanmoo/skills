@@ -26,8 +26,10 @@ export function resolveBase(base, git) {
 /**
  * Every changed path relative to `base`, deleted ones included, as project
  * paths in `files` and repository paths outside the project in `outside`; or
- * `{ widened: reason }` when the change cannot be established. When HEAD is
- * the base tip, the change is what landed with the tip commit. `git` runs a
+ * `{ widened: reason }` when the change cannot be established. On the base
+ * branch itself, or detached at its tip, the change is what landed with the
+ * tip commit; a branch that merely starts at the tip compares against it like
+ * any other. `git` runs a
  * git command in the project directory and returns stdout or undefined.
  */
 export function changedFiles(base, git) {
@@ -36,7 +38,8 @@ export function changedFiles(base, git) {
   const resolved = resolveBase(base, git);
   if (!resolved) return { widened: `the base branch ${base} cannot be resolved` };
   let compare;
-  if (resolved.sha === head) {
+  const branch = git(["symbolic-ref", "--quiet", "--short", "HEAD"]);
+  if (resolved.sha === head && (branch === undefined || branch === base)) {
     compare = git(["rev-parse", "--verify", "--quiet", "HEAD^1"]);
     if (!compare) return { widened: `HEAD is the tip of ${base} and has no earlier commit` };
   } else {

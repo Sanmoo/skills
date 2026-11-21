@@ -97,7 +97,7 @@ The state in which every Gate in the Gate Floor is adopted: each runs under its 
 _Avoid_: Complete harness, certified harness
 
 **Entry Point**:
-A single command that runs Gates, in two tiers: the full Entry Point is what CI calls for a change and runs the Gates applicable to its chosen validation scope; the fast Entry Point runs the quick subset for local hooks. The full Entry Point has two modes, validation by change and integral validation, and the mode is part of its definition rather than another command. These are the only commands a Guide may name.
+A single command that runs Gates, in two tiers: the full Entry Point is what CI calls for a change and runs the Gates applicable to its chosen validation scope; the fast Entry Point runs the quick subset for local hooks. The full Entry Point has two modes, validation by change and integral validation, and the mode is part of its definition rather than another command. These are the only build, test or check commands a Guide may name; operational commands, such as version control, are not Gates and are not covered by this rule.
 _Avoid_: Check script
 
 **Validation by change**:

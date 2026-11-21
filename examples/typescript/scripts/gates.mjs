@@ -34,7 +34,7 @@ function secrets() {
   if (top === undefined) return [["false"]];
   const config = `${process.cwd()}/.gitleaks.toml`;
   return [
-    ["gitleaks", "git", "--config", config, "--redact", "--no-banner", top],
+    ["gitleaks", "git", "--config", config, "--redact", "--no-banner", "--log-opts=HEAD", top],
     ["gitleaks", "dir", "--config", config, "--redact", "--no-banner", "."],
   ];
 }
