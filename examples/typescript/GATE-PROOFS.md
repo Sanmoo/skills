@@ -2,7 +2,7 @@
 
 The record of the Gate Proofs the 2026-11-20 [acceptance run](SKILL-FEEDBACK.md#the-acceptance-run) ran, one Gate at a time. Each proof is defined in [scripts/gate-proofs.mjs](scripts/gate-proofs.mjs), which applies the violation, runs the Entry Point of the Gate's tier, attributes the red result from the Entry Point's own report, and restores the tree. The run writes its raw report to `reports/gate-proofs.json`, which is not committed. A proof counts only when the failing check is the Gate under proof, the check actually ran and failed, and a declared scope was analyzed exactly as declared.
 
-These outcomes belong to the tree they ran against. The Mutation proof ran at `2f6c0e7`, and every other proof ran at `a57e016`. Between the two commits only the Mutation proof's own definition changed, and that file is outside both Entry Points. A later change needs its own run.
+These outcomes belong to the tree they ran against. The Mutation proof ran at `2f6c0e7`, and every other proof ran at `a57e016`. The Secrets proof re-ran at `cfdc7b5`, after the adoption run ([#24](https://github.com/Sanmoo/skills/issues/24)) scoped its scan to the history reachable from HEAD. Between the two commits only the Mutation proof's own definition changed, and that file is outside both Entry Points. A later change needs its own run.
 
 Tool versions are locked in [package-lock.json](package-lock.json) and [mise.toml](mise.toml). Every Gate is **adopted**: it runs under the day-zero defaults in both modes of the full Entry Point (and in the fast one when its tier is fast), it enforces its Contract, and its repeatable proof turned the Entry Point of its tier red because of it.
 
